@@ -69,6 +69,6 @@ func (c *Configuration) load() {
 			fmt.Println("Error unmarshal configuration file. Overwritting file with default values.")
 			c.createDefault()
 		}
-		fmt.Println("Successfully loaded configuration file.")
+		fmt.Println("Configuration loaded.")
 	}
 }
