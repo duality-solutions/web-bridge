@@ -1,4 +1,4 @@
-package config
+package webbridge
 
 import (
 	"encoding/json"

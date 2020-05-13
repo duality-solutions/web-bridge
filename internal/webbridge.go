@@ -1,8 +1,7 @@
-package main
+package webbridge
 
 import (
 	"fmt"
-	"github.com/amirabrams/webbridge/config"
 	"os"
 )
 
@@ -59,7 +58,8 @@ var config Configuration
 var development = false
 var debug = false
 
-func main() {
+// Init is used to begin all WebBridge tasks
+func Init() {
 	if debug {
 		fmt.Println("Running WebBridge in debug log mode.")
 	}
