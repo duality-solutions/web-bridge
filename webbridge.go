@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/amirabrams/webbridge/config"
 	"os"
 )
 
@@ -14,6 +15,23 @@ import (
 - Admin console running
 - Establishing WebRTC connections with links
 - Starting HTTP bridges for active links
+api
+- RestAPI
+configs
+- Config
+docs
+- Diagrams
+init
+- Main.
+- call config init
+- Manage channels
+- Manage shutdown and cleanup
+dynamicd
+- Manage dynamicd and JSON RPC calls
+web
+- AdminConsole
+
+WebRTCBridge
 
 2) Load HTTP Server
 	- Authentication: Use OAuth

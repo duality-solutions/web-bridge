@@ -1,4 +1,4 @@
-module github.com/webbridge
+module github.com/amirabrams/webbridge
 
 go 1.14
 
