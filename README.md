@@ -1,6 +1,16 @@
 # WebBridge
 Connecting HTTP within intranets using WebRTC and blockchain signaling
 
+### Running with dev and debug mode
+```
+go run -race . -dev -debug
+```
+
+### Building
+```
+go build -i -v -ldflags="-X 'main.GitHash=$(git describe --always --long --dirty)' -X 'main.Version=$(Get-Date -Format "yy.MM.dd")'" github.com/amirabrams/webbridge
+```
+
 ### Diagrams
 ![General Diagram](docs/diagram-webbridge-general.png)
 
