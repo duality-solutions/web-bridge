@@ -1,0 +1,17 @@
+sudo: required
+dist: bionic
+language: go
+go:
+  - "1.14.x"
+install: 
+  - sudo apt-get install -qq pkg-config fuse build-essential
+cache:
+  apt: true
+jobs:
+  include:
+      - stage: build
+        name: 'Ubuntu 18 Build Test'
+        script:
+          - go run . -debug
+          - go build
+          - ./webbridge -dev
