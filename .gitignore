@@ -5,6 +5,10 @@
 *.so
 *.dylib
 
+# Archives
+*.zip
+*.tar.gz
+
 # Test binary, built with `go test -c`
 *.test
 
@@ -16,3 +20,6 @@
 
 # setting configuration file
 .webbridge.settings.json
+
+# Dynamic binaries
+dynamic/*

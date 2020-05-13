@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"runtime"
 
 	webbridge "github.com/amirabrams/webbridge/internal"
 )
@@ -17,5 +18,6 @@ var GitHash string
 
 func main() {
 	fmt.Println("Version:", Version, "Hash", GitHash)
+	fmt.Println("OS: ", runtime.GOOS)
 	webbridge.Init()
 }

@@ -101,14 +101,9 @@ func Init() {
 			fmt.Println("dynamicd error:", err)
 		}
 	} else {
-		dynamicd, err := LoadRPCDynamicd()
+		err := LoadRPCDynamicd()
 		if err != nil {
-			if dynamicd != nil {
-				// get percent complete from syncstatus
-				fmt.Println("Dynamicd running ... sync", dynamicd, "complete")
-			} else {
-				fmt.Println("Dynamicd not running.")
-			}
+			fmt.Println("Starting dynamicd...")
 		} else {
 			fmt.Println("dynamicd error:", err)
 		}
