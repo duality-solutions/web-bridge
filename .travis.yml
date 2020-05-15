@@ -14,4 +14,4 @@ jobs:
         script:
           - go run . -debug
           - go build
-          - ./webbridge -dev
+          - ./web-bridge -debug

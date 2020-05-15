@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"runtime"
 
-	webbridge "github.com/amirabrams/webbridge/internal"
+	webbridge "github.com/duality-solutions/web-bridge/internal"
 )
 
 // Version is the WebBridge version number in ISO date format

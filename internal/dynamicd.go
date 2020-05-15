@@ -11,7 +11,7 @@ import (
 	"github.com/docker/docker/client"
 	"github.com/docker/go-connections/nat"
 
-	util "github.com/amirabrams/webbridge/internal/utilities"
+	util "github.com/duality-solutions/web-bridge/internal/utilities"
 )
 
 const (
