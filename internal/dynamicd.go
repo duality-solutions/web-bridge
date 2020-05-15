@@ -2,6 +2,7 @@ package webbridge
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os/exec"
 	"runtime"
@@ -28,7 +29,7 @@ var cliName string = "dynamic-cli"
 var dynDir string = "dynamic"
 var arch = "x64"
 
-func loadDynamicd(os string, archiveExt string) {
+func loadDynamicd(os string, archiveExt string) (*exec.Cmd, error) {
 	if os == "Windows" {
 		dynDir += "\\"
 		dynamicdName += ".exe"
@@ -45,6 +46,7 @@ func loadDynamicd(os string, archiveExt string) {
 			err := util.DownloadFile(binPath, binaryURL)
 			if err != nil {
 				fmt.Println("Binary download failed.", err)
+				return nil, err
 			}
 		} else {
 			fmt.Println("Compressed binary found")
@@ -57,12 +59,14 @@ func loadDynamicd(os string, archiveExt string) {
 			dir, errDecompress = util.Unzip(binPath, dynDir)
 			if errDecompress != nil {
 				fmt.Println("Error unzipping file.", binPath, errDecompress)
+				return nil, errDecompress
 			}
 		} else {
 			// Extract tar.gz archive file
 			dir, errDecompress = util.ExtractTarGz(binPath, dynDir)
 			if errDecompress != nil {
 				fmt.Println("Error decompressing file.", binPath, errDecompress)
+				return nil, errDecompress
 			}
 		}
 
@@ -73,12 +77,14 @@ func loadDynamicd(os string, archiveExt string) {
 				errMove := util.MoveFile(v, dynDir+dynamicdName)
 				if errMove != nil {
 					fmt.Println("Error moving", v, errMove)
+					return nil, errMove
 				}
 			} else if strings.HasSuffix(v, cliName) {
 				fmt.Println("Found", v, "Moving to correct directory")
 				errMove := util.MoveFile(v, dynDir+cliName)
 				if errMove != nil {
 					fmt.Println("Error moving", v, errMove)
+					return nil, errMove
 				}
 			}
 		}
@@ -86,12 +92,14 @@ func loadDynamicd(os string, archiveExt string) {
 		dirs, errDirs := util.ListDirectories(dynDir)
 		if errDirs != nil {
 			fmt.Println("Error listing directories", errDirs)
+			return nil, errDirs
 		}
 		for _, v := range dirs {
 			fmt.Println("Deleting directory", dynDir+v)
 			errDeleteDir := util.DeleteDirectory(dynDir + v)
 			if errDeleteDir != nil {
 				fmt.Println("Error deleting directory", v, errDeleteDir)
+				return nil, errDeleteDir
 			}
 		}
 		// clean up archive file
@@ -101,6 +109,7 @@ func loadDynamicd(os string, archiveExt string) {
 			errDelete := util.DeleteFile(binPath)
 			if errDelete != nil {
 				fmt.Println("Error deleting binary archive file", binPath, errDelete)
+				return nil, errDelete
 			}
 		}
 	} else {
@@ -114,61 +123,71 @@ func loadDynamicd(os string, archiveExt string) {
 	case "Windows":
 		if winDyndHash != hashDynamicd {
 			fmt.Println("Error with", dynamicdName, ". File hash mismatch", winDyndHash, hashDynamicd)
-			// TODO panic
-		} else {
-			fmt.Println("File binary hash check pass", dynamicdName, hashDynamicd)
+			errHash := errors.New("Error with " + dynamicdName + ". File hash mismatch " + winDyndHash + " vs " + hashDynamicd)
+			return nil, errHash
 		}
+		fmt.Println("File binary hash check pass", dynamicdName, hashDynamicd)
 		if winDynCliHash != hashCli {
 			fmt.Println("Error with", cliName, ". File hash mismatch", winDynCliHash, hashCli)
-			// TODO panic
-		} else {
-			fmt.Println("File binary hash check pass", cliName, hashCli)
+			errHash := errors.New("Error with " + cliName + ". File hash mismatch " + winDynCliHash + " vs " + hashCli)
+			return nil, errHash
 		}
+		fmt.Println("File binary hash check pass", cliName, hashCli)
 	case "Linux":
 		if linuxDyndHash != hashDynamicd {
 			fmt.Println("Error with", dynamicdName, ". File hash mismatch", linuxDyndHash, hashDynamicd)
-			// TODO panic
-		} else {
-			fmt.Println("File binary hash check pass", dynamicdName, hashDynamicd)
+			errHash := errors.New("Error with " + dynamicdName + ". File hash mismatch " + linuxDyndHash + " vs " + hashDynamicd)
+			return nil, errHash
 		}
+		fmt.Println("File binary hash check pass", dynamicdName, hashDynamicd)
 		if linuxDynCliHash != hashCli {
 			fmt.Println("Error with", cliName, ". File hash mismatch", linuxDynCliHash, hashCli)
-			// TODO panic
-		} else {
-			fmt.Println("File binary hash check pass", cliName, hashCli)
+			errHash := errors.New("Error with " + cliName + ". File hash mismatch " + linuxDynCliHash + " vs " + hashCli)
+			return nil, errHash
 		}
+		fmt.Println("File binary hash check pass", cliName, hashCli)
 	case "OSX":
 		if macDyndHash != hashDynamicd {
 			fmt.Println("Error with", dynamicdName, ". File hash mismatch", macDyndHash, hashDynamicd)
-			// TODO panic
-		} else {
-			fmt.Println("File binary hash check pass", dynamicdName, hashDynamicd)
+			errHash := errors.New("Error with " + dynamicdName + ". File hash mismatch " + macDyndHash + " vs " + hashDynamicd)
+			return nil, errHash
 		}
+		fmt.Println("File binary hash check pass", dynamicdName, hashDynamicd)
 		if macDynCliHash != hashCli {
 			fmt.Println("Error with", cliName, ". File hash mismatch", macDynCliHash, hashCli)
-			// TODO panic
-		} else {
-			fmt.Println("File binary hash check pass", cliName, hashCli)
+			errHash := errors.New("Error with " + cliName + ". File hash mismatch " + macDynCliHash + " vs " + hashCli)
+			return nil, errHash
 		}
+		fmt.Println("File binary hash check pass", cliName, hashCli)
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel() // The cancel should be deferred so resources are cleaned up
 	cmd := exec.CommandContext(ctx, dynDir+dynamicdName, "-debug=1")
-	cmd.Start()
-	fmt.Println("Process:", cmd.Process)
-	cmd.Wait()
+
+	return cmd, nil
 }
 
 // LoadRPCDynamicd is used to create and run a managed dynamicd full node and cli.
-func LoadRPCDynamicd() error {
+func LoadRPCDynamicd() (*exec.Cmd, error) {
+	var cmd *exec.Cmd
+	var err error
 	switch runtime.GOOS {
 	case "windows":
-		loadDynamicd("Windows", "zip")
+		cmd, err = loadDynamicd("Windows", "zip")
+		if err != nil {
+			return nil, err
+		}
 	case "linux":
-		loadDynamicd("Linux", "tar.gz")
+		cmd, err = loadDynamicd("Linux", "tar.gz")
+		if err != nil {
+			return nil, err
+		}
 	case "darwin":
-		loadDynamicd("OSX", "tar.gz")
+		cmd, err = loadDynamicd("OSX", "tar.gz")
+		if err != nil {
+			return nil, err
+		}
 	}
-	return nil
+	return cmd, nil
 }

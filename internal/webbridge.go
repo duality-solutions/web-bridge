@@ -87,12 +87,20 @@ func Init() {
 	// ICE service test completed
 
 	// Dynamicd running ... sync 88% complete
-	err := LoadRPCDynamicd()
+	cmd, err := LoadRPCDynamicd()
 	if err != nil {
-		fmt.Println("Starting dynamicd...")
-	} else {
-		fmt.Println("dynamicd error:", err)
+		fmt.Println("Could not load dynamicd. Can not continue.", err)
+		os.Exit(-1)
 	}
+	fmt.Println("Starting dynamicd...")
+	cmd.Start()
+	fmt.Println("Cmd", cmd)
+	fmt.Println("Cmd Address:", &cmd)
+	fmt.Printf("Cmd Type: %T\n", cmd)
+	cmd.Wait()
+	fmt.Println("Proc:", cmd.Process)
+	fmt.Println("Proc Address:", &cmd.Process)
+	fmt.Printf("Proc Type: %T\n", cmd.Process)
 	// REST API running
 	// Admin console running
 	// Establishing WebRTC connections with links
