@@ -87,26 +87,11 @@ func Init() {
 	// ICE service test completed
 
 	// Dynamicd running ... sync 88% complete
-	if development {
-		// load dynamic docker image
-		dynamicd, err := LoadDockerDynamicd()
-		if err != nil {
-			if dynamicd != nil {
-				// get percent complete from syncstatus
-				fmt.Println("Dynamicd running ... sync", dynamicd, "complete")
-			} else {
-				fmt.Println("Dynamicd not running.")
-			}
-		} else {
-			fmt.Println("dynamicd error:", err)
-		}
+	err := LoadRPCDynamicd()
+	if err != nil {
+		fmt.Println("Starting dynamicd...")
 	} else {
-		err := LoadRPCDynamicd()
-		if err != nil {
-			fmt.Println("Starting dynamicd...")
-		} else {
-			fmt.Println("dynamicd error:", err)
-		}
+		fmt.Println("dynamicd error:", err)
 	}
 	// REST API running
 	// Admin console running

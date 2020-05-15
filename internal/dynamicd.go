@@ -3,82 +3,69 @@ package webbridge
 import (
 	"context"
 	"fmt"
+	"os/exec"
 	"runtime"
 	"strings"
-
-	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/client"
-	"github.com/docker/go-connections/nat"
+	"time"
 
 	util "github.com/duality-solutions/web-bridge/internal/utilities"
 )
 
 const (
 	binaryRepo        string = "https://github.com/duality-solutions/Dynamic"
-	binaryVersionPath string = "releases/download/v2.4.4.1"
+	binaryReleasePath string = "releases/download"
+	binaryVersion     string = "2.4.4.1"
 	winDyndHash       string = "NM+nYgDPBk/DTj/BOkG0vdKEEKAHdjRvcNKSeySiUtg="
 	winDynCliHash     string = "EoDfzegZT7bFEaHmUr3NMsWYSao0yPpoC6puq1OD8pw="
-	linuxDyndHash     string = ""
-	linuxDynCliHash   string = ""
-	macDyndHash       string = ""
-	macDynCliHash     string = ""
+	linuxDyndHash     string = "8bFnTc9lOMWJsklMFXX4NurK1umSTROLJSvDAmul2MQ="
+	linuxDynCliHash   string = "K66Z66XJn+9NEYrUZsqA0UNpGzVHlmEQjlsakioWvn4="
+	macDyndHash       string = "AjXMbmI6M1QpKX9JILeMDpdO9d5OkazNKygoRP1y4cg="
+	macDynCliHash     string = "4pYr5IQ9NJUrQga7jjhUJ3ThoVQncYGLVv1OyWkRsJs="
 )
 
-/*
-docker volume create --name=dynamicd-data
-docker run -e DISABLEWALLET=0 -v dynamicd-data:/dynamic --name=dynamicd -d -p 33300:33300 -p 127.0.0.1:33350:33350 dualitysolutions/docker-dynamicd
-*/
+var dynamicdName string = "dynamicd"
+var cliName string = "dynamic-cli"
+var dynDir string = "dynamic"
+var arch = "x64"
 
-// LoadDockerDynamicd is used to create and run a Docker dynamicd full node and cli.
-func LoadDockerDynamicd() (*client.Client, error) {
-	cli, err := client.NewEnvClient()
-	if err != nil {
-		return nil, err
+func loadDynamicd(os string, archiveExt string) {
+	if os == "Windows" {
+		dynDir += "\\"
+		dynamicdName += ".exe"
+		cliName += ".exe"
+	} else {
+		dynDir += "/"
 	}
-
-	ctx := context.Background()
-	resp, err := cli.ContainerCreate(ctx, &container.Config{
-		Image:        "dynamicd",
-		ExposedPorts: nat.PortSet{"33350": struct{}{}},
-	}, &container.HostConfig{
-		PortBindings: map[nat.Port][]nat.PortBinding{nat.Port("33350"): {{HostIP: "127.0.0.1", HostPort: "8080"}}},
-	}, nil, "dynamicd")
-	if err != nil {
-		return nil, err
-	}
-
-	if err := cli.ContainerStart(ctx, resp.ID, types.ContainerStartOptions{}); err != nil {
-		return nil, err
-	}
-	return cli, nil
-}
-
-func loadWindowsDynamicd() {
-	//https://github.com/duality-solutions/Dynamic/releases/tag/v2.4.4.1/Dynamic-2.4.4.1-Windows-x64.zip
-	// look for binary.
-	// if not found, download a new one.
-	dynDir := "dynamic\\"
-	dynamicdName := "dynamicd.exe"
-	cliName := "dynamic-cli.exe"
-	if !util.FileExists("dynamic\\dynamicd.exe") || !util.FileExists("dynamic\\dynamic-cli.exe") {
-		fmt.Println("dynamicd.exe or dynamid-cli.exe not found. Downloading from repo.")
-		binZipPath := "dynamic\\dynamic-bin.zip"
-		if !util.FileExists(binZipPath) {
-			binaryURL := binaryRepo + "/" + binaryVersionPath + "/Dynamic-2.4.4.1-Windows-x64.zip"
+	if !util.FileExists(dynDir+dynamicdName) || !util.FileExists(dynDir+cliName) {
+		fmt.Println(dynamicdName, "or", cliName, "not found. Downloading from Git repo.")
+		binPath := dynDir + "dynamic." + archiveExt
+		if !util.FileExists(binPath) {
+			binaryURL := binaryRepo + "/" + binaryReleasePath + "/v" + binaryVersion + "/Dynamic-" + binaryVersion + "-" + os + "-" + arch + "." + archiveExt
 			fmt.Println("Downloading binaries:", binaryURL)
-			err := util.DownloadFile(binZipPath, binaryURL)
+			err := util.DownloadFile(binPath, binaryURL)
 			if err != nil {
 				fmt.Println("Binary download failed.", err)
 			}
 		} else {
 			fmt.Println("Compressed binary found")
 		}
-		// unzip
-		dir, err := util.Unzip(binZipPath, dynDir)
-		if err != nil {
-			fmt.Println("Error unzipping file.", binZipPath, err)
+
+		var dir []string
+		var errDecompress error
+		if os == "Windows" {
+			// unzip archive file
+			dir, errDecompress = util.Unzip(binPath, dynDir)
+			if errDecompress != nil {
+				fmt.Println("Error unzipping file.", binPath, errDecompress)
+			}
+		} else {
+			// Extract tar.gz archive file
+			dir, errDecompress = util.ExtractTarGz(binPath, dynDir)
+			if errDecompress != nil {
+				fmt.Println("Error decompressing file.", binPath, errDecompress)
+			}
 		}
+
 		// extract dynamicd.exe dynamid-cli.exe and move
 		for _, v := range dir {
 			if strings.HasSuffix(v, dynamicdName) {
@@ -95,15 +82,6 @@ func loadWindowsDynamicd() {
 				}
 			}
 		}
-		// clean up
-		fmt.Println("Cleaning up... Removing unneeded files and directories.")
-		if util.FileExists(binZipPath) {
-			fmt.Println("Deleting zip file", binZipPath)
-			errDelete := util.DeleteFile(binZipPath)
-			if errDelete != nil {
-				fmt.Println("Error deleting binary archive file", binZipPath, errDelete)
-			}
-		}
 		// clean up extract directory
 		dirs, errDirs := util.ListDirectories(dynDir)
 		if errDirs != nil {
@@ -116,44 +94,81 @@ func loadWindowsDynamicd() {
 				fmt.Println("Error deleting directory", v, errDeleteDir)
 			}
 		}
+		// clean up archive file
+		fmt.Println("Cleaning up... Removing unneeded files and directories.")
+		if util.FileExists(binPath) {
+			fmt.Println("Deleting zip file", binPath)
+			errDelete := util.DeleteFile(binPath)
+			if errDelete != nil {
+				fmt.Println("Error deleting binary archive file", binPath, errDelete)
+			}
+		}
+	} else {
+		fmt.Println("Binaries found", dynamicdName, cliName)
 	}
 	// check file hashes to make sure they are valid.
 	hashDynamicd, _ := util.GetFileHash(dynDir + dynamicdName)
 	hashCli, _ := util.GetFileHash(dynDir + cliName)
 
-	if winDyndHash != hashDynamicd {
-		fmt.Println("Error with", dynamicdName, ". File hash mismatch", winDyndHash, hashDynamicd)
-		// TODO panic
-	} else {
-		fmt.Println("File binary hash check pass", dynamicdName, hashDynamicd)
+	switch os {
+	case "Windows":
+		if winDyndHash != hashDynamicd {
+			fmt.Println("Error with", dynamicdName, ". File hash mismatch", winDyndHash, hashDynamicd)
+			// TODO panic
+		} else {
+			fmt.Println("File binary hash check pass", dynamicdName, hashDynamicd)
+		}
+		if winDynCliHash != hashCli {
+			fmt.Println("Error with", cliName, ". File hash mismatch", winDynCliHash, hashCli)
+			// TODO panic
+		} else {
+			fmt.Println("File binary hash check pass", cliName, hashCli)
+		}
+	case "Linux":
+		if linuxDyndHash != hashDynamicd {
+			fmt.Println("Error with", dynamicdName, ". File hash mismatch", linuxDyndHash, hashDynamicd)
+			// TODO panic
+		} else {
+			fmt.Println("File binary hash check pass", dynamicdName, hashDynamicd)
+		}
+		if linuxDynCliHash != hashCli {
+			fmt.Println("Error with", cliName, ". File hash mismatch", linuxDynCliHash, hashCli)
+			// TODO panic
+		} else {
+			fmt.Println("File binary hash check pass", cliName, hashCli)
+		}
+	case "OSX":
+		if macDyndHash != hashDynamicd {
+			fmt.Println("Error with", dynamicdName, ". File hash mismatch", macDyndHash, hashDynamicd)
+			// TODO panic
+		} else {
+			fmt.Println("File binary hash check pass", dynamicdName, hashDynamicd)
+		}
+		if macDynCliHash != hashCli {
+			fmt.Println("Error with", cliName, ". File hash mismatch", macDynCliHash, hashCli)
+			// TODO panic
+		} else {
+			fmt.Println("File binary hash check pass", cliName, hashCli)
+		}
 	}
-	if winDynCliHash != hashCli {
-		fmt.Println("Error with", cliName, ". File hash mismatch", winDynCliHash, hashCli)
-		// TODO panic
-	} else {
-		fmt.Println("File binary hash check pass", cliName, hashCli)
-	}
-}
 
-func loadLinuxDynamicd() {
-	//https://github.com/duality-solutions/Dynamic/releases/tag/v2.4.4.1/Dynamic-2.4.4.1-Linux-x64.tar.gz
-
-}
-
-func loadMacOSDynamicd() {
-	//https://github.com/duality-solutions/Dynamic/releases/tag/v2.4.4.1/Dynamic-2.4.4.1-OSX-x64.tar.gz
-
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel() // The cancel should be deferred so resources are cleaned up
+	cmd := exec.CommandContext(ctx, dynDir+dynamicdName, "-debug=1")
+	cmd.Start()
+	fmt.Println("Process:", cmd.Process)
+	cmd.Wait()
 }
 
 // LoadRPCDynamicd is used to create and run a managed dynamicd full node and cli.
 func LoadRPCDynamicd() error {
 	switch runtime.GOOS {
 	case "windows":
-		loadWindowsDynamicd()
+		loadDynamicd("Windows", "zip")
 	case "linux":
-		loadLinuxDynamicd()
+		loadDynamicd("Linux", "tar.gz")
 	case "darwin":
-		loadMacOSDynamicd()
+		loadDynamicd("OSX", "tar.gz")
 	}
 	return nil
 }
