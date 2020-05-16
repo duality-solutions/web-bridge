@@ -78,12 +78,26 @@ func loadDynamicd(_os string, archiveExt string) (*exec.Cmd, error) {
 					fmt.Println("Error moving", v, errMove)
 					return nil, errMove
 				}
+				if _os != "Windows" {
+					cmd := exec.Command("chmod", "+x", dynDir+dynamicdName)
+					errRun := cmd.Run()
+					if errRun != nil {
+						fmt.Println("Error running chmod for", dynDir+dynamicdName, errRun)
+					}
+				}
 			} else if strings.HasSuffix(v, cliName) {
 				fmt.Println("Found", v, "Moving to correct directory")
 				errMove := util.MoveFile(v, dynDir+cliName)
 				if errMove != nil {
 					fmt.Println("Error moving", v, errMove)
 					return nil, errMove
+				}
+				if _os != "Windows" {
+					cmd := exec.Command("chmod", "+x", dynDir+cliName)
+					errRun := cmd.Run()
+					if errRun != nil {
+						fmt.Println("Error running chmod for", dynDir+cliName, errRun)
+					}
 				}
 			}
 		}
