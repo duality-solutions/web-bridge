@@ -94,7 +94,7 @@ func Init() {
 	}
 	fmt.Println("Starting dynamicd...")
 	// TODO: check if dynamicd is already running
-	if errStart := dynamicd.Start(); errStart != nil {
+	if errStart := dynamicd.cmd.Start(); errStart != nil {
 		fmt.Println("Error starting dynamicd", errStart)
 	} else {
 		// Success
@@ -102,14 +102,15 @@ func Init() {
 		fmt.Println("dynamicd", dynamicd)
 		fmt.Println("dynamicd address:", &dynamicd)
 		fmt.Printf("dynamicd Type: %T\n", dynamicd)
-		fmt.Println("dynamicd proc:", dynamicd.Process)
-		fmt.Println("dynamicd address:", &dynamicd.Process)
-		fmt.Printf("dynamicd proc type: %T\n", dynamicd.Process)
+		fmt.Println("dynamicd proc:", dynamicd.cmd.Process)
+		fmt.Println("dynamicd address:", &dynamicd.cmd.Process)
+		fmt.Printf("dynamicd proc type: %T\n", dynamicd.cmd.Process)
 
 		// TODO: Create dynamicd JSON RPC controller
 		// TODO: Dynamicd running ... print sync percent (like 88%) complete
 		time.Sleep(time.Second * 60)
-		if errKill := dynamicd.Process.Kill(); err != errKill {
+
+		if errKill := dynamicd.cmd.Process.Kill(); err != errKill {
 			fmt.Println("failed to kill process: ", errKill)
 		}
 	}

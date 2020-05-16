@@ -27,8 +27,37 @@ var dynamicdName string = "dynamicd"
 var cliName string = "dynamic-cli"
 var dynDir string = "dynamic"
 var arch = "x64"
+var defaultPort uint16 = 33334
+var defaultRPCPort uint16 = 33335
+var defaultBind string = "127.0.0.1"
 
-func loadDynamicd(_os string, archiveExt string) (*exec.Cmd, error) {
+// Dynamicd stores information about the binded dynamicd process
+type Dynamicd struct {
+	datadir        string
+	rpcuser        string
+	rpcpassword    string
+	p2pport        uint16
+	rpcport        uint16
+	bindaddress    string
+	rpcbindaddress string
+	cmd            *exec.Cmd
+}
+
+func newDynamicd(datadir string, rpcuser string, rpcpassword string, p2pport uint16, prcport uint16, bindaddress string, rpcbindaddress string, cmd *exec.Cmd) *Dynamicd {
+	d := Dynamicd{
+		datadir:        datadir,
+		rpcuser:        rpcuser,
+		rpcpassword:    rpcpassword,
+		p2pport:        p2pport,
+		rpcport:        prcport,
+		bindaddress:    bindaddress,
+		rpcbindaddress: rpcbindaddress,
+		cmd:            cmd,
+	}
+	return &d
+}
+
+func loadDynamicd(_os string, archiveExt string) (*Dynamicd, error) {
 	if _os == "Windows" {
 		dynDir += "\\"
 		dynamicdName += ".exe"
@@ -186,31 +215,52 @@ func loadDynamicd(_os string, archiveExt string) (*exec.Cmd, error) {
 			return nil, errMkdir
 		}
 	}
-	cmd := exec.Command(dynDir+dynamicdName, "-datadir="+dataDirPath)
+	rpcUser, errUser := util.RandomString(12)
+	if errUser != nil {
+		return nil, errUser
+	}
+	rpcPassword, errPassword := util.RandomString(18)
+	if errPassword != nil {
+		return nil, errPassword
+	}
+	cmd := exec.Command(dynDir+dynamicdName,
+		"-datadir="+dataDirPath,
+		"-port="+string(defaultPort),
+		"-rpcuser="+rpcUser,
+		"-rpcpassword="+rpcPassword,
+		"-rpcport="+string(defaultRPCPort),
+		"-rpcbind="+defaultBind,
+		"-rpcallowip="+defaultBind,
+		"-server=1",
+		"-addnode=206.189.68.224",
+		"-addnode=138.197.193.115",
+		"-addnode=dynexplorer.duality.solutions",
+	)
+	dynamicd := newDynamicd(dataDirPath, rpcUser, rpcPassword, defaultPort, defaultRPCPort, defaultBind, defaultBind, cmd)
 
-	return cmd, nil
+	return dynamicd, nil
 }
 
 // LoadRPCDynamicd is used to create and run a managed dynamicd full node and cli.
-func LoadRPCDynamicd() (*exec.Cmd, error) {
-	var cmd *exec.Cmd
+func LoadRPCDynamicd() (*Dynamicd, error) {
+	var dynamicd *Dynamicd
 	var err error
 	switch runtime.GOOS {
 	case "windows":
-		cmd, err = loadDynamicd("Windows", "zip")
+		dynamicd, err = loadDynamicd("Windows", "zip")
 		if err != nil {
 			return nil, err
 		}
 	case "linux":
-		cmd, err = loadDynamicd("Linux", "tar.gz")
+		dynamicd, err = loadDynamicd("Linux", "tar.gz")
 		if err != nil {
 			return nil, err
 		}
 	case "darwin":
-		cmd, err = loadDynamicd("OSX", "tar.gz")
+		dynamicd, err = loadDynamicd("OSX", "tar.gz")
 		if err != nil {
 			return nil, err
 		}
 	}
-	return cmd, nil
+	return dynamicd, nil
 }
