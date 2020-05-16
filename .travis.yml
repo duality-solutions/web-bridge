@@ -12,6 +12,8 @@ jobs:
       - stage: build
         name: 'Ubuntu 18 Build Test'
         script:
-          - go run . -debug
+          - go run -race . -debug
           - go build
+          - chmod +x dynamic/dynamicd
+          - chmod +x dynamic/dynamic-cli
           - ./web-bridge -debug
