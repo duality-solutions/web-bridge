@@ -1,13 +1,12 @@
 package webbridge
 
 import (
-	"context"
 	"errors"
 	"fmt"
+	"os"
 	"os/exec"
 	"runtime"
 	"strings"
-	"time"
 
 	util "github.com/duality-solutions/web-bridge/internal/utilities"
 )
@@ -29,8 +28,8 @@ var cliName string = "dynamic-cli"
 var dynDir string = "dynamic"
 var arch = "x64"
 
-func loadDynamicd(os string, archiveExt string) (*exec.Cmd, error) {
-	if os == "Windows" {
+func loadDynamicd(_os string, archiveExt string) (*exec.Cmd, error) {
+	if _os == "Windows" {
 		dynDir += "\\"
 		dynamicdName += ".exe"
 		cliName += ".exe"
@@ -41,7 +40,7 @@ func loadDynamicd(os string, archiveExt string) (*exec.Cmd, error) {
 		fmt.Println(dynamicdName, "or", cliName, "not found. Downloading from Git repo.")
 		binPath := dynDir + "dynamic." + archiveExt
 		if !util.FileExists(binPath) {
-			binaryURL := binaryRepo + "/" + binaryReleasePath + "/v" + binaryVersion + "/Dynamic-" + binaryVersion + "-" + os + "-" + arch + "." + archiveExt
+			binaryURL := binaryRepo + "/" + binaryReleasePath + "/v" + binaryVersion + "/Dynamic-" + binaryVersion + "-" + _os + "-" + arch + "." + archiveExt
 			fmt.Println("Downloading binaries:", binaryURL)
 			err := util.DownloadFile(binPath, binaryURL)
 			if err != nil {
@@ -54,7 +53,7 @@ func loadDynamicd(os string, archiveExt string) (*exec.Cmd, error) {
 
 		var dir []string
 		var errDecompress error
-		if os == "Windows" {
+		if _os == "Windows" {
 			// unzip archive file
 			dir, errDecompress = util.Unzip(binPath, dynDir)
 			if errDecompress != nil {
@@ -118,8 +117,12 @@ func loadDynamicd(os string, archiveExt string) (*exec.Cmd, error) {
 	// check file hashes to make sure they are valid.
 	hashDynamicd, _ := util.GetFileHash(dynDir + dynamicdName)
 	hashCli, _ := util.GetFileHash(dynDir + cliName)
-
-	switch os {
+	var dataDirPath string
+	dir, errPath := os.Getwd()
+	if errPath != nil {
+		return nil, errPath
+	}
+	switch _os {
 	case "Windows":
 		if winDyndHash != hashDynamicd {
 			fmt.Println("Error with", dynamicdName, ". File hash mismatch", winDyndHash, hashDynamicd)
@@ -133,6 +136,7 @@ func loadDynamicd(os string, archiveExt string) (*exec.Cmd, error) {
 			return nil, errHash
 		}
 		fmt.Println("File binary hash check pass", cliName, hashCli)
+		dataDirPath = dir + "\\" + dynDir + "\\" + ".dynamic"
 	case "Linux":
 		if linuxDyndHash != hashDynamicd {
 			fmt.Println("Error with", dynamicdName, ". File hash mismatch", linuxDyndHash, hashDynamicd)
@@ -146,6 +150,7 @@ func loadDynamicd(os string, archiveExt string) (*exec.Cmd, error) {
 			return nil, errHash
 		}
 		fmt.Println("File binary hash check pass", cliName, hashCli)
+		dataDirPath = dir + "/" + dynDir + "/" + ".dynamic"
 	case "OSX":
 		if macDyndHash != hashDynamicd {
 			fmt.Println("Error with", dynamicdName, ". File hash mismatch", macDyndHash, hashDynamicd)
@@ -159,11 +164,15 @@ func loadDynamicd(os string, archiveExt string) (*exec.Cmd, error) {
 			return nil, errHash
 		}
 		fmt.Println("File binary hash check pass", cliName, hashCli)
+		dataDirPath = dir + "/" + dynDir + "/" + ".dynamic"
 	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-	defer cancel() // The cancel should be deferred so resources are cleaned up
-	cmd := exec.CommandContext(ctx, dynDir+dynamicdName, "-debug=1")
+	if !util.DirectoryExists(dataDirPath) {
+		errMkdir := os.Mkdir(dataDirPath, 0755)
+		if errMkdir != nil {
+			return nil, errMkdir
+		}
+	}
+	cmd := exec.Command(dynDir+dynamicdName, "-datadir="+dataDirPath)
 
 	return cmd, nil
 }

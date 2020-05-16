@@ -3,6 +3,7 @@ package webbridge
 import (
 	"fmt"
 	"os"
+	"time"
 )
 
 /*
@@ -84,25 +85,36 @@ func Init() {
 	if debug {
 		fmt.Println("Config", config)
 	}
-	// ICE service test completed
+	// TODO: ICE service test completed
 
-	// Dynamicd running ... sync 88% complete
-	cmd, err := LoadRPCDynamicd()
+	dynamicd, err := LoadRPCDynamicd()
 	if err != nil {
 		fmt.Println("Could not load dynamicd. Can not continue.", err)
 		os.Exit(-1)
 	}
 	fmt.Println("Starting dynamicd...")
-	cmd.Start()
-	fmt.Println("Cmd", cmd)
-	fmt.Println("Cmd Address:", &cmd)
-	fmt.Printf("Cmd Type: %T\n", cmd)
-	cmd.Wait()
-	fmt.Println("Proc:", cmd.Process)
-	fmt.Println("Proc Address:", &cmd.Process)
-	fmt.Printf("Proc Type: %T\n", cmd.Process)
-	// REST API running
-	// Admin console running
-	// Establishing WebRTC connections with links
-	// Starting HTTP bridges for active links
+	// TODO: check if dynamicd is already running
+	if errStart := dynamicd.Start(); errStart != nil {
+		fmt.Println("Error starting dynamicd", errStart)
+	} else {
+		// Success
+		fmt.Println("dynamicd started")
+		fmt.Println("dynamicd", dynamicd)
+		fmt.Println("dynamicd address:", &dynamicd)
+		fmt.Printf("dynamicd Type: %T\n", dynamicd)
+		fmt.Println("dynamicd proc:", dynamicd.Process)
+		fmt.Println("dynamicd address:", &dynamicd.Process)
+		fmt.Printf("dynamicd proc type: %T\n", dynamicd.Process)
+
+		// TODO: Create dynamicd JSON RPC controller
+		// TODO: Dynamicd running ... print sync percent (like 88%) complete
+		time.Sleep(time.Second * 60)
+		if errKill := dynamicd.Process.Kill(); err != errKill {
+			fmt.Println("failed to kill process: ", errKill)
+		}
+	}
+	// TODO: REST API running
+	// TODO: Admin console running
+	// TODO: Establishing WebRTC connections with links
+	// TODO: Starting HTTP bridges for active links
 }

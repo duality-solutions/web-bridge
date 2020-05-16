@@ -54,6 +54,18 @@ func DeleteFile(path string) error {
 	return nil
 }
 
+// DirectoryExists checks if the directory path exists
+func DirectoryExists(path string) bool {
+	_, err := os.Stat(path)
+	if err == nil {
+		return true
+	}
+	if os.IsNotExist(err) {
+		return false
+	}
+	return true
+}
+
 // DeleteDirectory delete directory passed in path parameter
 func DeleteDirectory(path string) error {
 	// delete directory contents
