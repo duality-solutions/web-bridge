@@ -136,7 +136,7 @@ func loadDynamicd(_os string, archiveExt string) (*exec.Cmd, error) {
 			return nil, errHash
 		}
 		fmt.Println("File binary hash check pass", cliName, hashCli)
-		dataDirPath = dir + "\\" + dynDir + "\\" + ".dynamic"
+		dataDirPath = dir + "\\" + dynDir + ".dynamic"
 	case "Linux":
 		if linuxDyndHash != hashDynamicd {
 			fmt.Println("Error with", dynamicdName, ". File hash mismatch", linuxDyndHash, hashDynamicd)
@@ -150,7 +150,7 @@ func loadDynamicd(_os string, archiveExt string) (*exec.Cmd, error) {
 			return nil, errHash
 		}
 		fmt.Println("File binary hash check pass", cliName, hashCli)
-		dataDirPath = dir + "/" + dynDir + "/" + ".dynamic"
+		dataDirPath = dir + "/" + dynDir + ".dynamic"
 	case "OSX":
 		if macDyndHash != hashDynamicd {
 			fmt.Println("Error with", dynamicdName, ". File hash mismatch", macDyndHash, hashDynamicd)
@@ -164,7 +164,7 @@ func loadDynamicd(_os string, archiveExt string) (*exec.Cmd, error) {
 			return nil, errHash
 		}
 		fmt.Println("File binary hash check pass", cliName, hashCli)
-		dataDirPath = dir + "/" + dynDir + "/" + ".dynamic"
+		dataDirPath = dir + "/" + dynDir + ".dynamic"
 	}
 	if !util.DirectoryExists(dataDirPath) {
 		errMkdir := os.Mkdir(dataDirPath, 0755)
