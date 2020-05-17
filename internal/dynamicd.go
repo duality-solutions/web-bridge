@@ -1,6 +1,7 @@
 package webbridge
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -34,6 +35,8 @@ var defaultBind string = "127.0.0.1"
 
 // Dynamicd stores information about the binded dynamicd process
 type Dynamicd struct {
+	ctx            context.Context
+	cancelFunc     context.CancelFunc
 	datadir        string
 	rpcuser        string
 	rpcpassword    string
@@ -44,8 +47,21 @@ type Dynamicd struct {
 	cmd            *exec.Cmd
 }
 
-func newDynamicd(datadir string, rpcuser string, rpcpassword string, p2pport uint16, prcport uint16, bindaddress string, rpcbindaddress string, cmd *exec.Cmd) *Dynamicd {
+func newDynamicd(
+	ctx context.Context,
+	cancelFunc context.CancelFunc,
+	datadir string,
+	rpcuser string,
+	rpcpassword string,
+	p2pport uint16,
+	prcport uint16,
+	bindaddress string,
+	rpcbindaddress string,
+	cmd *exec.Cmd,
+) *Dynamicd {
 	d := Dynamicd{
+		ctx:            ctx,
+		cancelFunc:     cancelFunc,
 		datadir:        datadir,
 		rpcuser:        rpcuser,
 		rpcpassword:    rpcpassword,
@@ -224,7 +240,8 @@ func loadDynamicd(_os string, archiveExt string) (*Dynamicd, error) {
 	if errPassword != nil {
 		return nil, errPassword
 	}
-	cmd := exec.Command(dynDir+dynamicdName,
+	ctx, cancel := context.WithCancel(context.Background())
+	cmd := exec.CommandContext(ctx, dynDir+dynamicdName,
 		"-datadir="+dataDirPath,
 		"-port="+string(defaultPort),
 		"-rpcuser="+rpcUser,
@@ -237,7 +254,7 @@ func loadDynamicd(_os string, archiveExt string) (*Dynamicd, error) {
 		"-addnode=138.197.193.115",
 		"-addnode=dynexplorer.duality.solutions",
 	)
-	dynamicd := newDynamicd(dataDirPath, rpcUser, rpcPassword, defaultPort, defaultRPCPort, defaultBind, defaultBind, cmd)
+	dynamicd := newDynamicd(ctx, cancel, dataDirPath, rpcUser, rpcPassword, defaultPort, defaultRPCPort, defaultBind, defaultBind, cmd)
 
 	return dynamicd, nil
 }
