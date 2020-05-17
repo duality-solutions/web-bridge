@@ -9,7 +9,9 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+	"time"
 
+	rpc "github.com/duality-solutions/web-bridge/internal/rpc"
 	util "github.com/duality-solutions/web-bridge/internal/utilities"
 )
 
@@ -45,6 +47,7 @@ type Dynamicd struct {
 	bindaddress    string
 	rpcbindaddress string
 	cmd            *exec.Cmd
+	configRPC      rpc.Config
 }
 
 func newDynamicd(
@@ -58,6 +61,7 @@ func newDynamicd(
 	bindaddress string,
 	rpcbindaddress string,
 	cmd *exec.Cmd,
+	configRPC rpc.Config,
 ) *Dynamicd {
 	d := Dynamicd{
 		ctx:            ctx,
@@ -70,6 +74,7 @@ func newDynamicd(
 		bindaddress:    bindaddress,
 		rpcbindaddress: rpcbindaddress,
 		cmd:            cmd,
+		configRPC:      configRPC,
 	}
 	return &d
 }
@@ -254,9 +259,34 @@ func loadDynamicd(_os string, archiveExt string) (*Dynamicd, error) {
 		"-addnode=138.197.193.115",
 		"-addnode=dynexplorer.duality.solutions",
 	)
-	dynamicd := newDynamicd(ctx, cancel, dataDirPath, rpcUser, rpcPassword, defaultPort, defaultRPCPort, defaultBind, defaultBind, cmd)
-
+	configRPC := rpc.Config{
+		RPCServer:   defaultBind + ":" + strconv.Itoa(int(defaultRPCPort)),
+		RPCUser:     rpcUser,
+		RPCPassword: rpcPassword,
+		NoTLS:       true,
+	}
+	dynamicd := newDynamicd(ctx, cancel, dataDirPath, rpcUser, rpcPassword, defaultPort, defaultRPCPort, defaultBind, defaultBind, cmd, configRPC)
+	if errStart := dynamicd.cmd.Start(); errStart != nil {
+		return nil, errStart
+	}
+	time.Sleep(time.Second * 15)
+	cmdJSON := "{\"method\": \"syncstatus\", \"params\": [], \"id\": 1}"
+	resp, errExec := dynamicd.execCmd(cmdJSON)
+	if errExec != nil {
+		fmt.Println("SendPostRequest error:", errExec)
+	}
+	fmt.Println("SendPostRequest response:", resp)
 	return dynamicd, nil
+}
+
+func (d *Dynamicd) execCmd(cmdJSON string) (string, error) {
+	byteCmd := []byte(cmdJSON)
+	byteResp, errResp := rpc.SendPostRequest(byteCmd, &d.configRPC)
+	if errResp != nil {
+		fmt.Println("SendPostRequest error:", errResp)
+		return "", errResp
+	}
+	return string(byteResp), nil
 }
 
 // LoadRPCDynamicd is used to create and run a managed dynamicd full node and cli.

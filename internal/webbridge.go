@@ -3,10 +3,6 @@ package webbridge
 import (
 	"fmt"
 	"os"
-	"strconv"
-	"time"
-
-	rpc "github.com/duality-solutions/web-bridge/internal/rpc"
 )
 
 /*
@@ -90,46 +86,30 @@ func Init() {
 	}
 	// TODO: ICE service test completed
 
+	fmt.Println("Starting dynamicd...")
 	dynamicd, err := LoadRPCDynamicd()
 	if err != nil {
 		fmt.Println("Could not load dynamicd. Can not continue.", err)
 		os.Exit(-1)
 	}
-	fmt.Println("Starting dynamicd...")
 	// TODO: check if dynamicd is already running
-	if errStart := dynamicd.cmd.Start(); errStart != nil {
-		fmt.Println("Error starting dynamicd", errStart)
-	} else {
-		// Success
-		fmt.Println("dynamicd started")
-		fmt.Println("dynamicd", dynamicd)
-		fmt.Println("dynamicd address:", &dynamicd)
-		fmt.Printf("dynamicd Type: %T\n", dynamicd)
-		fmt.Println("dynamicd proc:", dynamicd.cmd.Process)
-		fmt.Println("dynamicd address:", &dynamicd.cmd.Process)
-		fmt.Printf("dynamicd proc type: %T\n", dynamicd.cmd.Process)
+	// Success
+	fmt.Println("dynamicd started")
+	fmt.Println("dynamicd", dynamicd)
+	fmt.Println("dynamicd address:", &dynamicd)
+	fmt.Printf("dynamicd Type: %T\n", dynamicd)
+	fmt.Println("dynamicd proc:", dynamicd.cmd.Process)
+	fmt.Println("dynamicd address:", &dynamicd.cmd.Process)
+	fmt.Printf("dynamicd proc type: %T\n", dynamicd.cmd.Process)
+	fmt.Println("dynamicd cmd ctx:", dynamicd.ctx)
+	fmt.Println("dynamicd cmd cancelFunc:", dynamicd.cancelFunc)
+	// TODO: Create dynamicd JSON RPC controller
+	// TODO: Dynamicd running ... print sync percent (like 88%) complete
 
-		// TODO: Create dynamicd JSON RPC controller
-		// TODO: Dynamicd running ... print sync percent (like 88%) complete
-		time.Sleep(time.Second * 5)
-		config := rpc.Config{
-			RPCServer:   dynamicd.rpcbindaddress + ":" + strconv.Itoa(int(dynamicd.rpcport)),
-			RPCUser:     dynamicd.rpcuser,
-			RPCPassword: dynamicd.rpcpassword,
-			NoTLS:       true,
-		}
-		strCmd := "{\"method\": \"syncstatus\", \"params\": [], \"id\": 1}"
-		byteCmd := []byte(strCmd)
-		byteResp, errResp := rpc.SendPostRequest(byteCmd, &config)
-		if errResp != nil {
-			fmt.Println("SendPostRequest error:", errResp)
-		} else {
-			fmt.Println("SendPostRequest response:", string(byteResp))
-		}
-		if errKill := dynamicd.cmd.Process.Kill(); err != errKill {
-			fmt.Println("failed to kill process: ", errKill)
-		}
+	if errKill := dynamicd.cmd.Process.Kill(); err != errKill {
+		fmt.Println("failed to kill process: ", errKill)
 	}
+
 	// TODO: REST API running
 	// TODO: Admin console running
 	// TODO: Establishing WebRTC connections with links
