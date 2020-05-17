@@ -3,7 +3,10 @@ package webbridge
 import (
 	"fmt"
 	"os"
+	"strconv"
 	"time"
+
+	rpc "github.com/duality-solutions/web-bridge/internal/rpc"
 )
 
 /*
@@ -108,8 +111,21 @@ func Init() {
 
 		// TODO: Create dynamicd JSON RPC controller
 		// TODO: Dynamicd running ... print sync percent (like 88%) complete
-		time.Sleep(time.Second * 60)
-
+		time.Sleep(time.Second * 5)
+		config := rpc.Config{
+			RPCServer:   dynamicd.rpcbindaddress + ":" + strconv.Itoa(int(dynamicd.rpcport)),
+			RPCUser:     dynamicd.rpcuser,
+			RPCPassword: dynamicd.rpcpassword,
+			NoTLS:       true,
+		}
+		strCmd := "{\"method\": \"syncstatus\", \"params\": [], \"id\": 1}"
+		byteCmd := []byte(strCmd)
+		byteResp, errResp := rpc.SendPostRequest(byteCmd, &config)
+		if errResp != nil {
+			fmt.Println("SendPostRequest error:", errResp)
+		} else {
+			fmt.Println("SendPostRequest response:", string(byteResp))
+		}
 		if errKill := dynamicd.cmd.Process.Kill(); err != errKill {
 			fmt.Println("failed to kill process: ", errKill)
 		}

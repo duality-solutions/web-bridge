@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"runtime"
+	"strconv"
 	"strings"
 
 	util "github.com/duality-solutions/web-bridge/internal/utilities"
@@ -228,7 +229,7 @@ func loadDynamicd(_os string, archiveExt string) (*Dynamicd, error) {
 		"-port="+string(defaultPort),
 		"-rpcuser="+rpcUser,
 		"-rpcpassword="+rpcPassword,
-		"-rpcport="+string(defaultRPCPort),
+		"-rpcport="+strconv.Itoa(int(defaultRPCPort)),
 		"-rpcbind="+defaultBind,
 		"-rpcallowip="+defaultBind,
 		"-server=1",
