@@ -265,28 +265,27 @@ func loadDynamicd(_os string, archiveExt string) (*Dynamicd, error) {
 		RPCPassword: rpcPassword,
 		NoTLS:       true,
 	}
+	fmt.Println("dynamicd starting...")
 	dynamicd := newDynamicd(ctx, cancel, dataDirPath, rpcUser, rpcPassword, defaultPort, defaultRPCPort, defaultBind, defaultBind, cmd, configRPC)
 	if errStart := dynamicd.cmd.Start(); errStart != nil {
 		return nil, errStart
 	}
-	time.Sleep(time.Second * 15)
-	cmdJSON := "{\"method\": \"syncstatus\", \"params\": [], \"id\": 1}"
-	resp, errExec := dynamicd.execCmd(cmdJSON)
-	if errExec != nil {
-		fmt.Println("SendPostRequest error:", errExec)
-	}
-	fmt.Println("SendPostRequest response:", resp)
+	time.Sleep(time.Second * 5)
+	fmt.Println("dynamicd started")
 	return dynamicd, nil
 }
 
-func (d *Dynamicd) execCmd(cmdJSON string) (string, error) {
-	byteCmd := []byte(cmdJSON)
-	byteResp, errResp := rpc.SendPostRequest(byteCmd, &d.configRPC)
-	if errResp != nil {
-		fmt.Println("SendPostRequest error:", errResp)
-		return "", errResp
-	}
-	return string(byteResp), nil
+func (d *Dynamicd) execCmd(cmdJSON string) <-chan string {
+	c := make(chan string)
+	go func() {
+		byteCmd := []byte(cmdJSON)
+		byteResp, errResp := rpc.SendPostRequest(byteCmd, &d.configRPC)
+		if errResp != nil {
+			fmt.Println("SendPostRequest error:", errResp)
+		}
+		c <- string(byteResp)
+	}()
+	return c
 }
 
 // LoadRPCDynamicd is used to create and run a managed dynamicd full node and cli.

@@ -86,7 +86,6 @@ func Init() {
 	}
 	// TODO: ICE service test completed
 
-	fmt.Println("Starting dynamicd...")
 	dynamicd, err := LoadRPCDynamicd()
 	if err != nil {
 		fmt.Println("Could not load dynamicd. Can not continue.", err)
@@ -94,7 +93,6 @@ func Init() {
 	}
 	// TODO: check if dynamicd is already running
 	// Success
-	fmt.Println("dynamicd started")
 	fmt.Println("dynamicd", dynamicd)
 	fmt.Println("dynamicd address:", &dynamicd)
 	fmt.Printf("dynamicd Type: %T\n", dynamicd)
@@ -105,7 +103,12 @@ func Init() {
 	fmt.Println("dynamicd cmd cancelFunc:", dynamicd.cancelFunc)
 	// TODO: Create dynamicd JSON RPC controller
 	// TODO: Dynamicd running ... print sync percent (like 88%) complete
-
+	cmdSyncStatus := "{\"method\": \"syncstatus\", \"params\": [], \"id\": 1}"
+	c := dynamicd.execCmd(cmdSyncStatus)
+	fmt.Println("cmdSyncStatus", <-c)
+	cmdLinks := "{\"method\": \"link\", \"params\": [\"complete\"], \"id\": 1}"
+	c = dynamicd.execCmd(cmdLinks)
+	fmt.Println("cmdLinks", <-c)
 	if errKill := dynamicd.cmd.Process.Kill(); err != errKill {
 		fmt.Println("failed to kill process: ", errKill)
 	}
