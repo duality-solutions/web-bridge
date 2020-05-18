@@ -1,4 +1,4 @@
-package webbridge
+package dynamic
 
 import (
 	"context"
@@ -37,17 +37,17 @@ var defaultBind string = "127.0.0.1"
 
 // Dynamicd stores information about the binded dynamicd process
 type Dynamicd struct {
-	ctx            context.Context
-	cancelFunc     context.CancelFunc
-	datadir        string
-	rpcuser        string
-	rpcpassword    string
-	p2pport        uint16
-	rpcport        uint16
-	bindaddress    string
-	rpcbindaddress string
-	cmd            *exec.Cmd
-	configRPC      rpc.Config
+	Ctx            context.Context
+	CancelFunc     context.CancelFunc
+	Datadir        string
+	RPCUser        string
+	RPCPassword    string
+	P2PPort        uint16
+	RPCPort        uint16
+	BindAddress    string
+	RPCBindAddress string
+	Cmd            *exec.Cmd
+	ConfigRPC      rpc.Config
 }
 
 func newDynamicd(
@@ -64,17 +64,17 @@ func newDynamicd(
 	configRPC rpc.Config,
 ) *Dynamicd {
 	d := Dynamicd{
-		ctx:            ctx,
-		cancelFunc:     cancelFunc,
-		datadir:        datadir,
-		rpcuser:        rpcuser,
-		rpcpassword:    rpcpassword,
-		p2pport:        p2pport,
-		rpcport:        prcport,
-		bindaddress:    bindaddress,
-		rpcbindaddress: rpcbindaddress,
-		cmd:            cmd,
-		configRPC:      configRPC,
+		Ctx:            ctx,
+		CancelFunc:     cancelFunc,
+		Datadir:        datadir,
+		RPCUser:        rpcuser,
+		RPCPassword:    rpcpassword,
+		P2PPort:        p2pport,
+		RPCPort:        prcport,
+		BindAddress:    bindaddress,
+		RPCBindAddress: rpcbindaddress,
+		Cmd:            cmd,
+		ConfigRPC:      configRPC,
 	}
 	return &d
 }
@@ -267,7 +267,7 @@ func loadDynamicd(_os string, archiveExt string) (*Dynamicd, error) {
 	}
 	fmt.Println("dynamicd starting...")
 	dynamicd := newDynamicd(ctx, cancel, dataDirPath, rpcUser, rpcPassword, defaultPort, defaultRPCPort, defaultBind, defaultBind, cmd, configRPC)
-	if errStart := dynamicd.cmd.Start(); errStart != nil {
+	if errStart := dynamicd.Cmd.Start(); errStart != nil {
 		return nil, errStart
 	}
 	time.Sleep(time.Second * 5)
@@ -275,11 +275,12 @@ func loadDynamicd(_os string, archiveExt string) (*Dynamicd, error) {
 	return dynamicd, nil
 }
 
-func (d *Dynamicd) execCmd(cmdJSON string) <-chan string {
+// ExecCmd runs a dynamic-cli command
+func (d *Dynamicd) ExecCmd(cmdJSON string) <-chan string {
 	c := make(chan string)
 	go func() {
 		byteCmd := []byte(cmdJSON)
-		byteResp, errResp := rpc.SendPostRequest(byteCmd, &d.configRPC)
+		byteResp, errResp := rpc.SendPostRequest(byteCmd, &d.ConfigRPC)
 		if errResp != nil {
 			c <- errResp.Error()
 		} else {

@@ -5,8 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
+	dynamic "github.com/duality-solutions/web-bridge/internal/dynamic"
 	util "github.com/duality-solutions/web-bridge/internal/utilities"
 )
 
@@ -92,7 +94,7 @@ func Init() {
 	}
 	// TODO: ICE service test completed
 
-	dynamicd, err := LoadRPCDynamicd()
+	dynamicd, err := dynamic.LoadRPCDynamicd()
 	if err != nil {
 		fmt.Println("Could not load dynamicd. Can not continue.", err)
 		os.Exit(-1)
@@ -103,8 +105,8 @@ func Init() {
 	// TODO: Establishing WebRTC connections with links
 	// TODO: Starting HTTP bridges for active links
 	cmdStatus := "{\"method\": \"syncstatus\", \"params\": [], \"id\": 1}"
-	var status SyncStatus
-	errUnmarshal := json.Unmarshal([]byte(<-dynamicd.execCmd(cmdStatus)), &status)
+	var status dynamic.SyncStatus
+	errUnmarshal := json.Unmarshal([]byte(<-dynamicd.ExecCmd(cmdStatus)), &status)
 	if errUnmarshal != nil {
 		fmt.Println("cmdStatus Unmarshal error", errUnmarshal)
 	} else {
@@ -117,13 +119,15 @@ func Init() {
 		if len(cmdText) > 1 {
 			cmdText = cmdText[:len(cmdText)-2]
 		}
-		if cmdText == "exit" || cmdText == "shutdown" {
+		if strings.HasPrefix(cmdText, "exit") || strings.HasPrefix(cmdText, "shutdown") {
 			fmt.Println("Exit command. Stopping services.")
 			shutdown = true
+		} else if strings.HasPrefix(cmdText, "dynamic-cli") {
+
 		} else {
 			// TODO: process command here.
 			fmt.Println(cmdText)
-			errUnmarshal = json.Unmarshal([]byte(<-dynamicd.execCmd(cmdStatus)), &status)
+			errUnmarshal = json.Unmarshal([]byte(<-dynamicd.ExecCmd(cmdStatus)), &status)
 			if errUnmarshal != nil {
 				fmt.Println("cmdStatus Unmarshal error", errUnmarshal)
 			} else {
@@ -132,14 +136,14 @@ func Init() {
 		}
 	}
 	cmdStop := "{\"method\": \"stop\", \"params\": [], \"id\": 2}"
-	resStop, _ := util.BeautifyJSON(<-dynamicd.execCmd(cmdStop))
+	resStop, _ := util.BeautifyJSON(<-dynamicd.ExecCmd(cmdStop))
 	fmt.Println(resStop)
 	time.Sleep(time.Second * 5)
-	fmt.Println("Looking for dynamicd process pid", dynamicd.cmd.Process.Pid)
-	_, errFindProcess := os.FindProcess(dynamicd.cmd.Process.Pid)
+	fmt.Println("Looking for dynamicd process pid", dynamicd.Cmd.Process.Pid)
+	_, errFindProcess := os.FindProcess(dynamicd.Cmd.Process.Pid)
 	if errFindProcess == nil {
 		fmt.Println("Process found. Killing dynamicd process.")
-		if errKill := dynamicd.cmd.Process.Kill(); err != errKill {
+		if errKill := dynamicd.Cmd.Process.Kill(); err != errKill {
 			fmt.Println("failed to kill process: ", errKill)
 		}
 	} else {

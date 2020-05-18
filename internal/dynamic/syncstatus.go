@@ -1,4 +1,4 @@
-package webbridge
+package dynamic
 
 // SyncStatus is a dynamicd RPC command result
 type SyncStatus struct {
