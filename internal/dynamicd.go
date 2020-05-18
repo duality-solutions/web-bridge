@@ -281,9 +281,10 @@ func (d *Dynamicd) execCmd(cmdJSON string) <-chan string {
 		byteCmd := []byte(cmdJSON)
 		byteResp, errResp := rpc.SendPostRequest(byteCmd, &d.configRPC)
 		if errResp != nil {
-			fmt.Println("SendPostRequest error:", errResp)
+			c <- errResp.Error()
+		} else {
+			c <- string(byteResp)
 		}
-		c <- string(byteResp)
 	}()
 	return c
 }

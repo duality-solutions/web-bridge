@@ -110,14 +110,23 @@ func Init() {
 	cmdLinks := "{\"method\": \"link\", \"params\": [\"complete\"], \"id\": 2}"
 	c = dynamicd.execCmd(cmdLinks)
 	fmt.Println("cmdLinks", <-c)
-	cmdStop := "{\"method\": \"stop\", \"params\": [], \"id\": 3}"
+	cmdFailTest := "{\"method\": \"fail\", \"params\": [\"12345\"], \"id\": 3}"
+	c = dynamicd.execCmd(cmdFailTest)
+	fmt.Println("cmdFailTest", <-c)
+	cmdStop := "{\"method\": \"stop\", \"params\": [], \"id\": 4}"
 	c = dynamicd.execCmd(cmdStop)
 	fmt.Println("cmdStop", <-c)
 	time.Sleep(time.Second * 5)
-	if errKill := dynamicd.cmd.Process.Kill(); err != errKill {
-		fmt.Println("failed to kill process: ", errKill)
+	fmt.Println("Looking for dynamicd process pid", dynamicd.cmd.Process.Pid)
+	_, errFindProcess := os.FindProcess(dynamicd.cmd.Process.Pid)
+	if errFindProcess == nil {
+		fmt.Println("Process found. Killing dynamicd process.")
+		if errKill := dynamicd.cmd.Process.Kill(); err != errKill {
+			fmt.Println("failed to kill process: ", errKill)
+		}
+	} else {
+		fmt.Println("Dynamicd process not found")
 	}
-
 	// TODO: REST API running
 	// TODO: Admin console running
 	// TODO: Establishing WebRTC connections with links
