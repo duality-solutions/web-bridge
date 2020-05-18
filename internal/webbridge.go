@@ -132,8 +132,8 @@ func Init() {
 		}
 	}
 	cmdStop := "{\"method\": \"stop\", \"params\": [], \"id\": 2}"
-	res, _ := util.BeautifyJSON(<-dynamicd.execCmd(cmdStop))
-	fmt.Println("cmdStop", res)
+	resStop, _ := util.BeautifyJSON(<-dynamicd.execCmd(cmdStop))
+	fmt.Println(resStop)
 	time.Sleep(time.Second * 5)
 	fmt.Println("Looking for dynamicd process pid", dynamicd.cmd.Process.Pid)
 	_, errFindProcess := os.FindProcess(dynamicd.cmd.Process.Pid)
