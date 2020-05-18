@@ -3,6 +3,7 @@ package webbridge
 import (
 	"fmt"
 	"os"
+	"time"
 )
 
 /*
@@ -106,9 +107,13 @@ func Init() {
 	cmdSyncStatus := "{\"method\": \"syncstatus\", \"params\": [], \"id\": 1}"
 	c := dynamicd.execCmd(cmdSyncStatus)
 	fmt.Println("cmdSyncStatus", <-c)
-	cmdLinks := "{\"method\": \"link\", \"params\": [\"complete\"], \"id\": 1}"
+	cmdLinks := "{\"method\": \"link\", \"params\": [\"complete\"], \"id\": 2}"
 	c = dynamicd.execCmd(cmdLinks)
 	fmt.Println("cmdLinks", <-c)
+	cmdStop := "{\"method\": \"stop\", \"params\": [], \"id\": 3}"
+	c = dynamicd.execCmd(cmdStop)
+	fmt.Println("cmdStop", <-c)
+	time.Sleep(time.Second * 5)
 	if errKill := dynamicd.cmd.Process.Kill(); err != errKill {
 		fmt.Println("failed to kill process: ", errKill)
 	}
