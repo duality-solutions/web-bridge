@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 	"time"
+
+	util "github.com/duality-solutions/web-bridge/internal/utilities"
 )
 
 /*
@@ -93,29 +95,29 @@ func Init() {
 		os.Exit(-1)
 	}
 	// TODO: check if dynamicd is already running
-	// Success
-	fmt.Println("dynamicd", dynamicd)
-	fmt.Println("dynamicd address:", &dynamicd)
-	fmt.Printf("dynamicd Type: %T\n", dynamicd)
-	fmt.Println("dynamicd proc:", dynamicd.cmd.Process)
-	fmt.Println("dynamicd address:", &dynamicd.cmd.Process)
-	fmt.Printf("dynamicd proc type: %T\n", dynamicd.cmd.Process)
-	fmt.Println("dynamicd cmd ctx:", dynamicd.ctx)
-	fmt.Println("dynamicd cmd cancelFunc:", dynamicd.cancelFunc)
 	// TODO: Create dynamicd JSON RPC controller
 	// TODO: Dynamicd running ... print sync percent (like 88%) complete
 	cmdSyncStatus := "{\"method\": \"syncstatus\", \"params\": [], \"id\": 1}"
-	c := dynamicd.execCmd(cmdSyncStatus)
-	fmt.Println("cmdSyncStatus", <-c)
+	res, _ := util.BeautifyJSON(<-dynamicd.execCmd(cmdSyncStatus))
+	fmt.Println("cmdSyncStatus", res)
 	cmdLinks := "{\"method\": \"link\", \"params\": [\"complete\"], \"id\": 2}"
-	c = dynamicd.execCmd(cmdLinks)
-	fmt.Println("cmdLinks", <-c)
-	cmdFailTest := "{\"method\": \"fail\", \"params\": [\"12345\"], \"id\": 3}"
-	c = dynamicd.execCmd(cmdFailTest)
-	fmt.Println("cmdFailTest", <-c)
-	cmdStop := "{\"method\": \"stop\", \"params\": [], \"id\": 4}"
-	c = dynamicd.execCmd(cmdStop)
-	fmt.Println("cmdStop", <-c)
+	res, _ = util.BeautifyJSON(<-dynamicd.execCmd(cmdLinks))
+	fmt.Println("cmdLinks", res)
+	cmdGetInfo := "{\"method\": \"getinfo\", \"params\": [], \"id\": 3}"
+	res, _ = util.BeautifyJSON(<-dynamicd.execCmd(cmdGetInfo))
+	fmt.Println("cmdGetInfo", res)
+	cmdCredits := "{\"method\": \"getcredits\", \"params\": [], \"id\": 4}"
+	res, _ = util.BeautifyJSON(<-dynamicd.execCmd(cmdCredits))
+	fmt.Println("cmdCredits", res)
+	cmdFailTest := "{\"method\": \"fail\", \"params\": [\"12345\"], \"id\": 5}"
+	res, _ = util.BeautifyJSON(<-dynamicd.execCmd(cmdFailTest))
+	fmt.Println("cmdFailTest", res)
+	cmdAccounts := "{\"method\": \"mybdapaccounts\", \"params\": [], \"id\": 6}"
+	res, _ = util.BeautifyJSON(<-dynamicd.execCmd(cmdAccounts))
+	fmt.Println("cmdAccounts", res)
+	cmdStop := "{\"method\": \"stop\", \"params\": [], \"id\": 7}"
+	res, _ = util.BeautifyJSON(<-dynamicd.execCmd(cmdStop))
+	fmt.Println("cmdStop", res)
 	time.Sleep(time.Second * 5)
 	fmt.Println("Looking for dynamicd process pid", dynamicd.cmd.Process.Pid)
 	_, errFindProcess := os.FindProcess(dynamicd.cmd.Process.Pid)
