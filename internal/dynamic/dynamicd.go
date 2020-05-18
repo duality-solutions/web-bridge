@@ -2,6 +2,7 @@ package dynamic
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -280,6 +281,21 @@ func (d *Dynamicd) ExecCmd(cmdJSON string) <-chan string {
 	c := make(chan string)
 	go func() {
 		byteCmd := []byte(cmdJSON)
+		byteResp, errResp := rpc.SendPostRequest(byteCmd, &d.ConfigRPC)
+		if errResp != nil {
+			c <- errResp.Error()
+		} else {
+			c <- string(byteResp)
+		}
+	}()
+	return c
+}
+
+// ExecCmdRequest runs a dynamic-cli command using the RPCRequest struct
+func (d *Dynamicd) ExecCmdRequest(req RPCRequest) <-chan string {
+	c := make(chan string)
+	go func() {
+		byteCmd, _ := json.Marshal(req)
 		byteResp, errResp := rpc.SendPostRequest(byteCmd, &d.ConfigRPC)
 		if errResp != nil {
 			c <- errResp.Error()

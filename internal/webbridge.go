@@ -123,7 +123,13 @@ func Init() {
 			fmt.Println("Exit command. Stopping services.")
 			shutdown = true
 		} else if strings.HasPrefix(cmdText, "dynamic-cli") {
-
+			req, errNewRequest := dynamic.NewRequest(cmdText)
+			if errNewRequest != nil {
+				fmt.Println("Error:", errNewRequest)
+			} else {
+				strResp, _ := util.BeautifyJSON(<-dynamicd.ExecCmdRequest(req))
+				fmt.Println(strResp)
+			}
 		} else {
 			// TODO: process command here.
 			fmt.Println(cmdText)
