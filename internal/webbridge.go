@@ -2,6 +2,7 @@ package webbridge
 
 import (
 	"bufio"
+	"encoding/json"
 	"fmt"
 	"os"
 	"time"
@@ -97,13 +98,18 @@ func Init() {
 		os.Exit(-1)
 	}
 	// TODO: check if dynamicd is already running
-	// TODO: Create dynamicd JSON RPC controller
-	// TODO: Dynamicd running ... print sync percent (like 88%) complete
 	// TODO: REST API running
 	// TODO: Admin console running
 	// TODO: Establishing WebRTC connections with links
 	// TODO: Starting HTTP bridges for active links
-
+	cmdStatus := "{\"method\": \"syncstatus\", \"params\": [], \"id\": 1}"
+	var status SyncStatus
+	errUnmarshal := json.Unmarshal([]byte(<-dynamicd.execCmd(cmdStatus)), &status)
+	if errUnmarshal != nil {
+		fmt.Println("cmdStatus Unmarshal error", errUnmarshal)
+	} else {
+		fmt.Println("dynamicd running... Sync percent (", status.SyncProgress*100, "%) complete!")
+	}
 	for !shutdown {
 		reader := bufio.NewReader(os.Stdin)
 		fmt.Print("web-bridge> ")
@@ -117,9 +123,15 @@ func Init() {
 		} else {
 			// TODO: process command here.
 			fmt.Println(cmdText)
+			errUnmarshal = json.Unmarshal([]byte(<-dynamicd.execCmd(cmdStatus)), &status)
+			if errUnmarshal != nil {
+				fmt.Println("cmdStatus Unmarshal error", errUnmarshal)
+			} else {
+				fmt.Println("Sync percent (", status.SyncProgress*100, "%) complete!")
+			}
 		}
 	}
-	cmdStop := "{\"method\": \"stop\", \"params\": [], \"id\": 7}"
+	cmdStop := "{\"method\": \"stop\", \"params\": [], \"id\": 2}"
 	res, _ := util.BeautifyJSON(<-dynamicd.execCmd(cmdStop))
 	fmt.Println("cmdStop", res)
 	time.Sleep(time.Second * 5)
