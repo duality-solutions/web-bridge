@@ -12,6 +12,6 @@ jobs:
       - stage: build
         name: 'Ubuntu 18 Build Test'
         script:
-          - go run -race . -debug
+          - go run -race . -debug -dev
           - go build
-          - ./web-bridge -debug
+          - ./web-bridge -debug -dev

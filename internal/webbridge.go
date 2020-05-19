@@ -110,34 +110,38 @@ func Init() {
 	if errUnmarshal != nil {
 		fmt.Println("cmdStatus Unmarshal error", errUnmarshal)
 	} else {
-		fmt.Println("dynamicd running... Sync percent (", status.SyncProgress*100, "%) complete!")
+		fmt.Println("dynamicd running... Sync percent (" + fmt.Sprintf("%f", status.SyncProgress*100) + "%) complete!")
 	}
-	for !shutdown {
-		reader := bufio.NewReader(os.Stdin)
-		fmt.Print("web-bridge> ")
-		cmdText, _ := reader.ReadString('\n')
-		if len(cmdText) > 1 {
-			cmdText = cmdText[:len(cmdText)-2]
-		}
-		if strings.HasPrefix(cmdText, "exit") || strings.HasPrefix(cmdText, "shutdown") {
-			fmt.Println("Exit command. Stopping services.")
-			shutdown = true
-		} else if strings.HasPrefix(cmdText, "dynamic-cli") {
-			req, errNewRequest := dynamic.NewRequest(cmdText)
-			if errNewRequest != nil {
-				fmt.Println("Error:", errNewRequest)
-			} else {
-				strResp, _ := util.BeautifyJSON(<-dynamicd.ExecCmdRequest(req))
-				fmt.Println(strResp)
+	if development {
+		fmt.Println("Development mode. Skipping terminal input.")
+		time.Sleep(time.Second * 15)
+	} else {
+		for !shutdown {
+			reader := bufio.NewReader(os.Stdin)
+			fmt.Print("web-bridge> ")
+			cmdText, _ := reader.ReadString('\n')
+			if len(cmdText) > 1 {
+				cmdText = cmdText[:len(cmdText)-2]
 			}
-		} else {
-			// TODO: process command here.
-			fmt.Println(cmdText)
-			errUnmarshal = json.Unmarshal([]byte(<-dynamicd.ExecCmd(cmdStatus)), &status)
-			if errUnmarshal != nil {
-				fmt.Println("cmdStatus Unmarshal error", errUnmarshal)
+			if strings.HasPrefix(cmdText, "exit") || strings.HasPrefix(cmdText, "shutdown") {
+				fmt.Println("Exit command. Stopping services.")
+				shutdown = true
+			} else if strings.HasPrefix(cmdText, "dynamic-cli") {
+				req, errNewRequest := dynamic.NewRequest(cmdText)
+				if errNewRequest != nil {
+					fmt.Println("Error:", errNewRequest)
+				} else {
+					strResp, _ := util.BeautifyJSON(<-dynamicd.ExecCmdRequest(req))
+					fmt.Println(strResp)
+				}
 			} else {
-				fmt.Println("Sync percent (", status.SyncProgress*100, "%) complete!")
+				fmt.Println(cmdText)
+				errUnmarshal = json.Unmarshal([]byte(<-dynamicd.ExecCmd(cmdStatus)), &status)
+				if errUnmarshal != nil {
+					fmt.Println("cmdStatus Unmarshal error", errUnmarshal)
+				} else {
+					fmt.Println("Sync percent (" + fmt.Sprintf("%f", status.SyncProgress*100) + "%) complete!")
+				}
 			}
 		}
 	}
