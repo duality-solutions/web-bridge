@@ -10,43 +10,67 @@ import (
 )
 
 var wg sync.WaitGroup
-var lastID uint64 = 2
+var lastID int64 = 2
 
-// RPCRequest is a dynamicd RPC command request
+// RPCRequest is a type for raw JSON-RPC 1.0 requests.  The Method field identifies
+// the specific command type which in turns leads to different parameters.
+// Callers typically will not use this directly since this package provides a
+// statically typed command infrastructure which handles creation of these
+// requests, however this struct it being exported in case the caller wants to
+// construct raw requests for some reason.
 type RPCRequest struct {
-	Method string        `json:"method"`
-	Params []interface{} `json:"params"`
-	ID     uint64        `json:"id"`
+	Method  string        `json:"method"`
+	Params  []interface{} `json:"params"`
+	ID      int64         `json:"id"`
+	JSONRPC string        `json:"jsonrpc"`
 }
 
-// NewRequest return as new RPCRequest struct from the given cmd text
-func NewRequest(cmd string) (RPCRequest, error) {
+// NewRequest returns a new JSON-RPC 1.0 request object given the raw command.
+func NewRequest(cmd string) (*RPCRequest, error) {
 	var req RPCRequest
 	if len(cmd) < 12 {
-		return req, fmt.Errorf("incorrect cmd size %s", cmd)
+		return nil, fmt.Errorf("incorrect cmd size %s", cmd)
 	}
 	if !strings.HasPrefix(cmd, "dynamic-cli") {
-		return req, fmt.Errorf("incorrect prefix %s", cmd)
+		return nil, fmt.Errorf("incorrect prefix %s", cmd)
 	}
 	cmd = strings.Replace(cmd, "dynamic-cli ", "", -1)
-	for i, c := range strings.Split(cmd, " ") {
-		if i == 0 {
-			req.Method = c
-		} else {
-			if strings.HasPrefix(c, "\"") && strings.HasSuffix(c, "\"") {
-				c = c[1 : len(c)-1]
-				req.Params = append(req.Params, c)
-			} else if util.IsNumeric(c) {
-				req.Params = append(req.Params, util.ToInt(c))
-			} else {
-				req.Params = append(req.Params, c)
-			}
-
+	i := strings.Index(cmd, " ")
+	if i > 0 {
+		req.Method = strings.TrimSpace(cmd[:i])
+		cmd = cmd[i+1:]
+		err := req.parseCmd(cmd)
+		if err != nil {
+			return nil, err
 		}
+	} else {
+		req.Method = strings.TrimSpace(cmd)
 	}
+	req.JSONRPC = "1.0"
 	wg.Add(1)
-	atomic.AddUint64(&lastID, 1)
+	atomic.AddInt64(&lastID, 1)
 	wg.Done()
 	req.ID = lastID
-	return req, nil
+	return &req, nil
+}
+
+func (req *RPCRequest) parseCmd(cmd string) error {
+	// Split cmd string
+	r := NewCmdReader(strings.NewReader(cmd))
+	r.Delimiter = ' ' // space
+	paramsRaw, err := r.Read()
+	if err != nil {
+		return err
+	}
+	for _, val := range paramsRaw {
+		if strings.HasPrefix(val, "\"") && strings.HasSuffix(val, "\"") {
+			val = val[1 : len(val)-1]
+			req.Params = append(req.Params, val)
+		} else if util.IsNumeric(val) {
+			req.Params = append(req.Params, util.ToInt(val))
+		} else {
+			req.Params = append(req.Params, val)
+		}
+	}
+	return nil
 }
