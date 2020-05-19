@@ -276,21 +276,6 @@ func loadDynamicd(_os string, archiveExt string) (*Dynamicd, error) {
 	return dynamicd, nil
 }
 
-// ExecCmd runs a dynamic-cli command
-func (d *Dynamicd) ExecCmd(cmdJSON string) <-chan string {
-	c := make(chan string)
-	go func() {
-		byteCmd := []byte(cmdJSON)
-		byteResp, errResp := rpc.SendPostRequest(byteCmd, &d.ConfigRPC)
-		if errResp != nil {
-			c <- errResp.Error()
-		} else {
-			c <- string(byteResp)
-		}
-	}()
-	return c
-}
-
 // ExecCmdRequest runs a dynamic-cli command using the RPCRequest struct
 func (d *Dynamicd) ExecCmdRequest(req RPCRequest) <-chan string {
 	c := make(chan string)

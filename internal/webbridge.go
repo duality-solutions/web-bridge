@@ -97,21 +97,20 @@ func Init(version, githash string) error {
 
 	dynamicd, err := dynamic.LoadRPCDynamicd()
 	if err != nil {
-		fmt.Println("Could not load dynamicd. Can not continue.", err)
-		os.Exit(-1)
+		return err
 	}
 	// TODO: check if dynamicd is already running
 	// TODO: REST API running
 	// TODO: Admin console running
 	// TODO: Establishing WebRTC connections with links
 	// TODO: Starting HTTP bridges for active links
-	cmdStatus := "{\"method\": \"syncstatus\", \"params\": [], \"id\": 1}"
+	reqStatus, _ := dynamic.NewRequest("dynamic-cli syncstatus")
 	var status dynamic.SyncStatus
-	errUnmarshal := json.Unmarshal([]byte(<-dynamicd.ExecCmd(cmdStatus)), &status)
+	errUnmarshal := json.Unmarshal([]byte(<-dynamicd.ExecCmdRequest(reqStatus)), &status)
 	if errUnmarshal != nil {
-		fmt.Println("cmdStatus Unmarshal error", errUnmarshal)
+		fmt.Println("syncstatus unmarshal error", errUnmarshal)
 	} else {
-		fmt.Println("dynamicd running... Sync percent (" + fmt.Sprintf("%f", status.SyncProgress*100) + "%) complete!")
+		fmt.Println("dynamicd running... Sync " + fmt.Sprintf("%f", status.SyncProgress*100) + " percent complete!")
 	}
 	if development {
 		fmt.Println("Development mode. Skipping terminal input.")
@@ -137,18 +136,18 @@ func Init(version, githash string) error {
 				}
 			} else {
 				fmt.Println(cmdText)
-				errUnmarshal = json.Unmarshal([]byte(<-dynamicd.ExecCmd(cmdStatus)), &status)
+				errUnmarshal = json.Unmarshal([]byte(<-dynamicd.ExecCmdRequest(reqStatus)), &status)
 				if errUnmarshal != nil {
-					fmt.Println("cmdStatus Unmarshal error", errUnmarshal)
+					fmt.Println("syncstatus unmarshal error", errUnmarshal)
 				} else {
 					fmt.Println("Sync percent (" + fmt.Sprintf("%f", status.SyncProgress*100) + "%) complete!")
 				}
 			}
 		}
 	}
-	cmdStop := "{\"method\": \"stop\", \"params\": [], \"id\": 2}"
-	resStop, _ := util.BeautifyJSON(<-dynamicd.ExecCmd(cmdStop))
-	fmt.Println(resStop)
+	reqStop, _ := dynamic.NewRequest("dynamic-cli stop")
+	respStop, _ := util.BeautifyJSON(<-dynamicd.ExecCmdRequest(reqStop))
+	fmt.Println(respStop)
 	time.Sleep(time.Second * 5)
 	fmt.Println("Looking for dynamicd process pid", dynamicd.Cmd.Process.Pid)
 	_, errFindProcess := os.FindProcess(dynamicd.Cmd.Process.Pid)
