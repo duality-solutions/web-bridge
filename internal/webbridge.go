@@ -135,12 +135,12 @@ func Init(version, githash string) error {
 					fmt.Println(strResp)
 				}
 			} else {
-				fmt.Println(cmdText)
+				fmt.Println("Invalid command", cmdText)
 				errUnmarshal = json.Unmarshal([]byte(<-dynamicd.ExecCmdRequest(reqStatus)), &status)
 				if errUnmarshal != nil {
 					fmt.Println("syncstatus unmarshal error", errUnmarshal)
 				} else {
-					fmt.Println("Sync percent (" + fmt.Sprintf("%f", status.SyncProgress*100) + "%) complete!")
+					fmt.Println("Sync " + fmt.Sprintf("%f", status.SyncProgress*100) + " percent complete!")
 				}
 			}
 		}
