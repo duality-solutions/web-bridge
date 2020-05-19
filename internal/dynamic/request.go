@@ -3,15 +3,17 @@ package dynamic
 import (
 	"fmt"
 	"strings"
+
+	util "github.com/duality-solutions/web-bridge/internal/utilities"
 )
 
 var lastID int64 = 2
 
 // RPCRequest is a dynamicd RPC command request
 type RPCRequest struct {
-	Method string   `json:"method"`
-	Params []string `json:"params"`
-	ID     int64    `json:"id"`
+	Method string        `json:"method"`
+	Params []interface{} `json:"params"`
+	ID     int64         `json:"id"`
 }
 
 // NewRequest return as new RPCRequest struct from the given cmd text
@@ -28,7 +30,15 @@ func NewRequest(cmd string) (RPCRequest, error) {
 		if i == 0 {
 			req.Method = c
 		} else {
-			req.Params = append(req.Params, c)
+			if strings.HasPrefix(c, "\"") && strings.HasSuffix(c, "\"") {
+				c = c[1 : len(c)-1]
+				req.Params = append(req.Params, c)
+			} else if util.IsNumeric(c) {
+				req.Params = append(req.Params, util.ToInt(c))
+			} else {
+				req.Params = append(req.Params, c)
+			}
+
 		}
 	}
 	lastID++
