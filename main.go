@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"runtime"
+	"os"
 
 	webbridge "github.com/duality-solutions/web-bridge/internal"
 )
@@ -17,7 +17,8 @@ var GitHash string
 //var BuildDateTime string
 
 func main() {
-	fmt.Println("Version:", Version, "Hash", GitHash)
-	fmt.Println("OS: ", runtime.GOOS)
-	webbridge.Init()
+	if err := webbridge.Init(Version, GitHash); err != nil {
+		fmt.Fprintf(os.Stderr, "%s\n", err)
+		os.Exit(1)
+	}
 }

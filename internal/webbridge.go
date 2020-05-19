@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"runtime"
 	"strings"
 	"time"
 
@@ -67,13 +68,9 @@ var debug = false
 var shutdown = false
 
 // Init is used to begin all WebBridge tasks
-func Init() {
-	if debug {
-		fmt.Println("Running WebBridge in debug log mode.")
-	}
-	if development {
-		fmt.Println("Running WebBridge in development mode.")
-	}
+func Init(version, githash string) error {
+	fmt.Println("Version:", version, "Hash", githash)
+	fmt.Println("OS: ", runtime.GOOS)
 	args := os.Args[1:]
 	if len(args) > 0 {
 		for _, v := range args {
@@ -86,7 +83,11 @@ func Init() {
 		}
 	}
 	if debug {
+		fmt.Println("Running WebBridge in debug log mode.")
 		fmt.Println("Args", args)
+	}
+	if development {
+		fmt.Println("Running WebBridge in development mode.")
 	}
 	config.load()
 	if debug {
@@ -160,4 +161,5 @@ func Init() {
 		fmt.Println("Dynamicd process not found")
 	}
 	fmt.Println("Good bye.")
+	return nil
 }
