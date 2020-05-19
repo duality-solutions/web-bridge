@@ -81,7 +81,7 @@ func downloadBinaries(_os, dynDir, dynamicName, cliName, archiveExt string) erro
 			return errDirs
 		}
 		for _, v := range dirs {
-			if v != ".dynamic" {
+			if !strings.HasPrefix(v, ".dynamic") {
 				fmt.Println("Deleting directory", dynDir+v)
 				errDeleteDir := util.DeleteDirectory(dynDir + v)
 				if errDeleteDir != nil {
