@@ -3,7 +3,6 @@ package dynamic
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -80,14 +79,17 @@ func newDynamicd(
 }
 
 func loadDynamicd(_os string, archiveExt string) (*Dynamicd, error) {
+	var dataDirPath string
+	var dirDelimit string
 	if _os == "Windows" {
-		dynDir += "\\"
+		dirDelimit = "\\"
+		dynDir += dirDelimit
 		dynamicdName += ".exe"
 		cliName += ".exe"
 	} else {
-		dynDir += "/"
+		dirDelimit = "/"
+		dynDir += dirDelimit
 	}
-
 	err := downloadBinaries(_os, dynDir, dynamicdName, cliName, archiveExt)
 	if err != nil {
 		return nil, err
@@ -95,61 +97,21 @@ func loadDynamicd(_os string, archiveExt string) (*Dynamicd, error) {
 	// check file hashes to make sure they are valid.
 	hashDynamicd, _ := util.GetFileHash(dynDir + dynamicdName)
 	hashCli, _ := util.GetFileHash(dynDir + cliName)
-	var dataDirPath string
+	err = checkBinaryHash(_os, hashDynamicd, hashCli)
+	if err != nil {
+		return nil, err
+	}
+	// check to make sure .dynamic directory exists and create if doesn't
 	dir, errPath := os.Getwd()
 	if errPath != nil {
 		return nil, errPath
 	}
-	switch _os {
-	case "Windows":
-		if winDyndHash != hashDynamicd {
-			fmt.Println("Error with", dynamicdName, ". File hash mismatch", winDyndHash, hashDynamicd)
-			errHash := errors.New("Error with " + dynamicdName + ". File hash mismatch " + winDyndHash + " vs " + hashDynamicd)
-			return nil, errHash
-		}
-		fmt.Println("File binary hash check pass", dynamicdName, hashDynamicd)
-		if winDynCliHash != hashCli {
-			fmt.Println("Error with", cliName, ". File hash mismatch", winDynCliHash, hashCli)
-			errHash := errors.New("Error with " + cliName + ". File hash mismatch " + winDynCliHash + " vs " + hashCli)
-			return nil, errHash
-		}
-		fmt.Println("File binary hash check pass", cliName, hashCli)
-		dataDirPath = dir + "\\" + dynDir + ".dynamic"
-	case "Linux":
-		if linuxDyndHash != hashDynamicd {
-			fmt.Println("Error with", dynamicdName, ". File hash mismatch", linuxDyndHash, hashDynamicd)
-			errHash := errors.New("Error with " + dynamicdName + ". File hash mismatch " + linuxDyndHash + " vs " + hashDynamicd)
-			return nil, errHash
-		}
-		fmt.Println("File binary hash check pass", dynamicdName, hashDynamicd)
-		if linuxDynCliHash != hashCli {
-			fmt.Println("Error with", cliName, ". File hash mismatch", linuxDynCliHash, hashCli)
-			errHash := errors.New("Error with " + cliName + ". File hash mismatch " + linuxDynCliHash + " vs " + hashCli)
-			return nil, errHash
-		}
-		fmt.Println("File binary hash check pass", cliName, hashCli)
-		dataDirPath = dir + "/" + dynDir + ".dynamic"
-	case "OSX":
-		if macDyndHash != hashDynamicd {
-			fmt.Println("Error with", dynamicdName, ". File hash mismatch", macDyndHash, hashDynamicd)
-			errHash := errors.New("Error with " + dynamicdName + ". File hash mismatch " + macDyndHash + " vs " + hashDynamicd)
-			return nil, errHash
-		}
-		fmt.Println("File binary hash check pass", dynamicdName, hashDynamicd)
-		if macDynCliHash != hashCli {
-			fmt.Println("Error with", cliName, ". File hash mismatch", macDynCliHash, hashCli)
-			errHash := errors.New("Error with " + cliName + ". File hash mismatch " + macDynCliHash + " vs " + hashCli)
-			return nil, errHash
-		}
-		fmt.Println("File binary hash check pass", cliName, hashCli)
-		dataDirPath = dir + "/" + dynDir + ".dynamic"
+	dataDirPath = dir + dirDelimit + dynDir + ".dynamic"
+	err = util.AddDirectory(dataDirPath)
+	if err != nil {
+		return nil, err
 	}
-	if !util.DirectoryExists(dataDirPath) {
-		errMkdir := os.Mkdir(dataDirPath, 0755)
-		if errMkdir != nil {
-			return nil, errMkdir
-		}
-	}
+
 	rpcUser, errUser := util.RandomString(12)
 	if errUser != nil {
 		return nil, errUser

@@ -42,3 +42,19 @@ func ListDirectories(path string) ([]string, error) {
 	}
 	return dirs, nil
 }
+
+// AddDirectory adds a new directory for the given path
+func AddDirectory(path string) error {
+	if !DirectoryExists(path) {
+		err := os.Mkdir(path, 0755)
+		if err != nil {
+			return err
+		}
+	} else {
+		err := os.Chmod(path, 0755)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
