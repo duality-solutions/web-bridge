@@ -3,17 +3,20 @@ package dynamic
 import (
 	"fmt"
 	"strings"
+	"sync"
+	"sync/atomic"
 
 	util "github.com/duality-solutions/web-bridge/internal/utilities"
 )
 
-var lastID int64 = 2
+var wg sync.WaitGroup
+var lastID uint64 = 2
 
 // RPCRequest is a dynamicd RPC command request
 type RPCRequest struct {
 	Method string        `json:"method"`
 	Params []interface{} `json:"params"`
-	ID     int64         `json:"id"`
+	ID     uint64        `json:"id"`
 }
 
 // NewRequest return as new RPCRequest struct from the given cmd text
@@ -41,7 +44,9 @@ func NewRequest(cmd string) (RPCRequest, error) {
 
 		}
 	}
-	lastID++
+	wg.Add(1)
+	atomic.AddUint64(&lastID, 1)
+	wg.Done()
 	req.ID = lastID
 	return req, nil
 }
