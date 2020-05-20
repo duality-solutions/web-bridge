@@ -13,7 +13,6 @@ import (
 	dynamic "github.com/duality-solutions/web-bridge/internal/dynamic"
 	settings "github.com/duality-solutions/web-bridge/internal/settings"
 	util "github.com/duality-solutions/web-bridge/internal/utilities"
-	"github.com/pion/webrtc/v2"
 )
 
 /*
@@ -97,14 +96,7 @@ func Init(version, githash string) error {
 		fmt.Println("Config", config)
 	}
 	// Connect to ICE services
-	iceSettings, err := bridge.NewIceSetting(config)
-	if err != nil {
-		return fmt.Errorf("NewIceSetting", err)
-	}
-	configICE := webrtc.Configuration{
-		ICEServers: []webrtc.ICEServer{*iceSettings},
-	}
-	peerConnection, err := webrtc.NewPeerConnection(configICE)
+	peerConnection, err := bridge.ConnectToIceServices(config)
 	if err != nil {
 		return fmt.Errorf("NewPeerConnection", err)
 	}
@@ -118,7 +110,6 @@ func Init(version, githash string) error {
 	if debug {
 		fmt.Println(offer, "\nCreated WebRTC offer successfully!")
 	}
-
 	// create and run dynamicd
 	dynamicd, err := dynamic.LoadRPCDynamicd()
 	if err != nil {

@@ -7,8 +7,8 @@ import (
 	webrtc "github.com/pion/webrtc/v2"
 )
 
-// NewIceSetting create a new WebRTC ICE Server setting
-func NewIceSetting(config settings.Configuration) (*webrtc.ICEServer, error) {
+// newIceSetting create a new WebRTC ICE Server setting
+func newIceSetting(config settings.Configuration) (*webrtc.ICEServer, error) {
 	if (len(config.IceServers)) == 0 {
 		return nil, fmt.Errorf("No ICE service URL found")
 	}
@@ -20,4 +20,21 @@ func NewIceSetting(config settings.Configuration) (*webrtc.ICEServer, error) {
 		CredentialType: webrtc.ICECredentialTypePassword,
 	}
 	return &iceSettings, nil
+}
+
+// ConnectToIceServices uses the configuration settings to establish a connection with ICE servers
+func ConnectToIceServices(config settings.Configuration) (*webrtc.PeerConnection, error) {
+	iceSettings, err := newIceSetting(config)
+	if err != nil {
+		return nil, fmt.Errorf("NewIceSetting", err)
+	}
+	configICE := webrtc.Configuration{
+		ICEServers: []webrtc.ICEServer{*iceSettings},
+	}
+
+	peerConnection, err := webrtc.NewPeerConnection(configICE)
+	if err != nil {
+		return nil, fmt.Errorf("NewPeerConnection", err)
+	}
+	return peerConnection, nil
 }
