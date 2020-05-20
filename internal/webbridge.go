@@ -9,8 +9,11 @@ import (
 	"strings"
 	"time"
 
+	bridge "github.com/duality-solutions/web-bridge/internal/bridge"
 	dynamic "github.com/duality-solutions/web-bridge/internal/dynamic"
+	settings "github.com/duality-solutions/web-bridge/internal/settings"
 	util "github.com/duality-solutions/web-bridge/internal/utilities"
+	"github.com/pion/webrtc/v2"
 )
 
 /*
@@ -62,7 +65,7 @@ WebRTCBridge
 	- Connect to all links
 */
 
-var config Configuration
+var config settings.Configuration
 var development = false
 var debug = false
 var shutdown = false
@@ -89,15 +92,37 @@ func Init(version, githash string) error {
 	if development {
 		fmt.Println("Running WebBridge in development mode.")
 	}
-	config.load()
+	config.Load()
 	if debug {
 		fmt.Println("Config", config)
 	}
-	// TODO: ICE service test completed
+	// Connect to ICE services
+	iceSettings, err := bridge.NewIceSetting(config)
+	if err != nil {
+		return fmt.Errorf("NewIceSetting", err)
+	}
+	configICE := webrtc.Configuration{
+		ICEServers: []webrtc.ICEServer{*iceSettings},
+	}
+	peerConnection, err := webrtc.NewPeerConnection(configICE)
+	if err != nil {
+		return fmt.Errorf("NewPeerConnection", err)
+	}
+	if debug {
+		fmt.Println("Connected to ICE services.")
+	}
+	offer, err := peerConnection.CreateOffer(nil)
+	if err != nil {
+		return fmt.Errorf("CreateOffer", err)
+	}
+	if debug {
+		fmt.Println(offer, "\nCreated WebRTC offer successfully!")
+	}
 
+	// create and run dynamicd
 	dynamicd, err := dynamic.LoadRPCDynamicd()
 	if err != nil {
-		return err
+		return fmt.Errorf("LoadRPCDynamicd", err)
 	}
 	// TODO: check if dynamicd is already running
 	// TODO: REST API running

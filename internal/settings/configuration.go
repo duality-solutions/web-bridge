@@ -1,4 +1,4 @@
-package webbridge
+package settings
 
 import (
 	"encoding/json"
@@ -53,7 +53,8 @@ func (c *Configuration) createDefault() {
 	}
 }
 
-func (c *Configuration) load() {
+// Load reads the configuration file or loads default values
+func (c *Configuration) Load() {
 	_, errOpen := os.Open(ConfigurationFileName)
 	if isErr(errOpen) {
 		fmt.Println("Configuration file doesn't exist. Creating new configuration with default values.")
