@@ -130,33 +130,19 @@ func Init(version, githash string) error {
 	}
 	errUnlock := dynamicd.UnlockWallet("")
 	if errUnlock != nil {
-		if strings.Contains(errUnlock.Error(), "Loading wallet...") {
-			fmt.Println("Loading wallet...")
-			time.Sleep(time.Second * 5)
-			for strings.Contains(errUnlock.Error(), "Loading wallet...") {
-				errUnlock = dynamicd.UnlockWallet("")
-				if errUnlock == nil {
-					break
-				}
-				fmt.Println("Loading wallet...")
-				time.Sleep(time.Second * 5)
-			}
-		}
-		if errUnlock != nil {
-			fmt.Println("Wallet locked. Please unlock the wallet to continue.")
-			var unlocked = false
-			for !unlocked {
-				reader := bufio.NewReader(os.Stdin)
-				fmt.Print("wallet passphrase> ")
-				walletpassphrase, _ := reader.ReadString('\n')
-				walletpassphrase = strings.Trim(walletpassphrase, "\r\n ")
-				errUnlock = dynamicd.UnlockWallet(walletpassphrase)
-				if errUnlock == nil {
-					fmt.Println("Wallet unlocked.")
-					unlocked = true
-				} else {
-					fmt.Println(errUnlock)
-				}
+		fmt.Println("Wallet locked. Please unlock the wallet to continue.")
+		var unlocked = false
+		for !unlocked {
+			reader := bufio.NewReader(os.Stdin)
+			fmt.Print("wallet passphrase> ")
+			walletpassphrase, _ := reader.ReadString('\n')
+			walletpassphrase = strings.Trim(walletpassphrase, "\r\n ")
+			errUnlock = dynamicd.UnlockWallet(walletpassphrase)
+			if errUnlock == nil {
+				fmt.Println("Wallet unlocked.")
+				unlocked = true
+			} else {
+				fmt.Println(errUnlock)
 			}
 		}
 	}
