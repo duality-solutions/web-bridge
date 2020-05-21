@@ -12,6 +12,9 @@ func (d *Dynamicd) UnlockWallet(password string) error {
 	req, _ := NewRequest("dynamic-cli walletpassphrase \"" + password + "\" 600000")
 	response, _ := util.BeautifyJSON(<-d.ExecCmdRequest(req))
 	if strings.HasPrefix(response, "null") || strings.Contains(response, "Wallet is already fully unlocked") || strings.Contains(response, "running with an unencrypted wallet") {
+		if strings.HasPrefix(response, "null") {
+			d.WalletPassword = password
+		}
 		return nil
 	}
 	return fmt.Errorf("Wallet unlock failed %s", response)

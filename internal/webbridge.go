@@ -68,7 +68,6 @@ var config settings.Configuration
 var development = false
 var debug = false
 var shutdown = false
-var walletpassphrase = ""
 
 // Init is used to begin all WebBridge tasks
 func Init(version, githash string) error {
@@ -129,13 +128,13 @@ func Init(version, githash string) error {
 	} else {
 		fmt.Println("dynamicd running... Sync " + fmt.Sprintf("%f", status.SyncProgress*100) + " percent complete!")
 	}
-	errUnlock := dynamicd.UnlockWallet(walletpassphrase)
+	errUnlock := dynamicd.UnlockWallet("")
 	if errUnlock != nil {
 		if strings.Contains(errUnlock.Error(), "Loading wallet...") {
 			fmt.Println("Loading wallet...")
 			time.Sleep(time.Second * 5)
 			for strings.Contains(errUnlock.Error(), "Loading wallet...") {
-				errUnlock = dynamicd.UnlockWallet(walletpassphrase)
+				errUnlock = dynamicd.UnlockWallet("")
 				if errUnlock == nil {
 					break
 				}

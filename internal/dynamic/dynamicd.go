@@ -47,6 +47,7 @@ type Dynamicd struct {
 	RPCBindAddress string
 	Cmd            *exec.Cmd
 	ConfigRPC      rpc.Config
+	WalletPassword string
 }
 
 func newDynamicd(
