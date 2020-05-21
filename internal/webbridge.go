@@ -68,6 +68,7 @@ var config settings.Configuration
 var development = false
 var debug = false
 var shutdown = false
+var walletpassphrase = ""
 
 // Init is used to begin all WebBridge tasks
 func Init(version, githash string) error {
@@ -128,6 +129,38 @@ func Init(version, githash string) error {
 	} else {
 		fmt.Println("dynamicd running... Sync " + fmt.Sprintf("%f", status.SyncProgress*100) + " percent complete!")
 	}
+	errUnlock := dynamicd.UnlockWallet(walletpassphrase)
+	if errUnlock != nil {
+		if strings.Contains(errUnlock.Error(), "Loading wallet...") {
+			fmt.Println("Loading wallet...")
+			time.Sleep(time.Second * 5)
+			for strings.Contains(errUnlock.Error(), "Loading wallet...") {
+				errUnlock = dynamicd.UnlockWallet(walletpassphrase)
+				if errUnlock == nil {
+					break
+				}
+				fmt.Println("Loading wallet...")
+				time.Sleep(time.Second * 5)
+			}
+		}
+		if errUnlock != nil {
+			fmt.Println("Wallet locked. Please unlock the wallet to continue.")
+			var unlocked = false
+			for !unlocked {
+				reader := bufio.NewReader(os.Stdin)
+				fmt.Print("wallet passphrase> ")
+				walletpassphrase, _ := reader.ReadString('\n')
+				walletpassphrase = strings.Trim(walletpassphrase, "\r\n ")
+				errUnlock = dynamicd.UnlockWallet(walletpassphrase)
+				if errUnlock == nil {
+					fmt.Println("Wallet unlocked.")
+					unlocked = true
+				} else {
+					fmt.Println(errUnlock)
+				}
+			}
+		}
+	}
 	if development {
 		fmt.Println("Development mode. Skipping terminal input.")
 		time.Sleep(time.Second * 15)
@@ -137,7 +170,7 @@ func Init(version, githash string) error {
 			fmt.Print("web-bridge> ")
 			cmdText, _ := reader.ReadString('\n')
 			if len(cmdText) > 1 {
-				cmdText = cmdText[:len(cmdText)-2]
+				cmdText = strings.Trim(cmdText, "\r\n ") //cmdText[:len(cmdText)-2]
 			}
 			if strings.HasPrefix(cmdText, "exit") || strings.HasPrefix(cmdText, "shutdown") {
 				fmt.Println("Exit command. Stopping services.")
