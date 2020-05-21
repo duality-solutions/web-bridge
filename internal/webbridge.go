@@ -13,6 +13,7 @@ import (
 	dynamic "github.com/duality-solutions/web-bridge/internal/dynamic"
 	settings "github.com/duality-solutions/web-bridge/internal/settings"
 	util "github.com/duality-solutions/web-bridge/internal/utilities"
+	"golang.org/x/crypto/ssh/terminal"
 )
 
 /*
@@ -133,10 +134,9 @@ func Init(version, githash string) error {
 		fmt.Println("Wallet locked. Please unlock the wallet to continue.")
 		var unlocked = false
 		for !unlocked {
-			reader := bufio.NewReader(os.Stdin)
 			fmt.Print("wallet passphrase> ")
-			walletpassphrase, _ := reader.ReadString('\n')
-			walletpassphrase = strings.Trim(walletpassphrase, "\r\n ")
+			bytePassword, _ := terminal.ReadPassword(int(os.Stdin.Fd()))
+			walletpassphrase := strings.Trim(string(bytePassword), "\r\n ")
 			errUnlock = dynamicd.UnlockWallet(walletpassphrase)
 			if errUnlock == nil {
 				fmt.Println("Wallet unlocked.")
