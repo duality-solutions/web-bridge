@@ -129,6 +129,14 @@ func Init(version, githash string) error {
 	} else {
 		fmt.Println("dynamicd running... Sync " + fmt.Sprintf("%f", status.SyncProgress*100) + " percent complete!")
 	}
+	acc, errAccounts := dynamicd.GetMyAccounts()
+	if errAccounts != nil {
+		fmt.Println("GetActiveLinks error", errAccounts)
+	} else {
+		for i, account := range *acc {
+			fmt.Println("Account", i+1, account.CommonName, account.ObjectFullPath, account.WalletAddress, account.LinkAddress)
+		}
+	}
 	errUnlock := dynamicd.UnlockWallet("")
 	if errUnlock != nil {
 		fmt.Println("Wallet locked. Please unlock the wallet to continue.")
