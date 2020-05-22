@@ -122,6 +122,12 @@ func Init(version, githash string) error {
 	}
 	fmt.Println("dynamicd running... Sync " + fmt.Sprintf("%f", status.SyncProgress*100) + " percent complete!")
 
+	info, errInfo := dynamicd.GetInfo()
+	if errInfo != nil {
+		return fmt.Errorf("GetInfo", errInfo)
+	}
+	fmt.Println("dynamic connections", info.Connections)
+
 	acc, errAccounts := dynamicd.GetMyAccounts()
 	if errAccounts != nil {
 		fmt.Println("GetActiveLinks error", errAccounts)
