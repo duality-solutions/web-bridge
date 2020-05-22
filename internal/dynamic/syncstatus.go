@@ -1,5 +1,9 @@
 package dynamic
 
+import (
+	"encoding/json"
+)
+
 // SyncStatus is a dynamicd RPC command result
 type SyncStatus struct {
 	ChainName          string  `json:"chain_name"`
@@ -12,4 +16,15 @@ type SyncStatus struct {
 	StatusDescription  string  `json:"status_description"`
 	FullySynced        bool    `json:"fully_synced"`
 	Failed             bool    `json:"failed"`
+}
+
+// GetSyncStatus returns the dynamicd blockchain status
+func (d *Dynamicd) GetSyncStatus() (*SyncStatus, error) {
+	var status SyncStatus
+	req, _ := NewRequest("dynamic-cli syncstatus")
+	err := json.Unmarshal([]byte(<-d.ExecCmdRequest(req)), &status)
+	if err != nil {
+		return nil, err
+	}
+	return &status, nil
 }

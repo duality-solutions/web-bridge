@@ -2,7 +2,6 @@ package webbridge
 
 import (
 	"bufio"
-	"encoding/json"
 	"fmt"
 	"os"
 	"runtime"
@@ -117,18 +116,12 @@ func Init(version, githash string) error {
 		return fmt.Errorf("LoadRPCDynamicd", err)
 	}
 	// TODO: check if dynamicd is already running
-	// TODO: REST API running
-	// TODO: Admin console running
-	// TODO: Establishing WebRTC connections with links
-	// TODO: Starting HTTP bridges for active links
-	reqStatus, _ := dynamic.NewRequest("dynamic-cli syncstatus")
-	var status dynamic.SyncStatus
-	errUnmarshal := json.Unmarshal([]byte(<-dynamicd.ExecCmdRequest(reqStatus)), &status)
-	if errUnmarshal != nil {
-		fmt.Println("syncstatus unmarshal error", errUnmarshal)
-	} else {
-		fmt.Println("dynamicd running... Sync " + fmt.Sprintf("%f", status.SyncProgress*100) + " percent complete!")
+	status, errStatus := dynamicd.GetSyncStatus()
+	if errStatus != nil {
+		return fmt.Errorf("GetSyncStatus", errStatus)
 	}
+	fmt.Println("dynamicd running... Sync " + fmt.Sprintf("%f", status.SyncProgress*100) + " percent complete!")
+
 	acc, errAccounts := dynamicd.GetMyAccounts()
 	if errAccounts != nil {
 		fmt.Println("GetActiveLinks error", errAccounts)
@@ -162,6 +155,10 @@ func Init(version, githash string) error {
 			fmt.Println("Link", i, link.RecipientFQDN, link.RequestorFQDN)
 		}
 	}
+	// TODO: Establishing WebRTC connections with links
+	// TODO: Starting HTTP bridges for active links
+	// TODO: REST API running
+	// TODO: Admin console running
 	if development {
 		fmt.Println("Development mode. Skipping terminal input.")
 		time.Sleep(time.Second * 15)
@@ -186,9 +183,9 @@ func Init(version, githash string) error {
 				}
 			} else {
 				fmt.Println("Invalid command", cmdText)
-				errUnmarshal = json.Unmarshal([]byte(<-dynamicd.ExecCmdRequest(reqStatus)), &status)
-				if errUnmarshal != nil {
-					fmt.Println("syncstatus unmarshal error", errUnmarshal)
+				status, errStatus = dynamicd.GetSyncStatus()
+				if errStatus != nil {
+					fmt.Println("syncstatus unmarshal error", errStatus)
 				} else {
 					fmt.Println("Sync " + fmt.Sprintf("%f", status.SyncProgress*100) + " percent complete!")
 				}
