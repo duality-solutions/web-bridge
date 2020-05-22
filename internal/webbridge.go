@@ -146,6 +146,14 @@ func Init(version, githash string) error {
 			}
 		}
 	}
+	al, errLinks := dynamicd.GetActiveLinks()
+	if errLinks != nil {
+		fmt.Println("GetActiveLinks error", errLinks)
+	} else {
+		for i, link := range al.Links {
+			fmt.Println("Link", i, link.RecipientFQDN, link.RequestorFQDN)
+		}
+	}
 	if development {
 		fmt.Println("Development mode. Skipping terminal input.")
 		time.Sleep(time.Second * 15)
@@ -157,7 +165,7 @@ func Init(version, githash string) error {
 			if len(cmdText) > 1 {
 				cmdText = strings.Trim(cmdText, "\r\n ") //cmdText[:len(cmdText)-2]
 			}
-			if strings.HasPrefix(cmdText, "exit") || strings.HasPrefix(cmdText, "shutdown") {
+			if strings.HasPrefix(cmdText, "exit") || strings.HasPrefix(cmdText, "shutdown") || strings.HasPrefix(cmdText, "stop") {
 				fmt.Println("Exit command. Stopping services.")
 				shutdown = true
 			} else if strings.HasPrefix(cmdText, "dynamic-cli") {
