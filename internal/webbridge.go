@@ -98,14 +98,14 @@ func Init(version, githash string) error {
 	// Connect to ICE services
 	peerConnection, err := bridge.ConnectToIceServices(config)
 	if err != nil {
-		return fmt.Errorf("NewPeerConnection", err)
+		return fmt.Errorf("NewPeerConnection %v", err)
 	}
 	if debug {
 		fmt.Println("Connected to ICE services.")
 	}
 	offer, err := peerConnection.CreateOffer(nil)
 	if err != nil {
-		return fmt.Errorf("CreateOffer", err)
+		return fmt.Errorf("CreateOffer %v", err)
 	}
 	if debug {
 		fmt.Println(offer, "\nCreated WebRTC offer successfully!")
@@ -113,18 +113,18 @@ func Init(version, githash string) error {
 	// create and run dynamicd
 	dynamicd, err := dynamic.LoadRPCDynamicd()
 	if err != nil {
-		return fmt.Errorf("LoadRPCDynamicd", err)
+		return fmt.Errorf("LoadRPCDynamicd %v", err)
 	}
 	// TODO: check if dynamicd is already running
 	status, errStatus := dynamicd.GetSyncStatus()
 	if errStatus != nil {
-		return fmt.Errorf("GetSyncStatus", errStatus)
+		return fmt.Errorf("GetSyncStatus %v", errStatus)
 	}
 	fmt.Println("dynamicd running... Sync " + fmt.Sprintf("%f", status.SyncProgress*100) + " percent complete!")
 
 	info, errInfo := dynamicd.GetInfo()
 	if errInfo != nil {
-		return fmt.Errorf("GetInfo", errInfo)
+		return fmt.Errorf("GetInfo %v", errInfo)
 	}
 	fmt.Println("dynamic connections", info.Connections)
 
