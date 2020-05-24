@@ -1,5 +1,7 @@
 package dynamic
 
+import "strings"
+
 // Link stores a BDAP link data that is returned by running dynamic link RPC commands
 type Link struct {
 	AcceptExpired          bool   `json:"accept_expired"`
@@ -19,4 +21,22 @@ type Link struct {
 	SharedRequestPubkey    string `json:"shared_request_pubkey"`
 	Time                   int    `json:"time"`
 	TxID                   string `json:"txid"`
+}
+
+//GetRecipientObjectID returns the recipient object id from the FQDN
+func (l *Link) GetRecipientObjectID() string {
+	p := strings.Split(l.RecipientFQDN, "@")
+	if len(p) > 0 {
+		return p[0]
+	}
+	return ""
+}
+
+//GetRequestorObjectID returns the requestor object id from the FQDN
+func (l *Link) GetRequestorObjectID() string {
+	p := strings.Split(l.RequestorFQDN, "@")
+	if len(p) > 0 {
+		return p[0]
+	}
+	return ""
 }

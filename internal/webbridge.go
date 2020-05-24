@@ -103,13 +103,6 @@ func Init(version, githash string) error {
 	if debug {
 		fmt.Println("Connected to ICE services.")
 	}
-	offer, err := peerConnection.CreateOffer(nil)
-	if err != nil {
-		return fmt.Errorf("CreateOffer %v", err)
-	}
-	if debug {
-		fmt.Println(offer, "\nCreated WebRTC offer successfully!")
-	}
 	// create and run dynamicd
 	dynamicd, err := dynamic.LoadRPCDynamicd()
 	if err != nil {
@@ -156,15 +149,13 @@ func Init(version, githash string) error {
 	al, errLinks := dynamicd.GetActiveLinks()
 	if errLinks != nil {
 		fmt.Println("GetActiveLinks error", errLinks)
-	} else {
-		for i, link := range al.Links {
-			fmt.Println("Link", i, link.RecipientFQDN, link.RequestorFQDN)
-		}
 	}
 	// TODO: Establishing WebRTC connections with links
 	// TODO: Starting HTTP bridges for active links
 	// TODO: REST API running
 	// TODO: Admin console running
+	var sync = false
+	var checkLinks = true
 	if development {
 		fmt.Println("Development mode. Skipping terminal input.")
 		time.Sleep(time.Second * 15)
@@ -190,10 +181,30 @@ func Init(version, githash string) error {
 			} else {
 				fmt.Println("Invalid command", cmdText)
 				status, errStatus = dynamicd.GetSyncStatus()
-				if errStatus != nil {
-					fmt.Println("syncstatus unmarshal error", errStatus)
-				} else {
+			}
+			status, errStatus = dynamicd.GetSyncStatus()
+			if errStatus != nil {
+				fmt.Println("syncstatus unmarshal error", errStatus)
+			} else {
+				if !sync {
 					fmt.Println("Sync " + fmt.Sprintf("%f", status.SyncProgress*100) + " percent complete!")
+					if status.SyncProgress == 1 {
+						sync = true
+					}
+				}
+			}
+			if sync {
+				if checkLinks {
+					for _, link := range al.Links {
+						offer, errOffer := peerConnection.CreateOffer(nil)
+						if errOffer != nil {
+							fmt.Println("CreateOffer error", errOffer)
+						}
+						//offerEncoded := base64.StdEncoding.EncodeToString([]byte(offer.SDP))
+						go dynamicd.PutLinkRecord(link.GetRequestorObjectID(), link.GetRecipientObjectID(), offer.SDP)
+						go dynamicd.GetLinkRecord(link.GetRecipientObjectID(), link.GetRequestorObjectID())
+					}
+					checkLinks = false
 				}
 			}
 		}
