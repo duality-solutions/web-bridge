@@ -17,9 +17,9 @@ import (
 const (
 	binaryRepo        string = "https://github.com/duality-solutions/Dynamic"
 	binaryReleasePath string = "releases/download"
-	binaryVersion     string = "2.4.4.1"
-	winDyndHash       string = "NM+nYgDPBk/DTj/BOkG0vdKEEKAHdjRvcNKSeySiUtg="
-	winDynCliHash     string = "EoDfzegZT7bFEaHmUr3NMsWYSao0yPpoC6puq1OD8pw="
+	binaryVersion     string = "2.4.4.2"
+	winDyndHash       string = "igapPrGTghx/cI2bfWdfTWsnoTrdIynSvRAXnkKuNnE="
+	winDynCliHash     string = "UqdmySq4tTXQr/GS3iv5R1NCky8OH5sSgCPElhE7gLU="
 	linuxDyndHash     string = "8bFnTc9lOMWJsklMFXX4NurK1umSTROLJSvDAmul2MQ="
 	linuxDynCliHash   string = "K66Z66XJn+9NEYrUZsqA0UNpGzVHlmEQjlsakioWvn4="
 	macDyndHash       string = "AjXMbmI6M1QpKX9JILeMDpdO9d5OkazNKygoRP1y4cg="
