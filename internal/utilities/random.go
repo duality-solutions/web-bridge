@@ -2,6 +2,8 @@ package util
 
 import (
 	"crypto/rand"
+	"crypto/sha256"
+	"fmt"
 )
 
 const (
@@ -39,4 +41,24 @@ func RandomBytes(length uint) ([]byte, error) {
 		return nil, err
 	}
 	return rb, nil
+}
+
+// RandomHashString returns the requested number of random charactors
+func RandomHashString(length uint) (string, error) {
+	var ranlen uint = 24
+	if length > ranlen {
+		ranlen = length
+	}
+	s, err := RandomString(ranlen)
+	if err != nil {
+		return "", err
+	}
+	hash := sha256.New()
+	hash.Write([]byte(s))
+	bs := hash.Sum(nil)
+	hs := fmt.Sprintf("%x", bs)
+	if len(hs) > int(length) {
+		hs = hs[0 : length-1]
+	}
+	return hs, nil
 }

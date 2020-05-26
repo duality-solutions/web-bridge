@@ -3,14 +3,9 @@ package dynamic
 import (
 	"fmt"
 	"strings"
-	"sync"
-	"sync/atomic"
 
 	util "github.com/duality-solutions/web-bridge/internal/utilities"
 )
-
-var wg sync.WaitGroup
-var lastID int64 = 2
 
 // RPCRequest is a type for raw JSON-RPC 1.0 requests.  The Method field identifies
 // the specific command type which in turns leads to different parameters.
@@ -21,7 +16,7 @@ var lastID int64 = 2
 type RPCRequest struct {
 	Method  string        `json:"method"`
 	Params  []interface{} `json:"params"`
-	ID      int64         `json:"id"`
+	ID      interface{}   `json:"id"`
 	JSONRPC string        `json:"jsonrpc"`
 }
 
@@ -47,10 +42,7 @@ func NewRequest(cmd string) (*RPCRequest, error) {
 		req.Method = strings.TrimSpace(cmd)
 	}
 	req.JSONRPC = "1.0"
-	wg.Add(1)
-	atomic.AddInt64(&lastID, 1)
-	wg.Done()
-	req.ID = lastID
+	req.ID, _ = util.RandomHashString(9)
 	return &req, nil
 }
 
