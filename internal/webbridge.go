@@ -65,9 +65,9 @@ WebRTCBridge
 */
 
 var config settings.Configuration
-var development = false
 var debug = false
 var shutdown = false
+var test = false
 
 // Init is used to begin all WebBridge tasks
 func Init(version, githash string) error {
@@ -77,10 +77,10 @@ func Init(version, githash string) error {
 	if len(args) > 0 {
 		for _, v := range args {
 			switch v {
-			case "-dev":
-				development = true
 			case "-debug":
 				debug = true
+			case "-test":
+				test = true
 			}
 		}
 	}
@@ -88,8 +88,8 @@ func Init(version, githash string) error {
 		fmt.Println("Running WebBridge in debug log mode.")
 		fmt.Println("Args", args)
 	}
-	if development {
-		fmt.Println("Running WebBridge in development mode.")
+	if test {
+		fmt.Println("Running WebBridge in test mode.")
 	}
 	config.Load()
 	if debug {
@@ -103,63 +103,61 @@ func Init(version, githash string) error {
 	if debug {
 		fmt.Println("Connected to ICE services.")
 	}
+
 	// create and run dynamicd
 	dynamicd, err := dynamic.LoadRPCDynamicd()
 	if err != nil {
 		return fmt.Errorf("LoadRPCDynamicd %v", err)
 	}
-	// TODO: check if dynamicd is already running
-	status, errStatus := dynamicd.GetSyncStatus()
-	if errStatus != nil {
-		return fmt.Errorf("GetSyncStatus %v", errStatus)
-	}
-	fmt.Println("dynamicd running... Sync " + fmt.Sprintf("%f", status.SyncProgress*100) + " percent complete!")
-
-	info, errInfo := dynamicd.GetInfo()
-	if errInfo != nil {
-		return fmt.Errorf("GetInfo %v", errInfo)
-	}
-	fmt.Println("dynamic connections", info.Connections)
-
-	acc, errAccounts := dynamicd.GetMyAccounts()
-	if errAccounts != nil {
-		fmt.Println("GetActiveLinks error", errAccounts)
-	} else {
-		for i, account := range *acc {
-			fmt.Println("Account", i+1, account.CommonName, account.ObjectFullPath, account.WalletAddress, account.LinkAddress)
+	if !test {
+		// TODO: check if dynamicd is already running
+		status, errStatus := dynamicd.GetSyncStatus()
+		if errStatus != nil {
+			return fmt.Errorf("GetSyncStatus %v", errStatus)
 		}
-	}
-	errUnlock := dynamicd.UnlockWallet("")
-	if errUnlock != nil {
-		fmt.Println("Wallet locked. Please unlock the wallet to continue.")
-		var unlocked = false
-		for !unlocked {
-			fmt.Print("wallet passphrase> ")
-			bytePassword, _ := terminal.ReadPassword(int(os.Stdin.Fd()))
-			walletpassphrase := strings.Trim(string(bytePassword), "\r\n ")
-			errUnlock = dynamicd.UnlockWallet(walletpassphrase)
-			if errUnlock == nil {
-				fmt.Println("Wallet unlocked.")
-				unlocked = true
-			} else {
-				fmt.Println(errUnlock)
+		fmt.Println("dynamicd running... Sync " + fmt.Sprintf("%f", status.SyncProgress*100) + " percent complete!")
+
+		info, errInfo := dynamicd.GetInfo()
+		if errInfo != nil {
+			return fmt.Errorf("GetInfo %v", errInfo)
+		}
+		fmt.Println("dynamic connections", info.Connections)
+
+		acc, errAccounts := dynamicd.GetMyAccounts()
+		if errAccounts != nil {
+			fmt.Println("GetActiveLinks error", errAccounts)
+		} else {
+			for i, account := range *acc {
+				fmt.Println("Account", i+1, account.CommonName, account.ObjectFullPath, account.WalletAddress, account.LinkAddress)
 			}
 		}
-	}
-	al, errLinks := dynamicd.GetActiveLinks()
-	if errLinks != nil {
-		fmt.Println("GetActiveLinks error", errLinks)
-	}
-	// TODO: Establishing WebRTC connections with links
-	// TODO: Starting HTTP bridges for active links
-	// TODO: REST API running
-	// TODO: Admin console running
-	var sync = false
-	var checkLinks = true
-	if development {
-		fmt.Println("Development mode. Skipping terminal input.")
-		time.Sleep(time.Second * 15)
-	} else {
+		errUnlock := dynamicd.UnlockWallet("")
+		if errUnlock != nil {
+			fmt.Println("Wallet locked. Please unlock the wallet to continue.")
+			var unlocked = false
+			for !unlocked {
+				fmt.Print("wallet passphrase> ")
+				bytePassword, _ := terminal.ReadPassword(int(os.Stdin.Fd()))
+				walletpassphrase := strings.Trim(string(bytePassword), "\r\n ")
+				errUnlock = dynamicd.UnlockWallet(walletpassphrase)
+				if errUnlock == nil {
+					fmt.Println("Wallet unlocked.")
+					unlocked = true
+				} else {
+					fmt.Println(errUnlock)
+				}
+			}
+		}
+		al, errLinks := dynamicd.GetActiveLinks()
+		if errLinks != nil {
+			fmt.Println("GetActiveLinks error", errLinks)
+		}
+		// TODO: Establishing WebRTC connections with links
+		// TODO: Starting HTTP bridges for active links
+		// TODO: REST API running
+		// TODO: Admin console running
+		var sync = false
+		var checkLinks = true
 		for !shutdown {
 			reader := bufio.NewReader(os.Stdin)
 			fmt.Print("web-bridge> ")
@@ -208,11 +206,13 @@ func Init(version, githash string) error {
 				}
 			}
 		}
+		// Stop dynamicd
+		reqStop, _ := dynamic.NewRequest("dynamic-cli stop")
+		respStop, _ := util.BeautifyJSON(<-dynamicd.ExecCmdRequest(reqStop))
+		fmt.Println(respStop)
+		time.Sleep(time.Second * 5)
 	}
-	reqStop, _ := dynamic.NewRequest("dynamic-cli stop")
-	respStop, _ := util.BeautifyJSON(<-dynamicd.ExecCmdRequest(reqStop))
-	fmt.Println(respStop)
-	time.Sleep(time.Second * 5)
+
 	fmt.Println("Looking for dynamicd process pid", dynamicd.Cmd.Process.Pid)
 	_, errFindProcess := os.FindProcess(dynamicd.Cmd.Process.Pid)
 	if errFindProcess == nil {
@@ -223,6 +223,7 @@ func Init(version, githash string) error {
 	} else {
 		fmt.Println("Dynamicd process not found")
 	}
-	fmt.Println("Good bye.")
+
+	fmt.Println("Exit.")
 	return nil
 }
