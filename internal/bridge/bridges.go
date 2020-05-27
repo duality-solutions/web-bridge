@@ -2,6 +2,7 @@ package bridge
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/duality-solutions/web-bridge/internal/dynamic"
@@ -46,7 +47,7 @@ func getAllOffers() {
 			pc, err := ConnectToIceServices(config)
 			if err == nil && offer.GetValue != "null" {
 				//fmt.Println("Offer found for", offer.Sender)
-				linkBridge.Offer = offer.GetValue
+				linkBridge.Offer = strings.ReplaceAll(offer.GetValue, `""`, "")
 				linkBridge.PeerConnection = pc
 				linkBridges.connected = append(linkBridges.connected, linkBridge)
 			} else {
@@ -77,7 +78,8 @@ func putOffers(bridges []Bridge) {
 
 func sendAnswers(bridges []Bridge) {
 	for _, brd := range bridges {
-		if brd.PeerConnection != nil {
+		if brd.PeerConnection != nil && len(brd.Offer) > 10 {
+			brd.Offer = strings.ReplaceAll(brd.Offer, `""`, "") // remove double quotes in offer
 			sd := webrtc.SessionDescription{Type: 1, SDP: brd.Offer}
 			//fmt.Println("sendAnswers", brd.LinkAccount, "SessionDescription", sd)
 			err := brd.PeerConnection.SetRemoteDescription(sd)
