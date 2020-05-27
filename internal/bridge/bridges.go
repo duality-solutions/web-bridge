@@ -118,6 +118,15 @@ func clearOffers(bridges []Bridge) {
 	}
 }
 
+func waitForSync() {
+	status, _ := dynamicd.GetSyncStatus()
+	for status.SyncProgress < 1 {
+		time.Sleep(time.Second * 30)
+		status, _ = dynamicd.GetSyncStatus()
+	}
+	time.Sleep(time.Second * 10)
+}
+
 // StartBridges runs a goroutine in the background to manage network bridges
 // get link offers from DHT
 // send answers to offers using VGP instant messaging and create a WebRTC bridge
@@ -127,11 +136,12 @@ func clearOffers(bridges []Bridge) {
 // if new answer found, create a WebRTC bridge and send bridge result to upstream channel
 // on shutdown, clear all DHT offers
 func StartBridges(chanBridge *chan []Bridge, c settings.Configuration, d dynamic.Dynamicd, a []dynamic.Account, l dynamic.ActiveLinks) {
-	fmt.Println("\nStartBridges")
 	dynamicd = d
 	config = c
 	accounts = a
 	links = l
+	waitForSync()
+	fmt.Println("\n\nStarting Link Bridges")
 	// check all links for WebRTC offers in the DHT
 	getAllOffers()
 	fmt.Println("Get offers complete.", len(linkBridges.connected), len(linkBridges.unconnected))

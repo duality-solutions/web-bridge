@@ -152,13 +152,14 @@ func Init(version, githash string) error {
 		if errLinks != nil {
 			fmt.Println("GetActiveLinks error", errLinks)
 		}
+
 		// TODO: Establishing WebRTC connections with links
 		// TODO: Starting HTTP bridges for active links
 		// TODO: REST API running
 		// TODO: Admin console running
 		var sync = false
-		var startBridges = true
 		var bridges chan []bridge.Bridge
+		go bridge.StartBridges(&bridges, config, *dynamicd, *acc, *al)
 		for !shutdown {
 			reader := bufio.NewReader(os.Stdin)
 			fmt.Print("web-bridge> ")
@@ -190,12 +191,6 @@ func Init(version, githash string) error {
 					if status.SyncProgress == 1 {
 						sync = true
 					}
-				}
-			}
-			if sync {
-				if startBridges {
-					go bridge.StartBridges(&bridges, config, *dynamicd, *acc, *al)
-					startBridges = false
 				}
 			}
 		}
