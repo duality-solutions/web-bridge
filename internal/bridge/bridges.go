@@ -94,7 +94,10 @@ func sendAnswers(bridges []Bridge) {
 					// remove from connected and add to unconnected
 				} else {
 					//fmt.Println("SendLinkMessage", brd.LinkAccount, answer.SDP)
-					dynamicd.SendLinkMessage(brd.MyAccount, brd.LinkAccount, answer.SDP)
+					_, err := dynamicd.SendLinkMessage(brd.MyAccount, brd.LinkAccount, answer.SDP)
+					if err != nil {
+						fmt.Println("SendLinkMessage error", brd.LinkAccount, err)
+					}
 				}
 			}
 		} else {

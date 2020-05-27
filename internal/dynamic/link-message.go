@@ -2,7 +2,6 @@ package dynamic
 
 import (
 	"encoding/json"
-	"fmt"
 )
 
 // MessageReturnJSON stores dynamic RPC send message response
@@ -18,9 +17,9 @@ type MessageReturnJSON struct {
 }
 
 // SendLinkMessage calls the DHT put command to add an encrypted record for the given account link
-func (d *Dynamicd) SendLinkMessage(sender, receiver, answer string) (*MessageReturnJSON, error) {
+func (d *Dynamicd) SendLinkMessage(sender, receiver, message string) (*MessageReturnJSON, error) {
 	var ret MessageReturnJSON
-	cmd := "dynamic-cli link sendmessage " + sender + " " + receiver + " bridge " + `"` + answer + `" 1`
+	cmd := "dynamic-cli link sendmessage " + sender + " " + receiver + " bridge " + `"` + message + `"`
 	req, err := NewRequest(cmd)
 	if err != nil {
 		return nil, err
@@ -30,6 +29,5 @@ func (d *Dynamicd) SendLinkMessage(sender, receiver, answer string) (*MessageRet
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println(cmd, &ret)
 	return &ret, nil
 }
