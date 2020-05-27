@@ -96,7 +96,7 @@ func Init(version, githash string) error {
 		fmt.Println("Config", config)
 	}
 	// Connect to ICE services
-	peerConnection, err := bridge.ConnectToIceServices(config)
+	_, err := bridge.ConnectToIceServices(config)
 	if err != nil {
 		return fmt.Errorf("NewPeerConnection %v", err)
 	}
@@ -157,7 +157,8 @@ func Init(version, githash string) error {
 		// TODO: REST API running
 		// TODO: Admin console running
 		var sync = false
-		var checkLinks = true
+		var startBridges = true
+		var bridges chan []bridge.Bridge
 		for !shutdown {
 			reader := bufio.NewReader(os.Stdin)
 			fmt.Print("web-bridge> ")
@@ -192,20 +193,13 @@ func Init(version, githash string) error {
 				}
 			}
 			if sync {
-				if checkLinks {
-					for _, link := range al.Links {
-						offer, errOffer := peerConnection.CreateOffer(nil)
-						if errOffer != nil {
-							fmt.Println("CreateOffer error", errOffer)
-						}
-						//offerEncoded := base64.StdEncoding.EncodeToString([]byte(offer.SDP))
-						go dynamicd.PutLinkRecord(link.GetRequestorObjectID(), link.GetRecipientObjectID(), offer.SDP)
-						go dynamicd.GetLinkRecord(link.GetRecipientObjectID(), link.GetRequestorObjectID())
-					}
-					checkLinks = false
+				if startBridges {
+					go bridge.StartBridges(&bridges, config, *dynamicd, *acc, *al)
+					startBridges = false
 				}
 			}
 		}
+		bridge.ShutdownBridges()
 		// Stop dynamicd
 		reqStop, _ := dynamic.NewRequest("dynamic-cli stop")
 		respStop, _ := util.BeautifyJSON(<-dynamicd.ExecCmdRequest(reqStop))
