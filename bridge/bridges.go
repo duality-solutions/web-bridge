@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/duality-solutions/web-bridge/internal/dynamic"
 	"github.com/duality-solutions/web-bridge/internal/settings"
+	"github.com/duality-solutions/web-bridge/rpc/dynamic"
 	"github.com/pion/webrtc/v2"
 )
 

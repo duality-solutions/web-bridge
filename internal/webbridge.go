@@ -8,10 +8,10 @@ import (
 	"strings"
 	"time"
 
-	bridge "github.com/duality-solutions/web-bridge/internal/bridge"
-	dynamic "github.com/duality-solutions/web-bridge/internal/dynamic"
+	bridge "github.com/duality-solutions/web-bridge/bridge"
 	settings "github.com/duality-solutions/web-bridge/internal/settings"
 	util "github.com/duality-solutions/web-bridge/internal/utilities"
+	dynamic "github.com/duality-solutions/web-bridge/rpc/dynamic"
 	"golang.org/x/crypto/ssh/terminal"
 )
 

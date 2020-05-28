@@ -1,6 +1,6 @@
 package bridge
 
-import "github.com/duality-solutions/web-bridge/internal/dynamic"
+import "github.com/duality-solutions/web-bridge/rpc/dynamic"
 
 // NewBridge creates a new bridge struct
 func NewBridge(l dynamic.Link, acc []dynamic.Account) Bridge {
