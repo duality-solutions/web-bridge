@@ -57,7 +57,7 @@ func StartBridges(chanBridge *chan []Bridge, c settings.Configuration, d dynamic
 	config = c
 	accounts = a
 	links = l
-	dynamic.WaitForSync(&dynamicd)
+	dynamic.WaitForSync(&dynamicd, 30, 10)
 	fmt.Println("\n\nStarting Link Bridges")
 	initializeBridges()
 }
