@@ -103,14 +103,27 @@ func Init(version, githash string) error {
 	if debug {
 		fmt.Println("Connected to ICE services.")
 	}
-
+	proc, err := dynamic.FindDynamicdProcess()
+	if err == nil {
+		fmt.Println("dynamicd already running. Attempting to kill the process.")
+		err = proc.Kill()
+		if err != nil {
+			return fmt.Errorf("Fatal error, dynamicd process (%v) is running but can't be stopped %v", proc.Pid, err)
+		}
+	}
 	// create and run dynamicd
 	dynamicd, err := dynamic.LoadRPCDynamicd()
 	if err != nil {
 		return fmt.Errorf("LoadRPCDynamicd %v", err)
 	}
+	proc, err = dynamic.FindDynamicdProcess()
+	if proc != nil {
+		fmt.Println("Running dynamicd process found Pid", proc.Pid)
+	} else {
+		fmt.Println(err)
+		// start again or exit app ???
+	}
 	if !test {
-		// TODO: check if dynamicd is already running
 		status, errStatus := dynamicd.GetSyncStatus()
 		if errStatus != nil {
 			return fmt.Errorf("GetSyncStatus %v", errStatus)

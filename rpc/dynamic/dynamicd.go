@@ -124,7 +124,7 @@ func loadDynamicd(_os string, archiveExt string) (*Dynamicd, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cmd := exec.CommandContext(ctx, dynDir+dynamicdName,
 		"-datadir="+dataDirPath,
-		"-port="+string(defaultPort),
+		"-port="+strconv.Itoa(int(defaultPort)),
 		"-rpcuser="+rpcUser,
 		"-rpcpassword="+rpcPassword,
 		"-rpcport="+strconv.Itoa(int(defaultRPCPort)),
