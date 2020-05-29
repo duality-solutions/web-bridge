@@ -52,14 +52,12 @@ func (d *Dynamicd) GetLinkMessages(receiver, sender string) (*[]GetMessageReturn
 		return nil, err
 	}
 	res := <-d.ExecCmdRequest(req)
-	fmt.Println("GetLinkMessages res", res)
 	var messagesGeneric map[string]interface{}
 	err = json.Unmarshal([]byte(res), &messagesGeneric)
 	if err != nil {
 		fmt.Println("GetLinkMessages messagesGeneric error", err)
 		return nil, err
 	}
-	fmt.Println("GetLinkMessages messagesGeneric", &messagesGeneric)
 	for k, v := range messagesGeneric {
 		b, err := json.Marshal(v)
 		if err != nil {
@@ -70,7 +68,6 @@ func (d *Dynamicd) GetLinkMessages(receiver, sender string) (*[]GetMessageReturn
 			if err != nil {
 				fmt.Println("GetLinkMessages json.Unmarshal error", err)
 			} else {
-				fmt.Println("GetLinkMessages key:", k, " value:", message.Message)
 				ret = append(ret, message)
 			}
 		}
