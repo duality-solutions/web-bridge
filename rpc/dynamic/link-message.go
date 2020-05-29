@@ -58,7 +58,7 @@ func (d *Dynamicd) GetLinkMessages(receiver, sender string) (*[]GetMessageReturn
 		fmt.Println("GetLinkMessages messagesGeneric error", err)
 		return nil, err
 	}
-	for k, v := range messagesGeneric {
+	for _, v := range messagesGeneric {
 		b, err := json.Marshal(v)
 		if err != nil {
 			fmt.Println("GetLinkMessages json.Marshal error", err)
