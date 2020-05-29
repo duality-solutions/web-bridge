@@ -59,6 +59,7 @@ func PutOffers(bridges *[]Bridge) {
 		var linkBridge = NewLinkBridge(link.LinkAccount, link.MyAccount, accounts)
 		offer, _ := link.PeerConnection.CreateOffer(nil)
 		dynamicd.PutLinkRecord(linkBridge.MyAccount, linkBridge.LinkAccount, offer.SDP, putOffers)
+		link.Offer = offer.SDP
 	}
 	for i := 0; i < l; i++ {
 		offer := <-putOffers

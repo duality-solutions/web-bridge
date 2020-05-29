@@ -44,7 +44,7 @@ func initializeBridges() {
 	fmt.Println("Put offers completed", len(linkBridges.unconnected))
 }
 
-// StartBridges runs a goroutine in the background to manage network bridges
+// StartBridges runs a goroutine to manage network bridges
 // get link offers from DHT
 // send answers to offers using VGP instant messaging
 // send bridge result to upstream channel
@@ -60,6 +60,7 @@ func StartBridges(chanBridge *chan []Bridge, c settings.Configuration, d dynamic
 	dynamic.WaitForSync(&dynamicd, 30, 10)
 	fmt.Println("\n\nStarting Link Bridges")
 	initializeBridges()
+	GetAnswers(&linkBridges.unconnected)
 }
 
 // ShutdownBridges stops the ManageBridges goroutine
