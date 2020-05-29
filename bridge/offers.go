@@ -57,6 +57,15 @@ func PutOffers(bridges *[]Bridge) {
 	putOffers := make(chan dynamic.DHTPutReturn, l)
 	for _, link := range *bridges {
 		var linkBridge = NewLinkBridge(link.LinkAccount, link.MyAccount, accounts)
+		if link.PeerConnection == nil {
+			pc, err := ConnectToIceServices(config)
+			if err != nil {
+				fmt.Println("PutOffers error connecting tot ICE services", err)
+				continue
+			} else {
+				link.PeerConnection = pc
+			}
+		}
 		offer, _ := link.PeerConnection.CreateOffer(nil)
 		dynamicd.PutLinkRecord(linkBridge.MyAccount, linkBridge.LinkAccount, offer.SDP, putOffers)
 		link.Offer = offer.SDP
