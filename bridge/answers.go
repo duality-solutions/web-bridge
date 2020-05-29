@@ -60,6 +60,10 @@ func GetAnswers(bridges *[]Bridge) {
 						answer = res
 					}
 				}
+				if len(answer.Message) < 10 {
+					fmt.Println("GetAnswers for", brd.LinkAccount, "not found")
+					continue
+				}
 				brd.Answer = strings.ReplaceAll(answer.Message, `""`, "") // remove double quotes in answer
 				sd := webrtc.SessionDescription{Type: 2, SDP: brd.Answer}
 				err := brd.PeerConnection.SetRemoteDescription(sd)
