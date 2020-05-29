@@ -38,3 +38,24 @@ func ConnectToIceServices(config settings.Configuration) (*webrtc.PeerConnection
 	}
 	return peerConnection, nil
 }
+
+// DisconnectBridgeIceServices calls the close method for a WebRTC peer connection
+func DisconnectBridgeIceServices(bridges *Bridges) error {
+	for i, v := range bridges.connected {
+		fmt.Println("DisconnectBridgeIceServices", i, v)
+		DisconnectIceService(v.PeerConnection)
+	}
+	for i, v := range bridges.unconnected {
+		fmt.Println("DisconnectBridgeIceServices", i, v)
+		err := DisconnectIceService(v.PeerConnection)
+		if err != nil {
+			fmt.Println("DisconnectBridgeIceServices error", i, err)
+		}
+	}
+	return nil
+}
+
+// DisconnectIceService calls the close method for a WebRTC peer connection
+func DisconnectIceService(pc *webrtc.PeerConnection) error {
+	return pc.Close()
+}
