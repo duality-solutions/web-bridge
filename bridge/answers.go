@@ -48,7 +48,6 @@ func GetAnswers(bridges *[]Bridge) {
 				brd.PeerConnection = pc
 			}
 		}
-		config := brd.PeerConnection.GetConfiguration()
 		if brd.PeerConnection != nil {
 			answers, err := dynamicd.GetLinkMessages(brd.MyAccount, brd.LinkAccount)
 			if err != nil {
