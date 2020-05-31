@@ -24,15 +24,17 @@ const (
 	linuxDynCliHash   string = "t5FOoZJoZ8nogTh5Qfyr62/PWXHXqdFmufYovuzBQWU="
 	macDyndHash       string = ""
 	macDynCliHash     string = ""
+
+	defaultName    string = "dynamicd"
+	defaultPort    uint16 = 33334
+	defaultRPCPort uint16 = 33335
+	defaultBind    string = "127.0.0.1"
+	arch           string = "x64"
 )
 
-var dynamicdName string = "dynamicd"
-var cliName string = "dynamic-cli"
 var dynDir string = "dynamic"
-var arch = "x64"
-var defaultPort uint16 = 33334
-var defaultRPCPort uint16 = 33335
-var defaultBind string = "127.0.0.1"
+var dynamicdName string = defaultName
+var cliName string = "dynamic-cli"
 
 // Dynamicd stores information about the binded dynamicd process
 type Dynamicd struct {
@@ -93,48 +95,90 @@ func loadDynamicd(_os string, archiveExt string) (*Dynamicd, error) {
 	}
 	err := downloadBinaries(_os, dynDir, dynamicdName, cliName, archiveExt)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("loadDynamicd failed at downloadBinaries. %v", err)
 	}
 	// check file hashes to make sure they are valid.
 	hashDynamicd, _ := util.GetFileHash(dynDir + dynamicdName)
 	hashCli, _ := util.GetFileHash(dynDir + cliName)
 	err = checkBinaryHash(_os, hashDynamicd, hashCli)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("loadDynamicd failed at checkBinaryHash. %v", err)
 	}
 	// check to make sure .dynamic directory exists and create if doesn't
 	dir, errPath := os.Getwd()
 	if errPath != nil {
-		return nil, errPath
+		return nil, fmt.Errorf("loadDynamicd failed at Getwd. %v", errPath)
 	}
+	rpcUser, _ := util.RandomString(12)
+	rpcPassword, _ := util.RandomString(18)
 	dataDirPath = dir + dirDelimit + dynDir + ".dynamic"
-	err = util.AddDirectory(dataDirPath)
-	if err != nil {
-		return nil, err
+	ctx, cancel := context.WithCancel(context.Background())
+	var cmd *exec.Cmd
+	if !util.DirectoryExists(dataDirPath) {
+		err = util.AddDirectory(dataDirPath)
+		if err != nil {
+			return nil, fmt.Errorf("loadDynamicd failed at AddDirectory. %v", err)
+		}
+		cmd = exec.CommandContext(ctx, dynDir+dynamicdName,
+			"-datadir="+dataDirPath,
+			"-port="+strconv.Itoa(int(defaultPort)),
+			"-rpcuser="+rpcUser,
+			"-rpcpassword="+rpcPassword,
+			"-rpcport="+strconv.Itoa(int(defaultRPCPort)),
+			"-rpcbind="+defaultBind,
+			"-rpcallowip="+defaultBind,
+			"-server=1",
+			"-addnode=206.189.68.224",
+			"-addnode=138.197.193.115",
+			"-addnode=dynexplorer.duality.solutions",
+		)
+	} else {
+		// read username and password from config file
+		var userFound, passFound bool = false, false
+		configPath := dataDirPath + dirDelimit + "dynamic.conf"
+		user, err := ParseDynamicConfValue(configPath, "rpcuser=")
+		if err == nil {
+			rpcUser = user
+			userFound = true
+		} else {
+			fmt.Println("loadDynamicd error after ParseDynamicConfValue rpcUser", err)
+		}
+		pass, err := ParseDynamicConfValue(configPath, "rpcpassword=")
+		if err == nil {
+			rpcPassword = pass
+			passFound = true
+		} else {
+			fmt.Println("loadDynamicd error after ParseDynamicConfValue rpcPassword", err)
+		}
+		if userFound && passFound {
+			cmd = exec.CommandContext(ctx, dynDir+dynamicdName,
+				"-datadir="+dataDirPath,
+				"-port="+strconv.Itoa(int(defaultPort)),
+				"-rpcport="+strconv.Itoa(int(defaultRPCPort)),
+				"-rpcbind="+defaultBind,
+				"-rpcallowip="+defaultBind,
+				"-server=1",
+				"-addnode=206.189.68.224",
+				"-addnode=138.197.193.115",
+				"-addnode=dynexplorer.duality.solutions",
+			)
+		} else {
+			cmd = exec.CommandContext(ctx, dynDir+dynamicdName,
+				"-datadir="+dataDirPath,
+				"-port="+strconv.Itoa(int(defaultPort)),
+				"-rpcuser="+rpcUser,
+				"-rpcpassword="+rpcPassword,
+				"-rpcport="+strconv.Itoa(int(defaultRPCPort)),
+				"-rpcbind="+defaultBind,
+				"-rpcallowip="+defaultBind,
+				"-server=1",
+				"-addnode=206.189.68.224",
+				"-addnode=138.197.193.115",
+				"-addnode=dynexplorer.duality.solutions",
+			)
+		}
 	}
 
-	rpcUser, errUser := util.RandomString(12)
-	if errUser != nil {
-		return nil, errUser
-	}
-	rpcPassword, errPassword := util.RandomString(18)
-	if errPassword != nil {
-		return nil, errPassword
-	}
-	ctx, cancel := context.WithCancel(context.Background())
-	cmd := exec.CommandContext(ctx, dynDir+dynamicdName,
-		"-datadir="+dataDirPath,
-		"-port="+strconv.Itoa(int(defaultPort)),
-		"-rpcuser="+rpcUser,
-		"-rpcpassword="+rpcPassword,
-		"-rpcport="+strconv.Itoa(int(defaultRPCPort)),
-		"-rpcbind="+defaultBind,
-		"-rpcallowip="+defaultBind,
-		"-server=1",
-		"-addnode=206.189.68.224",
-		"-addnode=138.197.193.115",
-		"-addnode=dynexplorer.duality.solutions",
-	)
 	configRPC := rpcclient.Config{
 		RPCServer:   defaultBind + ":" + strconv.Itoa(int(defaultRPCPort)),
 		RPCUser:     rpcUser,
@@ -144,7 +188,7 @@ func loadDynamicd(_os string, archiveExt string) (*Dynamicd, error) {
 	fmt.Println("dynamicd starting...")
 	dynamicd := newDynamicd(ctx, cancel, dataDirPath, rpcUser, rpcPassword, defaultPort, defaultRPCPort, defaultBind, defaultBind, cmd, configRPC)
 	if errStart := dynamicd.Cmd.Start(); errStart != nil {
-		return nil, errStart
+		return nil, fmt.Errorf("loadDynamicd failed at dynamicd.Cmd.Start(). %v", errStart)
 	}
 	time.Sleep(time.Second * 5)
 	fmt.Println("dynamicd started")
