@@ -69,6 +69,7 @@ var config settings.Configuration
 var debug = false
 var shutdown = false
 var test = false
+var walletpassphrase = ""
 
 // Init is used to begin all WebBridge tasks
 func Init(version, githash string) error {
@@ -125,9 +126,6 @@ func Init(version, githash string) error {
 		// start again or exit app ???
 	}
 	if !test {
-		stopchan := make(chan struct{})
-		stoppedchan := make(chan struct{})
-		dynamic.WatchProcess(stopchan, stoppedchan, 20)
 		status, errStatus := dynamicd.GetSyncStatus()
 		if errStatus != nil {
 			return fmt.Errorf("GetSyncStatus %v", errStatus)
@@ -155,7 +153,7 @@ func Init(version, githash string) error {
 			for !unlocked {
 				fmt.Print("wallet passphrase> ")
 				bytePassword, _ := terminal.ReadPassword(int(os.Stdin.Fd()))
-				walletpassphrase := strings.Trim(string(bytePassword), "\r\n ")
+				walletpassphrase = strings.Trim(string(bytePassword), "\r\n ")
 				errUnlock = dynamicd.UnlockWallet(walletpassphrase)
 				if errUnlock == nil {
 					fmt.Println("Wallet unlocked.")
@@ -165,6 +163,9 @@ func Init(version, githash string) error {
 				}
 			}
 		}
+		stopchan := make(chan struct{})
+		stoppedchan := make(chan struct{})
+		dynamic.WatchProcess(stopchan, stoppedchan, 10, walletpassphrase)
 		al, errLinks := dynamicd.GetActiveLinks()
 		if errLinks != nil {
 			fmt.Println("GetActiveLinks error", errLinks)
