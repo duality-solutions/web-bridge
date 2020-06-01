@@ -136,19 +136,24 @@ func loadDynamicd(_os string, archiveExt string) (*Dynamicd, error) {
 		// read username and password from config file
 		var userFound, passFound bool = false, false
 		configPath := dataDirPath + dirDelimit + "dynamic.conf"
-		user, err := ParseDynamicConfValue(configPath, "rpcuser=")
+		conf, err := GetDynamicConfig(configPath)
 		if err == nil {
-			rpcUser = user
-			userFound = true
+			user, err := ParseDynamicConfigValue(conf, "rpcuser=")
+			if err == nil {
+				rpcUser = user
+				userFound = true
+			} else {
+				fmt.Println("loadDynamicd error after ParseDynamicConfValue rpcUser", err)
+			}
+			pass, err := ParseDynamicConfigValue(conf, "rpcpassword=")
+			if err == nil {
+				rpcPassword = pass
+				passFound = true
+			} else {
+				fmt.Println("loadDynamicd error after ParseDynamicConfValue rpcPassword", err)
+			}
 		} else {
-			fmt.Println("loadDynamicd error after ParseDynamicConfValue rpcUser", err)
-		}
-		pass, err := ParseDynamicConfValue(configPath, "rpcpassword=")
-		if err == nil {
-			rpcPassword = pass
-			passFound = true
-		} else {
-			fmt.Println("loadDynamicd error after ParseDynamicConfValue rpcPassword", err)
+			fmt.Println("loadDynamicd error after GetDynamicConf", err)
 		}
 		if userFound && passFound {
 			cmd = exec.CommandContext(ctx, dynDir+dynamicdName,
