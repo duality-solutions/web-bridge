@@ -8,11 +8,12 @@ import (
 	"strings"
 	"time"
 
+	"golang.org/x/crypto/ssh/terminal"
+
 	bridge "github.com/duality-solutions/web-bridge/bridge"
 	settings "github.com/duality-solutions/web-bridge/init/settings"
 	util "github.com/duality-solutions/web-bridge/internal/utilities"
 	dynamic "github.com/duality-solutions/web-bridge/rpc/dynamic"
-	"golang.org/x/crypto/ssh/terminal"
 )
 
 /*
@@ -124,6 +125,9 @@ func Init(version, githash string) error {
 		// start again or exit app ???
 	}
 	if !test {
+		stopchan := make(chan struct{})
+		stoppedchan := make(chan struct{})
+		dynamic.WatchProcess(stopchan, stoppedchan, 20)
 		status, errStatus := dynamicd.GetSyncStatus()
 		if errStatus != nil {
 			return fmt.Errorf("GetSyncStatus %v", errStatus)
@@ -183,6 +187,9 @@ func Init(version, githash string) error {
 			if strings.HasPrefix(cmdText, "exit") || strings.HasPrefix(cmdText, "shutdown") || strings.HasPrefix(cmdText, "stop") {
 				fmt.Println("Exit command. Stopping services.")
 				shutdown = true
+				close(stopchan)
+				<-stoppedchan
+				break
 			} else if strings.HasPrefix(cmdText, "dynamic-cli") {
 				req, errNewRequest := dynamic.NewRequest(cmdText)
 				if errNewRequest != nil {

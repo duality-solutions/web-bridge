@@ -25,13 +25,14 @@ const (
 	macDyndHash       string = ""
 	macDynCliHash     string = ""
 
-	defaultName    string = "dynamicd"
-	defaultPort    uint16 = 33334
-	defaultRPCPort uint16 = 33335
+	defaultName    string = DefaultName
+	defaultPort    uint16 = DefaultPort
+	defaultRPCPort uint16 = DefaultRPCPort
 	defaultBind    string = "127.0.0.1"
 	arch           string = "x64"
 )
 
+var initVars bool = false
 var dynDir string = "dynamic"
 var dynamicdName string = defaultName
 var cliName string = "dynamic-cli"
@@ -86,12 +87,19 @@ func loadDynamicd(_os string, archiveExt string) (*Dynamicd, error) {
 	var dirDelimit string
 	if _os == "Windows" {
 		dirDelimit = "\\"
-		dynDir += dirDelimit
-		dynamicdName += ".exe"
-		cliName += ".exe"
+		if !initVars {
+			dynDir += dirDelimit
+			dynamicdName += ".exe"
+			cliName += ".exe"
+			initVars = true
+		}
+
 	} else {
 		dirDelimit = "/"
-		dynDir += dirDelimit
+		if !initVars {
+			dynDir += dirDelimit
+			initVars = true
+		}
 	}
 	err := downloadBinaries(_os, dynDir, dynamicdName, cliName, archiveExt)
 	if err != nil {
