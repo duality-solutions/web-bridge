@@ -32,16 +32,29 @@ var config settings.Configuration
 var accounts []dynamic.Account
 var links dynamic.ActiveLinks
 
-func initializeBridges() {
+func initializeBridges(stopchan chan struct{}) bool {
 	// check all links for WebRTC offers in the DHT
-	GetAllOffers(links, accounts)
-	fmt.Println("Get offers complete. Found", len(linkBridges.connected), "Not found", len(linkBridges.unconnected))
-	// respond to all offers with a WebRTC answer and send it to the link using instant VGP messages
-	SendAnswers(&linkBridges.connected)
-	fmt.Println("Send answers completed", len(linkBridges.connected))
-	// put WebRTC offers for unconnected links
-	PutOffers(&linkBridges.unconnected)
-	fmt.Println("Put offers completed", len(linkBridges.unconnected))
+	if GetAllOffers(stopchan, links, accounts) {
+		fmt.Println("Get all offers complete. Found", len(linkBridges.connected), "Not found", len(linkBridges.unconnected))
+		// respond to all offers with a WebRTC answer and send it to the link using instant VGP messages
+		if SendAnswers(stopchan, &linkBridges.connected) {
+			fmt.Println("Send answers completed", len(linkBridges.connected))
+			// put WebRTC offers for unconnected links
+			if PutOffers(stopchan, &linkBridges.unconnected) {
+				fmt.Println("Put offers completed", len(linkBridges.unconnected))
+			} else {
+				fmt.Println("StartBridges stopped after PutOffers")
+				return false
+			}
+		} else {
+			fmt.Println("StartBridges stopped after SendAnswers")
+			return false
+		}
+	} else {
+		fmt.Println("StartBridges stopped after GetAllOffers")
+		return false
+	}
+	return true
 }
 
 // StartBridges runs a goroutine to manage network bridges
@@ -52,15 +65,19 @@ func initializeBridges() {
 // check for answers loop
 // if new answer found, create a WebRTC bridge and send bridge result to upstream channel
 // on shutdown, clear all DHT offers
-func StartBridges(chanBridge *chan []Bridge, c settings.Configuration, d dynamic.Dynamicd, a []dynamic.Account, l dynamic.ActiveLinks) {
+func StartBridges(stopchan chan struct{}, c settings.Configuration, d dynamic.Dynamicd, a []dynamic.Account, l dynamic.ActiveLinks) {
 	dynamicd = d
 	config = c
 	accounts = a
 	links = l
-	dynamic.WaitForSync(&dynamicd, 30, 10)
-	fmt.Println("\n\nStarting Link Bridges")
-	initializeBridges()
-	GetAnswers(&linkBridges.unconnected)
+	if dynamicd.WaitForSync(stopchan, 10, 10) {
+		if initializeBridges(stopchan) {
+			GetAnswers(stopchan, &linkBridges.unconnected)
+			fmt.Println("StartBridges stopped after GetAnswers")
+		}
+	} else {
+		fmt.Println("StartBridges stopped after WaitForSync")
+	}
 }
 
 // ShutdownBridges stops the ManageBridges goroutine

@@ -8,37 +8,46 @@ import (
 )
 
 // GetAllOffers checks the DHT for WebRTC offers from all links
-func GetAllOffers(links dynamic.ActiveLinks, accounts []dynamic.Account) {
+func GetAllOffers(stopchan chan struct{}, links dynamic.ActiveLinks, accounts []dynamic.Account) bool {
 	getOffers := make(chan dynamic.DHTGetReturn, len(links.Links))
 	for _, link := range links.Links {
 		var linkBridge = NewBridge(link, accounts)
 		dynamicd.GetLinkRecord(linkBridge.LinkAccount, linkBridge.MyAccount, getOffers)
 	}
+	fmt.Println("GetAllOffers started")
 	for i := 0; i < len(links.Links); i++ {
-		offer := <-getOffers
-		if offer.GetValueSize > 0 {
-			linkBridge := NewLinkBridge(offer.Sender, offer.Receiver, accounts)
-			pc, err := ConnectToIceServices(config)
-			if err == nil && offer.GetValue != "null" {
-				//fmt.Println("Offer found for", offer.Sender)
-				linkBridge.Offer = strings.ReplaceAll(offer.GetValue, `""`, "")
-				linkBridge.PeerConnection = pc
-				linkBridges.connected = append(linkBridges.connected, linkBridge)
+		select {
+		default:
+			offer := <-getOffers
+			if offer.GetValueSize > 0 {
+				linkBridge := NewLinkBridge(offer.Sender, offer.Receiver, accounts)
+				pc, err := ConnectToIceServices(config)
+				if err == nil && offer.GetValue != "null" {
+					//fmt.Println("Offer found for", offer.Sender)
+					linkBridge.Offer = strings.ReplaceAll(offer.GetValue, `""`, "")
+					linkBridge.PeerConnection = pc
+					linkBridges.connected = append(linkBridges.connected, linkBridge)
+				} else {
+					//fmt.Println("Offer found for", offer.Sender, "ConnectToIceServices failed", err)
+					linkBridges.unconnected = append(linkBridges.unconnected, linkBridge)
+				}
 			} else {
-				//fmt.Println("Offer found for", offer.Sender, "ConnectToIceServices failed", err)
+				linkBridge := NewLinkBridge(offer.Sender, offer.Receiver, accounts)
+				pc, _ := ConnectToIceServices(config)
+				linkBridge.PeerConnection = pc
 				linkBridges.unconnected = append(linkBridges.unconnected, linkBridge)
 			}
-		} else {
-			linkBridge := NewLinkBridge(offer.Sender, offer.Receiver, accounts)
-			pc, _ := ConnectToIceServices(config)
-			linkBridge.PeerConnection = pc
-			linkBridges.unconnected = append(linkBridges.unconnected, linkBridge)
+		case <-stopchan:
+			fmt.Println("GetAllOffers stopped")
+			return false
 		}
 	}
+	return true
 }
 
 // ClearOffers sets all DHT link records to null
 func ClearOffers(bridges *[]Bridge) {
+	fmt.Println("ClearOffers started")
 	l := len(*bridges)
 	clearOffers := make(chan dynamic.DHTPutReturn, l)
 	for _, link := range *bridges {
@@ -52,7 +61,8 @@ func ClearOffers(bridges *[]Bridge) {
 }
 
 // PutOffers saves offers in the DHT for the link
-func PutOffers(bridges *[]Bridge) {
+func PutOffers(stopchan chan struct{}, bridges *[]Bridge) bool {
+	fmt.Println("PutOffers started")
 	l := len(*bridges)
 	putOffers := make(chan dynamic.DHTPutReturn, l)
 	for _, link := range *bridges {
@@ -71,7 +81,14 @@ func PutOffers(bridges *[]Bridge) {
 		link.Offer = offer.SDP
 	}
 	for i := 0; i < l; i++ {
-		offer := <-putOffers
-		fmt.Println("Offer saved", offer)
+		select {
+		default:
+			offer := <-putOffers
+			fmt.Println("Offer saved", offer)
+		case <-stopchan:
+			fmt.Println("PutOffers stopped")
+			return false
+		}
 	}
+	return true
 }

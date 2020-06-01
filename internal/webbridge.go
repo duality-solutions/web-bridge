@@ -163,9 +163,8 @@ func Init(version, githash string) error {
 				}
 			}
 		}
-		stopchan := make(chan struct{})
-		stoppedchan := make(chan struct{})
-		dynamic.WatchProcess(stopchan, stoppedchan, 10, walletpassphrase)
+		stopWatcher := make(chan struct{})
+		dynamic.WatchProcess(stopWatcher, 10, walletpassphrase)
 		al, errLinks := dynamicd.GetActiveLinks()
 		if errLinks != nil {
 			fmt.Println("GetActiveLinks error", errLinks)
@@ -176,8 +175,8 @@ func Init(version, githash string) error {
 		// TODO: REST API running
 		// TODO: Admin console running
 		var sync = false
-		var bridges chan []bridge.Bridge
-		go bridge.StartBridges(&bridges, config, *dynamicd, *acc, *al)
+		stopBridges := make(chan struct{})
+		go bridge.StartBridges(stopBridges, config, *dynamicd, *acc, *al)
 		for !shutdown {
 			reader := bufio.NewReader(os.Stdin)
 			fmt.Print("web-bridge> ")
@@ -188,8 +187,8 @@ func Init(version, githash string) error {
 			if strings.HasPrefix(cmdText, "exit") || strings.HasPrefix(cmdText, "shutdown") || strings.HasPrefix(cmdText, "stop") {
 				fmt.Println("Exit command. Stopping services.")
 				shutdown = true
-				close(stopchan)
-				<-stoppedchan
+				close(stopWatcher)
+				close(stopBridges)
 				break
 			} else if strings.HasPrefix(cmdText, "dynamic-cli") {
 				req, errNewRequest := dynamic.NewRequest(cmdText)

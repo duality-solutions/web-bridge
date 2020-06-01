@@ -1,15 +1,23 @@
 package dynamic
 
 import (
+	"fmt"
 	"time"
 )
 
 // WaitForSync waits for the Dynamic blockchain to fully sync
-func WaitForSync(d *Dynamicd, checkDelaySeconds, endDelaySeconds uint16) {
+func (d *Dynamicd) WaitForSync(stopchan chan struct{}, checkDelaySeconds, endDelaySeconds uint16) bool {
 	status, _ := d.GetSyncStatus()
 	for status.SyncProgress < 1 {
-		time.Sleep(time.Duration(checkDelaySeconds) * time.Second)
-		status, _ = d.GetSyncStatus()
+		select {
+		default:
+			time.Sleep(time.Duration(checkDelaySeconds) * time.Second)
+			status, _ = d.GetSyncStatus()
+		case <-stopchan:
+			fmt.Println("WaitForSync stopped")
+			return false
+		}
 	}
 	time.Sleep(time.Duration(endDelaySeconds) * time.Second)
+	return true
 }
