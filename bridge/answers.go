@@ -10,35 +10,35 @@ import (
 )
 
 // SendAnswers uses VPG instant messages to send an answer to a WebRTC offer
-func SendAnswers(stopchan chan struct{}, bridges *[]Bridge) bool {
+func SendAnswers(stopchan chan struct{}) bool {
 	fmt.Println("SendAnswers Started")
-	for _, brd := range *bridges {
+	for _, link := range linkBridges.connected {
 		select {
 		default:
-			if brd.PeerConnection != nil && len(brd.Offer) > 10 {
-				brd.Offer = strings.ReplaceAll(brd.Offer, `""`, "") // remove double quotes in offer
-				sd := webrtc.SessionDescription{Type: 1, SDP: brd.Offer}
-				//fmt.Println("sendAnswers", brd.LinkAccount, "SessionDescription", sd)
-				err := brd.PeerConnection.SetRemoteDescription(sd)
+			if link.PeerConnection != nil && len(link.Offer) > 10 {
+				link.Offer = strings.ReplaceAll(link.Offer, `""`, "") // remove double quotes in offer
+				sd := webrtc.SessionDescription{Type: 1, SDP: link.Offer}
+				//fmt.Println("sendAnswers", link.LinkAccount, "SessionDescription", sd)
+				err := link.PeerConnection.SetRemoteDescription(sd)
 				if err != nil {
 					// move to unconnected
-					fmt.Printf("SendAnswers failed to connect to link %s. Error %s\n", brd.LinkAccount, err)
+					fmt.Printf("SendAnswers failed to connect to link %s. Error %s\n", link.LinkAccount, err)
 				} else {
-					answer, err := brd.PeerConnection.CreateAnswer(nil)
+					answer, err := link.PeerConnection.CreateAnswer(nil)
 					if err != nil {
-						fmt.Println(brd.LinkAccount, "SendAnswers error", err)
+						fmt.Println(link.LinkAccount, "SendAnswers error", err)
 						// clear offer since it didn't work
 						// remove from connected and add to unconnected
 					} else {
-						//fmt.Println("SendLinkMessage", brd.LinkAccount, answer.SDP)
-						_, err := dynamicd.SendLinkMessage(brd.MyAccount, brd.LinkAccount, answer.SDP)
+						//fmt.Println("SendLinkMessage", link.LinkAccount, answer.SDP)
+						_, err := dynamicd.SendLinkMessage(link.MyAccount, link.LinkAccount, answer.SDP)
 						if err != nil {
-							fmt.Println("SendLinkMessage error", brd.LinkAccount, err)
+							fmt.Println("SendLinkMessage error", link.LinkAccount, err)
 						}
 					}
 				}
 			} else {
-				fmt.Println("Error nil PeerConnection", brd.LinkAccount)
+				fmt.Println("Error nil PeerConnection", link.LinkAccount)
 			}
 		case <-stopchan:
 			fmt.Println("SendAnswers stopped")
@@ -49,24 +49,24 @@ func SendAnswers(stopchan chan struct{}, bridges *[]Bridge) bool {
 }
 
 // GetAnswers checks Dynamicd for bridge messages received
-func GetAnswers(stopchan chan struct{}, bridges *[]Bridge) bool {
+func GetAnswers(stopchan chan struct{}) bool {
 	fmt.Println("GetAnswers Started")
 	for {
 		select {
 		default:
-			for _, brd := range *bridges {
+			for _, link := range linkBridges.unconnected {
 				select {
 				default:
-					if brd.PeerConnection == nil {
+					if link.PeerConnection == nil {
 						pc, err := ConnectToIceServices(config)
 						if err == nil {
-							brd.PeerConnection = pc
+							link.PeerConnection = pc
 						}
 					}
-					if brd.PeerConnection != nil {
-						answers, err := dynamicd.GetLinkMessages(brd.MyAccount, brd.LinkAccount)
+					if link.PeerConnection != nil {
+						answers, err := dynamicd.GetLinkMessages(link.MyAccount, link.LinkAccount)
 						if err != nil {
-							fmt.Println("GetAnswers error", brd.LinkAccount, err)
+							fmt.Println("GetAnswers error", link.LinkAccount, err)
 						} else {
 							//fmt.Println("GetAnswers", answers)
 							var answer dynamic.GetMessageReturnJSON
@@ -76,24 +76,28 @@ func GetAnswers(stopchan chan struct{}, bridges *[]Bridge) bool {
 								}
 							}
 							if len(answer.Message) < 10 {
-								fmt.Println("GetAnswers for", brd.LinkAccount, "not found")
+								fmt.Println("GetAnswers for", link.LinkAccount, "not found")
 								continue
 							}
-							brd.Answer = strings.ReplaceAll(answer.Message, `""`, "") // remove double quotes in answer
-							sd := webrtc.SessionDescription{Type: 2, SDP: brd.Answer}
-							err := brd.PeerConnection.SetRemoteDescription(sd)
+							link.Answer = strings.ReplaceAll(answer.Message, `""`, "") // remove double quotes in answer
+							if link.PeerConnection == nil {
+								fmt.Println("GetAnswers PeerConnection nil for", link.LinkAccount)
+								continue
+							}
+							sd := webrtc.SessionDescription{Type: 2, SDP: link.Answer}
+							err := link.PeerConnection.SetRemoteDescription(sd)
 							if err != nil {
 								fmt.Println("GetAnswers SetRemoteDescription error ", err)
 							} else {
-								dc, err := brd.PeerConnection.CreateDataChannel(brd.LinkAccount, nil)
+								dc, err := link.PeerConnection.CreateDataChannel(link.LinkAccount, nil)
 								if err != nil {
 									fmt.Println("GetAnswers CreateDataChannel error", err)
 								}
-								fmt.Println("GetAnswers Data Channel", dc)
+								fmt.Println("GetAnswers Data Channel Negotiated", dc.Negotiated())
 							}
 						}
 					} else {
-						fmt.Println("Error nil PeerConnection", brd.LinkAccount)
+						fmt.Println("Error nil PeerConnection", link.LinkAccount)
 					}
 				case <-stopchan:
 					fmt.Println("GetAnswers stopped")

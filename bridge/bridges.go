@@ -22,8 +22,8 @@ type Bridge struct {
 
 // Bridges hold all link WebRTC bridges
 type Bridges struct {
-	connected   []Bridge
-	unconnected []Bridge
+	connected   []*Bridge
+	unconnected []*Bridge
 }
 
 var linkBridges Bridges
@@ -37,10 +37,10 @@ func initializeBridges(stopchan chan struct{}) bool {
 	if GetAllOffers(stopchan, links, accounts) {
 		fmt.Println("Get all offers complete. Found", len(linkBridges.connected), "Not found", len(linkBridges.unconnected))
 		// respond to all offers with a WebRTC answer and send it to the link using instant VGP messages
-		if SendAnswers(stopchan, &linkBridges.connected) {
+		if SendAnswers(stopchan) {
 			fmt.Println("Send answers completed", len(linkBridges.connected))
 			// put WebRTC offers for unconnected links
-			if PutOffers(stopchan, &linkBridges.unconnected) {
+			if PutOffers(stopchan) {
 				fmt.Println("Put offers completed", len(linkBridges.unconnected))
 			} else {
 				fmt.Println("StartBridges stopped after PutOffers")
@@ -72,7 +72,7 @@ func StartBridges(stopchan chan struct{}, c settings.Configuration, d dynamic.Dy
 	links = l
 	if dynamicd.WaitForSync(stopchan, 10, 10) {
 		if initializeBridges(stopchan) {
-			GetAnswers(stopchan, &linkBridges.unconnected)
+			GetAnswers(stopchan)
 			fmt.Println("StartBridges stopped after GetAnswers")
 		}
 	} else {
@@ -84,8 +84,7 @@ func StartBridges(stopchan chan struct{}, c settings.Configuration, d dynamic.Dy
 func ShutdownBridges() {
 	//TODO: disconnect WebRTC bridges
 	//clear all link offers in the DHT
-	ClearOffers(&linkBridges.unconnected)
-	ClearOffers(&linkBridges.connected)
+	ClearOffers()
 	// sleep for 20 seconds to make sure all clear take effect.
 	time.Sleep(time.Second * 20)
 }
