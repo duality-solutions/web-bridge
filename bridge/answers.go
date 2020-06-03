@@ -30,6 +30,17 @@ func SendAnswers(stopchan chan struct{}) bool {
 						// clear offer since it didn't work
 						// remove from connected and add to unconnected
 					} else {
+						sd = webrtc.SessionDescription{Type: 2, SDP: link.Answer}
+						err = link.PeerConnection.SetLocalDescription(sd)
+						if err != nil {
+							fmt.Println("SendAnswers SetLocalDescription error ", err)
+						} else {
+							dc, err := link.PeerConnection.CreateDataChannel(link.LinkAccount, nil)
+							if err != nil {
+								fmt.Println("GetAnswers CreateDataChannel error", err)
+							}
+							fmt.Println("GetAnswers Data Channel Negotiated", dc.Negotiated())
+						}
 						//fmt.Println("SendLinkMessage", link.LinkAccount, answer.SDP)
 						_, err := dynamicd.SendLinkMessage(link.MyAccount, link.LinkAccount, answer.SDP)
 						if err != nil {
