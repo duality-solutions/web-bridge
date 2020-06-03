@@ -26,6 +26,13 @@ func GetAllOffers(stopchan chan struct{}, links dynamic.ActiveLinks, accounts []
 				if err == nil && offer.GetValue != "null" {
 					//fmt.Println("Offer found for", offer.Sender)
 					linkBridge.Offer = strings.ReplaceAll(offer.GetValue, `""`, "")
+					sd := webrtc.SessionDescription{Type: 1, SDP: linkBridge.Offer}
+					err = linkBridge.PeerConnection.SetRemoteDescription(sd)
+					if err != nil {
+						fmt.Println("GetAllOffers SetRemoteDescription error", err)
+						linkBridges.unconnected = append(linkBridges.unconnected, &linkBridge)
+						continue
+					}
 					linkBridge.PeerConnection = pc
 					linkBridges.connected = append(linkBridges.connected, &linkBridge)
 				} else {
