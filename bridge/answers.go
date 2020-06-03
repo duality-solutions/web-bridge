@@ -130,15 +130,22 @@ func GetAnswers(stopchan chan struct{}) bool {
 							if err != nil {
 								fmt.Println("GetAnswers SetRemoteDescription error ", err)
 							} else {
-								dc, err := link.PeerConnection.CreateDataChannel(link.LinkAccount, nil)
-								if err != nil {
-									fmt.Println("GetAnswers CreateDataChannel error", err)
-								}
-								fmt.Println("GetAnswers Data Channel Negotiated", dc.Negotiated())
 								// Set the handler for ICE connection state
 								// This will notify you when the peer has connected/disconnected
 								link.PeerConnection.OnICEConnectionStateChange(func(connectionState webrtc.ICEConnectionState) {
-									fmt.Printf("ICE Connection State has changed: %s\n", connectionState.String())
+									fmt.Printf("OnICEConnectionStateChange has changed: %s\n", connectionState.String())
+								})
+								link.PeerConnection.OnICEGatheringStateChange(func(gathererState webrtc.ICEGathererState) {
+									fmt.Printf("OnICEGatheringStateChange has changed: %s\n", gathererState.String())
+								})
+								link.PeerConnection.OnICECandidate(func(candidate *webrtc.ICECandidate) {
+									fmt.Printf("OnICECandidate has changed: %s\n", candidate.ToJSON())
+								})
+								link.PeerConnection.OnConnectionStateChange(func(state webrtc.PeerConnectionState) {
+									fmt.Printf("OnConnectionStateChange has changed: %s\n", state.String())
+								})
+								link.PeerConnection.OnSignalingStateChange(func(sig webrtc.SignalingState) {
+									fmt.Printf("OnSignalingStateChange has changed: %s\n", sig.String())
 								})
 								// Register data channel creation handling
 								link.PeerConnection.OnDataChannel(func(d *webrtc.DataChannel) {
@@ -164,6 +171,11 @@ func GetAnswers(stopchan chan struct{}) bool {
 										fmt.Printf("Message from DataChannel '%s': '%s'\n", d.Label(), string(msg.Data))
 									})
 								})
+								dc, err := link.PeerConnection.CreateDataChannel(link.LinkAccount, nil)
+								if err != nil {
+									fmt.Println("GetAnswers CreateDataChannel error", err)
+								}
+								fmt.Println("GetAnswers Data Channel Negotiated", dc.Negotiated())
 							}
 						}
 					} else {
