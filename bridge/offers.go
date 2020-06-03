@@ -26,6 +26,7 @@ func GetAllOffers(stopchan chan struct{}, links dynamic.ActiveLinks, accounts []
 				if err == nil && offer.GetValue != "null" {
 					//fmt.Println("Offer found for", offer.Sender)
 					linkBridge.Offer = strings.ReplaceAll(offer.GetValue, `""`, "")
+					linkBridge.PeerConnection = pc
 					sd := webrtc.SessionDescription{Type: 1, SDP: linkBridge.Offer}
 					err = linkBridge.PeerConnection.SetRemoteDescription(sd)
 					if err != nil {
@@ -33,7 +34,6 @@ func GetAllOffers(stopchan chan struct{}, links dynamic.ActiveLinks, accounts []
 						linkBridges.unconnected = append(linkBridges.unconnected, &linkBridge)
 						continue
 					}
-					linkBridge.PeerConnection = pc
 					linkBridges.connected = append(linkBridges.connected, &linkBridge)
 				} else {
 					//fmt.Println("Offer found for", offer.Sender, "ConnectToIceServices failed", err)
