@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	util "github.com/duality-solutions/web-bridge/internal/utilities"
 	"github.com/duality-solutions/web-bridge/rpc/dynamic"
 	"github.com/pion/webrtc/v2"
 )
@@ -46,6 +47,35 @@ func SendAnswers(stopchan chan struct{}) bool {
 						if err != nil {
 							fmt.Println("SendLinkMessage error", link.LinkAccount, err)
 						}
+						// Set the handler for ICE connection state
+						// This will notify you when the peer has connected/disconnected
+						link.PeerConnection.OnICEConnectionStateChange(func(connectionState webrtc.ICEConnectionState) {
+							fmt.Printf("ICE Connection State has changed: %s\n", connectionState.String())
+						})
+						// Register data channel creation handling
+						link.PeerConnection.OnDataChannel(func(d *webrtc.DataChannel) {
+							fmt.Printf("New DataChannel %s %d\n", d.Label(), d.ID())
+							// Register channel opening handling
+							d.OnOpen(func() {
+								fmt.Printf("Data channel '%s'-'%d' open. Random messages will now be sent to any connected DataChannels every 5 seconds\n", d.Label(), d.ID())
+
+								for range time.NewTicker(5 * time.Second).C {
+									message, _ := util.RandomString(24)
+									fmt.Printf("Sending '%s'\n", message)
+
+									// Send the message as text
+									sendErr := d.SendText(message)
+									if sendErr != nil {
+										panic(sendErr)
+									}
+								}
+							})
+
+							// Register text message handling
+							d.OnMessage(func(msg webrtc.DataChannelMessage) {
+								fmt.Printf("Message from DataChannel '%s': '%s'\n", d.Label(), string(msg.Data))
+							})
+						})
 					}
 				}
 			} else {
@@ -105,6 +135,35 @@ func GetAnswers(stopchan chan struct{}) bool {
 									fmt.Println("GetAnswers CreateDataChannel error", err)
 								}
 								fmt.Println("GetAnswers Data Channel Negotiated", dc.Negotiated())
+								// Set the handler for ICE connection state
+								// This will notify you when the peer has connected/disconnected
+								link.PeerConnection.OnICEConnectionStateChange(func(connectionState webrtc.ICEConnectionState) {
+									fmt.Printf("ICE Connection State has changed: %s\n", connectionState.String())
+								})
+								// Register data channel creation handling
+								link.PeerConnection.OnDataChannel(func(d *webrtc.DataChannel) {
+									fmt.Printf("New DataChannel %s %d\n", d.Label(), d.ID())
+									// Register channel opening handling
+									d.OnOpen(func() {
+										fmt.Printf("Data channel '%s'-'%d' open. Random messages will now be sent to any connected DataChannels every 5 seconds\n", d.Label(), d.ID())
+
+										for range time.NewTicker(5 * time.Second).C {
+											message, _ := util.RandomString(12)
+											fmt.Printf("Sending '%s'\n", message)
+
+											// Send the message as text
+											sendErr := d.SendText(message)
+											if sendErr != nil {
+												panic(sendErr)
+											}
+										}
+									})
+
+									// Register text message handling
+									d.OnMessage(func(msg webrtc.DataChannelMessage) {
+										fmt.Printf("Message from DataChannel '%s': '%s'\n", d.Label(), string(msg.Data))
+									})
+								})
 							}
 						}
 					} else {
