@@ -65,8 +65,12 @@ func GetOffers(stopchan chan struct{}) bool {
 			offer := <-getOffers
 			if len(offer.GetValue) > 10 {
 				linkBridge := NewLinkBridge(offer.Sender, offer.Receiver, accounts)
+				linkBridge.Offer, _ = util.DecodeString(offer.GetValue)
+				pc, _ := ConnectToIceServices(config)
+				linkBridge.PeerConnection = pc
+				linkBridge.State = 2
+				fmt.Println("Offer found for", linkBridge.LinkAccount, linkBridge.LinkID())
 				linkBridges.unconnected[linkBridge.LinkID()] = &linkBridge
-				fmt.Println("GetOffers", offer)
 			}
 		case <-stopchan:
 			fmt.Println("PutOffers stopped")
