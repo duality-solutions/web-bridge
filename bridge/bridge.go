@@ -5,6 +5,7 @@ import "github.com/duality-solutions/web-bridge/rpc/dynamic"
 // NewBridge creates a new bridge struct
 func NewBridge(l dynamic.Link, acc []dynamic.Account) Bridge {
 	var brd Bridge
+	brd.State = 1
 	for _, a := range acc {
 		if a.ObjectID == l.GetRequestorObjectID() {
 			brd.MyAccount = l.GetRequestorObjectID()
@@ -22,6 +23,7 @@ func NewBridge(l dynamic.Link, acc []dynamic.Account) Bridge {
 // NewLinkBridge creates a new bridge struct
 func NewLinkBridge(requester string, recipient string, acc []dynamic.Account) Bridge {
 	var brd Bridge
+	brd.State = 1
 	for _, a := range acc {
 		if a.ObjectID == requester {
 			brd.MyAccount = requester

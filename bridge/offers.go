@@ -24,30 +24,60 @@ func GetAllOffers(stopchan chan struct{}, links dynamic.ActiveLinks, accounts []
 				linkBridge := NewLinkBridge(offer.Sender, offer.Receiver, accounts)
 				pc, err := ConnectToIceServices(config)
 				if err == nil && offer.GetValue != "null" {
-					fmt.Println("Offer found for", offer.Sender)
 					linkBridge.Offer, _ = util.DecodeString(offer.GetValue)
-					//linkBridge.Offer = strings.ReplaceAll(offer.GetValue, `""`, "")
 					linkBridge.PeerConnection = pc
 					sd := webrtc.SessionDescription{Type: 1, SDP: linkBridge.Offer}
 					err = linkBridge.PeerConnection.SetRemoteDescription(sd)
 					if err != nil {
 						fmt.Println("GetAllOffers SetRemoteDescription error", err)
-						linkBridges.unconnected = append(linkBridges.unconnected, &linkBridge)
+						linkBridges.unconnected[linkBridge.LinkID()] = &linkBridge
 						continue
 					}
-					linkBridges.connected = append(linkBridges.connected, &linkBridge)
+					linkBridge.State = 2
+					fmt.Println("Offer found for", linkBridge.LinkAccount, linkBridge.LinkID())
+					linkBridges.unconnected[linkBridge.LinkID()] = &linkBridge
 				} else {
 					//fmt.Println("Offer found for", offer.Sender, "ConnectToIceServices failed", err)
-					linkBridges.unconnected = append(linkBridges.unconnected, &linkBridge)
+					linkBridges.unconnected[linkBridge.LinkID()] = &linkBridge
 				}
 			} else {
 				linkBridge := NewLinkBridge(offer.Sender, offer.Receiver, accounts)
 				pc, _ := ConnectToIceServices(config)
 				linkBridge.PeerConnection = pc
-				linkBridges.unconnected = append(linkBridges.unconnected, &linkBridge)
+				fmt.Println("Offer NOT found for", linkBridge.LinkAccount, linkBridge.LinkID())
+				linkBridges.unconnected[linkBridge.LinkID()] = &linkBridge
 			}
 		case <-stopchan:
 			fmt.Println("GetAllOffers stopped")
+			return false
+		}
+	}
+	return true
+}
+
+// GetOffers checks the DHT for WebRTC offers from all links
+func GetOffers(stopchan chan struct{}) bool {
+	fmt.Println("GetOffers started")
+	l := len(linkBridges.unconnected)
+	getOffers := make(chan dynamic.DHTGetReturn, l)
+	for _, link := range linkBridges.unconnected {
+		if link.State == 1 {
+			var linkBridge = NewLinkBridge(link.LinkAccount, link.MyAccount, accounts)
+			dynamicd.GetLinkRecord(linkBridge.LinkAccount, linkBridge.MyAccount, getOffers)
+		} else {
+			fmt.Println("GetOffers skipped", link.LinkAccount)
+			l--
+		}
+	}
+	for i := 0; i < l; i++ {
+		select {
+		default:
+			offer := <-getOffers
+			linkBridge := NewLinkBridge(offer.Sender, offer.Receiver, accounts)
+			linkBridges.unconnected[linkBridge.LinkID()] = &linkBridge
+			fmt.Println("GetOffers", offer)
+		case <-stopchan:
+			fmt.Println("PutOffers stopped")
 			return false
 		}
 	}
@@ -75,28 +105,32 @@ func PutOffers(stopchan chan struct{}) bool {
 	l := len(linkBridges.unconnected)
 	putOffers := make(chan dynamic.DHTPutReturn, l)
 	for _, link := range linkBridges.unconnected {
-		var linkBridge = NewLinkBridge(link.LinkAccount, link.MyAccount, accounts)
-		if link.PeerConnection == nil {
-			pc, err := ConnectToIceServices(config)
-			if err != nil {
-				fmt.Println("PutOffers error connecting tot ICE services", err)
-				continue
-			} else {
-				link.PeerConnection = pc
+		if link.State == 1 {
+			var linkBridge = NewLinkBridge(link.LinkAccount, link.MyAccount, accounts)
+			if link.PeerConnection == nil {
+				pc, err := ConnectToIceServices(config)
+				if err != nil {
+					fmt.Println("PutOffers error connecting tot ICE services", err)
+					continue
+				} else {
+					link.PeerConnection = pc
+				}
 			}
-		}
-		offer, _ := link.PeerConnection.CreateOffer(nil)
-		encoded, err := util.EncodeString(offer.SDP)
-		if err != nil {
-			fmt.Println("PutOffers error EncodeString", err)
-		}
-		dynamicd.PutLinkRecord(linkBridge.MyAccount, linkBridge.LinkAccount, encoded, putOffers)
-		link.Offer = offer.SDP
-		sd := webrtc.SessionDescription{Type: 1, SDP: link.Offer}
-		//fmt.Println("PutOffers sd", sd)
-		err = link.PeerConnection.SetLocalDescription(sd)
-		if err != nil {
-			fmt.Println("PutOffers error SetLocalDescription", err)
+			offer, _ := link.PeerConnection.CreateOffer(nil)
+			encoded, err := util.EncodeString(offer.SDP)
+			if err != nil {
+				fmt.Println("PutOffers error EncodeString", err)
+			}
+			dynamicd.PutLinkRecord(linkBridge.MyAccount, linkBridge.LinkAccount, encoded, putOffers)
+			link.Offer = offer.SDP
+			sd := webrtc.SessionDescription{Type: 1, SDP: link.Offer}
+			//fmt.Println("PutOffers sd", sd)
+			err = link.PeerConnection.SetLocalDescription(sd)
+			if err != nil {
+				fmt.Println("PutOffers error SetLocalDescription", err)
+			}
+		} else {
+			l--
 		}
 	}
 	for i := 0; i < l; i++ {

@@ -1,7 +1,9 @@
 package bridge
 
 import (
+	"crypto/sha256"
 	"fmt"
+	"sort"
 	"time"
 
 	"github.com/duality-solutions/web-bridge/init/settings"
@@ -15,6 +17,7 @@ type Bridge struct {
 	LinkAccount    string
 	Offer          string
 	Answer         string
+	State          uint16
 	LastPingEpoch  int
 	PeerConnection *webrtc.PeerConnection
 	DataChannel    *webrtc.DataChannel
@@ -22,8 +25,8 @@ type Bridge struct {
 
 // Bridges hold all link WebRTC bridges
 type Bridges struct {
-	connected   []*Bridge
-	unconnected []*Bridge
+	connected   map[string]*Bridge
+	unconnected map[string]*Bridge
 }
 
 var linkBridges Bridges
@@ -35,10 +38,9 @@ var links dynamic.ActiveLinks
 func initializeBridges(stopchan chan struct{}) bool {
 	// check all links for WebRTC offers in the DHT
 	if GetAllOffers(stopchan, links, accounts) {
-		fmt.Println("Get all offers complete. Found", len(linkBridges.connected), "Not found", len(linkBridges.unconnected))
+		fmt.Println("Get all offers complete. unconnected", len(linkBridges.unconnected))
 		// respond to all offers with a WebRTC answer and send it to the link using instant VGP messages
 		if SendAnswers(stopchan) {
-			fmt.Println("Send answers completed", len(linkBridges.connected))
 			// put WebRTC offers for unconnected links
 			if PutOffers(stopchan) {
 				fmt.Println("Put offers completed", len(linkBridges.unconnected))
@@ -71,9 +73,24 @@ func StartBridges(stopchan chan struct{}, c settings.Configuration, d dynamic.Dy
 	accounts = a
 	links = l
 	if dynamicd.WaitForSync(stopchan, 10, 10) {
+		linkBridges.connected = make(map[string]*Bridge)
+		linkBridges.unconnected = make(map[string]*Bridge)
 		if initializeBridges(stopchan) {
-			GetAnswers(stopchan)
-			fmt.Println("StartBridges stopped after GetAnswers")
+			for {
+				select {
+				default:
+					if !GetAnswers(stopchan) {
+						return
+					}
+					if !GetOffers(stopchan) {
+						return
+					}
+					time.Sleep(time.Second * 20)
+				case <-stopchan:
+					fmt.Println("StartBridges stopped")
+					return
+				}
+			}
 		}
 	} else {
 		fmt.Println("StartBridges stopped after WaitForSync")
@@ -87,4 +104,19 @@ func ShutdownBridges() {
 	ClearOffers()
 	// sleep for 20 seconds to make sure all clear take effect.
 	time.Sleep(time.Second * 20)
+}
+
+// LinkID returns an hashed id for the link
+func (b *Bridge) LinkID() string {
+	var ret string = ""
+	strs := []string{b.MyAccount, b.LinkAccount}
+	sort.Strings(strs)
+	for _, str := range strs {
+		ret += str
+	}
+	hash := sha256.New()
+	hash.Write([]byte(ret))
+	bs := hash.Sum(nil)
+	hs := fmt.Sprintf("%x", bs)
+	return hs
 }
