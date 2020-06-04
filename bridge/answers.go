@@ -31,8 +31,8 @@ func SendAnswers(stopchan chan struct{}) bool {
 						// clear offer since it didn't work
 						// remove from connected and add to unconnected
 					} else {
-						sd = webrtc.SessionDescription{Type: 2, SDP: link.Answer}
-						err = link.PeerConnection.SetLocalDescription(sd)
+						link.Answer = answer.SDP
+						err = link.PeerConnection.SetLocalDescription(answer)
 						if err != nil {
 							fmt.Println("SendAnswers SetLocalDescription error ", err)
 						} else {
