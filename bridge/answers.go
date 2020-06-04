@@ -106,7 +106,6 @@ func GetAnswers(stopchan chan struct{}) bool {
 				if err != nil {
 					fmt.Println("GetAnswers error", link.LinkAccount, err)
 				} else {
-					fmt.Println("GetAnswers found answer!", link.LinkAccount, link.LinkID())
 					var answer dynamic.GetMessageReturnJSON
 					for _, res := range *answers {
 						if res.TimestampEpoch > answer.TimestampEpoch {
@@ -122,7 +121,7 @@ func GetAnswers(stopchan chan struct{}) bool {
 						fmt.Println("GetAnswers DecodeString error", link.LinkAccount, err)
 						continue
 					}
-					//link.Answer = strings.ReplaceAll(answer.Message, `""`, "") // remove double quotes in answer
+					fmt.Println("GetAnswers found answer!", link.LinkAccount, link.LinkID())
 					if link.PeerConnection == nil {
 						fmt.Println("GetAnswers PeerConnection nil for", link.LinkAccount)
 						continue
@@ -141,7 +140,7 @@ func GetAnswers(stopchan chan struct{}) bool {
 							fmt.Printf("OnICEGatheringStateChange has changed: %s\n", gathererState.String())
 						})
 						link.PeerConnection.OnICECandidate(func(candidate *webrtc.ICECandidate) {
-							fmt.Printf("OnICECandidate has changed: %s\n", candidate.ToJSON())
+							fmt.Printf("OnICECandidate has changed: %s\n", candidate.String())
 						})
 						link.PeerConnection.OnConnectionStateChange(func(state webrtc.PeerConnectionState) {
 							fmt.Printf("OnConnectionStateChange has changed: %s\n", state.String())
