@@ -14,7 +14,7 @@ func SendAnswers(stopchan chan struct{}) bool {
 	for _, link := range linkBridges.unconnected {
 		select {
 		default:
-			if link.State > 1 && link.PeerConnection != nil && len(link.Offer) > 10 {
+			if link.State == 2 && link.PeerConnection != nil && len(link.Offer) > 10 {
 				sd := webrtc.SessionDescription{Type: 1, SDP: link.Offer}
 				err := link.PeerConnection.SetRemoteDescription(sd)
 				if err != nil {

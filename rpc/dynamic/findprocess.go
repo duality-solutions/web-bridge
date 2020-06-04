@@ -23,7 +23,7 @@ func FindDynamicdProcess() (*ps.Process, error) {
 			if strings.Index(cmd, "-port="+strconv.Itoa(int(DefaultPort))) > 0 && strings.Index(cmd, "-rpcport="+strconv.Itoa(int(DefaultRPCPort))) > 0 {
 				return process, nil
 			}
-			fmt.Println("Incorrect dynamicd process cmd", cmd, len(cmd))
+			//fmt.Println("Different dynamicd process found", cmd)
 		}
 	}
 	return nil, fmt.Errorf("Running dynamicd process not found")

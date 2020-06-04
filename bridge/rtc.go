@@ -15,26 +15,20 @@ Offer Peer (EstablishRTC)					 Answer Peer (WaitForRTC)
 1- NewPeerConnection                         1- NewPeerConnection
 2- CreateDataChannel                         2- OnICEConnectionStateChange
 3- OnICEConnectionStateChange                3- OnDataChannel
-4- dataChannel.OnOpen						 4- SetRemoteDescription
-5- dataChannel.OnMessage					 5- CreateAnswer
-6- CreateOffer								 6- SetLocalDescription
+4- dataChannel.OnOpen                        4- SetRemoteDescription
+5- dataChannel.OnMessage                     5- CreateAnswer
+6- CreateOffer                               6- SetLocalDescription
 7- SetLocalDescription
 8- SetRemoteDescription
 */
 
-// EstablishRTC tries to establish a real time connection (RTC) bridge connection with the link
+// EstablishRTC tries to establish a real time connection (RTC) bridge with the link
 func EstablishRTC(link *Bridge) {
 	if link.PeerConnection == nil {
 		fmt.Println("EstablishRTC PeerConnection nil for", link.LinkAccount)
 		return
 	}
 	fmt.Println("EstablishRTC found answer!", link.LinkAccount, link.LinkID())
-	// Create a datachannel with label 'data'
-	dataChannel, err := link.PeerConnection.CreateDataChannel(link.MyAccount, nil)
-	if err != nil {
-		fmt.Println("EstablishRTC error creating dataChannel for", link.LinkAccount, link.LinkID())
-		return
-	}
 	// Set the handler for ICE connection state
 	// This will notify you when the peer has connected/disconnected
 	link.PeerConnection.OnICEConnectionStateChange(func(connectionState webrtc.ICEConnectionState) {
@@ -42,8 +36,8 @@ func EstablishRTC(link *Bridge) {
 	})
 
 	// Register channel opening handling
-	dataChannel.OnOpen(func() {
-		fmt.Printf("Data channel '%s'-'%d' open. Random messages will now be sent to any connected DataChannels every 5 seconds\n", dataChannel.Label(), dataChannel.ID())
+	link.DataChannel.OnOpen(func() {
+		fmt.Printf("Data channel '%s'-'%d' open. Random messages will now be sent to any connected DataChannels every 5 seconds\n", link.DataChannel.Label(), link.DataChannel.ID())
 
 		for range time.NewTicker(5 * time.Second).C {
 			rand, _ := util.RandomString(32)
@@ -51,7 +45,7 @@ func EstablishRTC(link *Bridge) {
 			fmt.Printf("Sending '%s'\n", message)
 
 			// Send the message as text
-			sendErr := dataChannel.SendText(message)
+			sendErr := link.DataChannel.SendText(message)
 			if sendErr != nil {
 				fmt.Printf("SendText error: %s\n", sendErr)
 			}
@@ -59,12 +53,19 @@ func EstablishRTC(link *Bridge) {
 	})
 
 	// Register text message handling
-	dataChannel.OnMessage(func(msg webrtc.DataChannelMessage) {
-		fmt.Printf("Message from DataChannel '%s': '%s'\n", dataChannel.Label(), string(msg.Data))
+	link.DataChannel.OnMessage(func(msg webrtc.DataChannelMessage) {
+		fmt.Printf("Message from DataChannel '%s': '%s'\n", link.DataChannel.Label(), string(msg.Data))
 	})
 
+	// Set the local SessionDescription
+	sd := webrtc.SessionDescription{Type: 1, SDP: link.Offer}
+	err := link.PeerConnection.SetLocalDescription(sd)
+	if err != nil {
+		fmt.Println("GetAnswers error SetLocalDescription", err)
+	}
+
 	// Set the remote SessionDescription
-	sd := webrtc.SessionDescription{Type: 2, SDP: link.Answer}
+	sd = webrtc.SessionDescription{Type: 2, SDP: link.Answer}
 	err = link.PeerConnection.SetRemoteDescription(sd)
 	if err != nil {
 		fmt.Println("GetAnswers SetRemoteDescription error ", err)
@@ -74,7 +75,7 @@ func EstablishRTC(link *Bridge) {
 	select {}
 }
 
-// WaitForRTC waits for a real time connection (RTC) bridge connection with the link
+// WaitForRTC waits for a real time connection (RTC) bridge with the link
 func WaitForRTC(link *Bridge, answer webrtc.SessionDescription) {
 	if link.PeerConnection == nil {
 		fmt.Println("EstablishRTC PeerConnection nil for", link.LinkAccount)
@@ -117,15 +118,8 @@ func WaitForRTC(link *Bridge, answer webrtc.SessionDescription) {
 	// Set the local SessionDescription
 	err := link.PeerConnection.SetLocalDescription(answer)
 	if err != nil {
-		fmt.Println("SendAnswers SetLocalDescription error ", err)
-	} else {
-		dc, err := link.PeerConnection.CreateDataChannel(link.LinkAccount, nil)
-		if err != nil {
-			fmt.Println("GetAnswers CreateDataChannel error", err)
-		}
-		fmt.Println("GetAnswers Data Channel Negotiated", dc.Negotiated())
+		fmt.Println("WaitForRTC SetLocalDescription error ", err)
 	}
-
 	// Block forever
 	select {}
 }
