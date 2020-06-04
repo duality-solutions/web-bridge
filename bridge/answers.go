@@ -2,7 +2,6 @@ package bridge
 
 import (
 	"fmt"
-	"time"
 
 	util "github.com/duality-solutions/web-bridge/internal/utilities"
 	"github.com/duality-solutions/web-bridge/rpc/dynamic"
@@ -28,19 +27,7 @@ func SendAnswers(stopchan chan struct{}) bool {
 						// clear offer since it didn't work
 						// remove from connected and add to unconnected
 					} else {
-						fmt.Println("SendAnswers created answer!", link.LinkAccount, link.LinkID())
 						link.Answer = answer.SDP
-						err = link.PeerConnection.SetLocalDescription(answer)
-						if err != nil {
-							fmt.Println("SendAnswers SetLocalDescription error ", err)
-						} else {
-							dc, err := link.PeerConnection.CreateDataChannel(link.LinkAccount, nil)
-							if err != nil {
-								fmt.Println("GetAnswers CreateDataChannel error", err)
-							}
-							fmt.Println("GetAnswers Data Channel Negotiated", dc.Negotiated())
-						}
-						//fmt.Println("SendLinkMessage", link.LinkAccount, answer.SDP)
 						encoded, err := util.EncodeString(answer.SDP)
 						if err != nil {
 							fmt.Println("SendAnswers EncodeString error", link.LinkAccount, err)
@@ -49,35 +36,7 @@ func SendAnswers(stopchan chan struct{}) bool {
 						if err != nil {
 							fmt.Println("SendAnswers dynamicd.SendLinkMessage error", link.LinkAccount, err)
 						}
-						// Set the handler for ICE connection state
-						// This will notify you when the peer has connected/disconnected
-						link.PeerConnection.OnICEConnectionStateChange(func(connectionState webrtc.ICEConnectionState) {
-							fmt.Printf("ICE Connection State has changed: %s\n", connectionState.String())
-						})
-						// Register data channel creation handling
-						link.PeerConnection.OnDataChannel(func(d *webrtc.DataChannel) {
-							fmt.Printf("New DataChannel %s %d\n", d.Label(), d.ID())
-							// Register channel opening handling
-							d.OnOpen(func() {
-								fmt.Printf("Data channel '%s'-'%d' open. Random messages will now be sent to any connected DataChannels every 5 seconds\n", d.Label(), d.ID())
-
-								for range time.NewTicker(5 * time.Second).C {
-									message, _ := util.RandomString(24)
-									fmt.Printf("Sending '%s'\n", message)
-
-									// Send the message as text
-									sendErr := d.SendText(message)
-									if sendErr != nil {
-										panic(sendErr)
-									}
-								}
-							})
-
-							// Register text message handling
-							d.OnMessage(func(msg webrtc.DataChannelMessage) {
-								fmt.Printf("Message from DataChannel '%s': '%s'\n", d.Label(), string(msg.Data))
-							})
-						})
+						go WaitForRTC(link, answer)
 					}
 				}
 			}
@@ -121,63 +80,7 @@ func GetAnswers(stopchan chan struct{}) bool {
 						fmt.Println("GetAnswers DecodeString error", link.LinkAccount, err)
 						continue
 					}
-					fmt.Println("GetAnswers found answer!", link.LinkAccount, link.LinkID())
-					if link.PeerConnection == nil {
-						fmt.Println("GetAnswers PeerConnection nil for", link.LinkAccount)
-						continue
-					}
-					sd := webrtc.SessionDescription{Type: 2, SDP: link.Answer}
-					err := link.PeerConnection.SetRemoteDescription(sd)
-					if err != nil {
-						fmt.Println("GetAnswers SetRemoteDescription error ", err)
-					} else {
-						// Set the handler for ICE connection state
-						// This will notify you when the peer has connected/disconnected
-						link.PeerConnection.OnICEConnectionStateChange(func(connectionState webrtc.ICEConnectionState) {
-							fmt.Printf("OnICEConnectionStateChange has changed: %s\n", connectionState.String())
-						})
-						link.PeerConnection.OnICEGatheringStateChange(func(gathererState webrtc.ICEGathererState) {
-							fmt.Printf("OnICEGatheringStateChange has changed: %s\n", gathererState.String())
-						})
-						link.PeerConnection.OnICECandidate(func(candidate *webrtc.ICECandidate) {
-							fmt.Printf("OnICECandidate has changed: %s\n", candidate.String())
-						})
-						link.PeerConnection.OnConnectionStateChange(func(state webrtc.PeerConnectionState) {
-							fmt.Printf("OnConnectionStateChange has changed: %s\n", state.String())
-						})
-						link.PeerConnection.OnSignalingStateChange(func(sig webrtc.SignalingState) {
-							fmt.Printf("OnSignalingStateChange has changed: %s\n", sig.String())
-						})
-						// Register data channel creation handling
-						link.PeerConnection.OnDataChannel(func(d *webrtc.DataChannel) {
-							fmt.Printf("New DataChannel %s %d\n", d.Label(), d.ID())
-							// Register channel opening handling
-							d.OnOpen(func() {
-								fmt.Printf("Data channel '%s'-'%d' open. Random messages will now be sent to any connected DataChannels every 5 seconds\n", d.Label(), d.ID())
-
-								for range time.NewTicker(5 * time.Second).C {
-									message, _ := util.RandomString(12)
-									fmt.Printf("Sending '%s'\n", message)
-
-									// Send the message as text
-									sendErr := d.SendText(message)
-									if sendErr != nil {
-										panic(sendErr)
-									}
-								}
-							})
-
-							// Register text message handling
-							d.OnMessage(func(msg webrtc.DataChannelMessage) {
-								fmt.Printf("Message from DataChannel '%s': '%s'\n", d.Label(), string(msg.Data))
-							})
-						})
-						dc, err := link.PeerConnection.CreateDataChannel(link.LinkAccount, nil)
-						if err != nil {
-							fmt.Println("GetAnswers CreateDataChannel error", err)
-						}
-						fmt.Println("GetAnswers Data Channel Negotiated", dc.Negotiated())
-					}
+					go EstablishRTC(link)
 				}
 			}
 		case <-stopchan:
