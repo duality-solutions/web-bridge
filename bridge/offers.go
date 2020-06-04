@@ -73,9 +73,11 @@ func GetOffers(stopchan chan struct{}) bool {
 		select {
 		default:
 			offer := <-getOffers
-			linkBridge := NewLinkBridge(offer.Sender, offer.Receiver, accounts)
-			linkBridges.unconnected[linkBridge.LinkID()] = &linkBridge
-			fmt.Println("GetOffers", offer)
+			if len(offer.GetValue) > 10 {
+				linkBridge := NewLinkBridge(offer.Sender, offer.Receiver, accounts)
+				linkBridges.unconnected[linkBridge.LinkID()] = &linkBridge
+				fmt.Println("GetOffers", offer)
+			}
 		case <-stopchan:
 			fmt.Println("PutOffers stopped")
 			return false
