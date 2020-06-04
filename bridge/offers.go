@@ -2,8 +2,8 @@ package bridge
 
 import (
 	"fmt"
-	"strings"
 
+	util "github.com/duality-solutions/web-bridge/internal/utilities"
 	"github.com/duality-solutions/web-bridge/rpc/dynamic"
 	"github.com/pion/webrtc/v2"
 )
@@ -24,8 +24,9 @@ func GetAllOffers(stopchan chan struct{}, links dynamic.ActiveLinks, accounts []
 				linkBridge := NewLinkBridge(offer.Sender, offer.Receiver, accounts)
 				pc, err := ConnectToIceServices(config)
 				if err == nil && offer.GetValue != "null" {
-					//fmt.Println("Offer found for", offer.Sender)
-					linkBridge.Offer = strings.ReplaceAll(offer.GetValue, `""`, "")
+					fmt.Println("Offer found for", offer.Sender)
+					linkBridge.Offer, _ = util.DecodeString(offer.GetValue)
+					//linkBridge.Offer = strings.ReplaceAll(offer.GetValue, `""`, "")
 					linkBridge.PeerConnection = pc
 					sd := webrtc.SessionDescription{Type: 1, SDP: linkBridge.Offer}
 					err = linkBridge.PeerConnection.SetRemoteDescription(sd)
@@ -85,11 +86,15 @@ func PutOffers(stopchan chan struct{}) bool {
 			}
 		}
 		offer, _ := link.PeerConnection.CreateOffer(nil)
-		dynamicd.PutLinkRecord(linkBridge.MyAccount, linkBridge.LinkAccount, offer.SDP, putOffers)
+		encoded, err := util.EncodeString(offer.SDP)
+		if err != nil {
+			fmt.Println("PutOffers error EncodeString", err)
+		}
+		dynamicd.PutLinkRecord(linkBridge.MyAccount, linkBridge.LinkAccount, encoded, putOffers)
 		link.Offer = offer.SDP
 		sd := webrtc.SessionDescription{Type: 1, SDP: link.Offer}
 		//fmt.Println("PutOffers sd", sd)
-		err := link.PeerConnection.SetLocalDescription(sd)
+		err = link.PeerConnection.SetLocalDescription(sd)
 		if err != nil {
 			fmt.Println("PutOffers error SetLocalDescription", err)
 		}

@@ -43,9 +43,13 @@ func SendAnswers(stopchan chan struct{}) bool {
 							fmt.Println("GetAnswers Data Channel Negotiated", dc.Negotiated())
 						}
 						//fmt.Println("SendLinkMessage", link.LinkAccount, answer.SDP)
-						_, err := dynamicd.SendLinkMessage(link.MyAccount, link.LinkAccount, answer.SDP)
+						encoded, err := util.EncodeString(answer.SDP)
 						if err != nil {
-							fmt.Println("SendLinkMessage error", link.LinkAccount, err)
+							fmt.Println("SendAnswers EncodeString error", link.LinkAccount, err)
+						}
+						_, err = dynamicd.SendLinkMessage(link.MyAccount, link.LinkAccount, encoded)
+						if err != nil {
+							fmt.Println("SendAnswers dynamicd.SendLinkMessage error", link.LinkAccount, err)
 						}
 						// Set the handler for ICE connection state
 						// This will notify you when the peer has connected/disconnected
@@ -120,7 +124,12 @@ func GetAnswers(stopchan chan struct{}) bool {
 								fmt.Println("GetAnswers for", link.LinkAccount, "not found")
 								continue
 							}
-							link.Answer = strings.ReplaceAll(answer.Message, `""`, "") // remove double quotes in answer
+							link.Answer, err = util.DecodeString(answer.Message)
+							if err != nil {
+								fmt.Println("GetAnswers DecodeString error", link.LinkAccount, err)
+								continue
+							}
+							//link.Answer = strings.ReplaceAll(answer.Message, `""`, "") // remove double quotes in answer
 							if link.PeerConnection == nil {
 								fmt.Println("GetAnswers PeerConnection nil for", link.LinkAccount)
 								continue
