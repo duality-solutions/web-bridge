@@ -37,6 +37,7 @@ func SendAnswers(stopchan chan struct{}) bool {
 							fmt.Println("SendAnswers dynamicd.SendLinkMessage error", link.LinkAccount, err)
 						}
 						go WaitForRTC(link, answer)
+						link.State = 3
 					}
 				}
 			}
@@ -81,6 +82,7 @@ func GetAnswers(stopchan chan struct{}) bool {
 						continue
 					}
 					go EstablishRTC(link)
+					link.State = 4
 				}
 			}
 		case <-stopchan:
