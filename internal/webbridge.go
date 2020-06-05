@@ -70,6 +70,8 @@ var debug = false
 var shutdown = false
 var test = false
 var walletpassphrase = ""
+var testCreateOffer = false
+var testWaitForOffer = false
 
 // Init is used to begin all WebBridge tasks
 func Init(version, githash string) error {
@@ -83,6 +85,10 @@ func Init(version, githash string) error {
 				debug = true
 			case "-test":
 				test = true
+			case "-testCreateOffer":
+				testCreateOffer = true
+			case "-testWaitForOffer":
+				testWaitForOffer = true
 			}
 		}
 	}
@@ -97,6 +103,18 @@ func Init(version, githash string) error {
 	if debug {
 		fmt.Println("Config", config)
 	}
+
+	if testCreateOffer || testWaitForOffer {
+		if testCreateOffer {
+			bridge.TestCreateOffer()
+		} else if testWaitForOffer {
+			reader := bufio.NewReader(os.Stdin)
+			fmt.Print("paste offer> ")
+			offer, _ := reader.ReadString('\n')
+			bridge.TestWaitForOffer(offer)
+		}
+	}
+
 	// Connect to ICE services
 	_, err := bridge.ConnectToIceServices(config)
 	if err != nil {
