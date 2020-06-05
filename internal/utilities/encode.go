@@ -4,11 +4,45 @@ import (
 	"bytes"
 	"compress/gzip"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 )
 
-// EncodeString compress with zip and encode in base64
+// EncodeObject marshals the object to JSON, compresses the JSON with zip and returns a base64 encoded string
+func EncodeObject(obj interface{}) (string, error) {
+	b, err := json.Marshal(obj)
+	if err != nil {
+		return "", fmt.Errorf("EncodeObject error after Marshal %v", err)
+	}
+	z, err := zipBytes(b)
+	if err != nil {
+		return "", fmt.Errorf("EncodeObject error after zipBytes %v", err)
+	}
+	return base64.StdEncoding.EncodeToString(z), nil
+}
+
+// DecodeObject decodes the base64 encoded string, unzips the compressed bytes and marshals the JSON into an object
+func DecodeObject(in string, obj interface{}) error {
+	b, err := base64.StdEncoding.DecodeString(in)
+	if err != nil {
+		return fmt.Errorf("DecodeObject error after DecodeString %v", err)
+	}
+
+	uz, err := unzipBytes(b)
+	if err != nil {
+		return fmt.Errorf("DecodeObject error after unzipBytes %v", err)
+	}
+
+	err = json.Unmarshal(uz, obj)
+	if err != nil {
+		return fmt.Errorf("DecodeObject error after Unmarshal %v", err)
+	}
+
+	return nil
+}
+
+// EncodeString compresses the input string using zip and returns a base64 encoded string
 func EncodeString(in string) (string, error) {
 	b := []byte(in)
 	z, err := zipBytes(b)
@@ -18,7 +52,7 @@ func EncodeString(in string) (string, error) {
 	return base64.StdEncoding.EncodeToString(z), nil
 }
 
-// DecodeString decodes the zip compressed input from base64
+// DecodeString decodes the base64 string, unzips the data and returns the original encoded string
 func DecodeString(in string) (string, error) {
 	b, err := base64.StdEncoding.DecodeString(in)
 	if err != nil {
