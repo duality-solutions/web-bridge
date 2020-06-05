@@ -5,7 +5,6 @@ import (
 
 	util "github.com/duality-solutions/web-bridge/internal/utilities"
 	"github.com/duality-solutions/web-bridge/rpc/dynamic"
-	"github.com/pion/webrtc/v2"
 )
 
 // SendAnswers uses VPG instant messages to send an answer to a WebRTC offer
@@ -14,9 +13,8 @@ func SendAnswers(stopchan chan struct{}) bool {
 	for _, link := range linkBridges.unconnected {
 		select {
 		default:
-			if link.State == 2 && link.PeerConnection != nil && len(link.Offer) > 10 {
-				sd := webrtc.SessionDescription{Type: 1, SDP: link.Offer}
-				err := link.PeerConnection.SetRemoteDescription(sd)
+			if link.State == 2 && link.PeerConnection != nil && len(link.Offer.SDP) > 10 {
+				err := link.PeerConnection.SetRemoteDescription(link.Offer)
 				if err != nil {
 					// move to unconnected
 					fmt.Printf("SendAnswers failed to connect to link %s. Error %s\n", link.LinkAccount, err)
@@ -27,10 +25,10 @@ func SendAnswers(stopchan chan struct{}) bool {
 						// clear offer since it didn't work
 						// remove from connected and add to unconnected
 					} else {
-						link.Answer = answer.SDP
-						encoded, err := util.EncodeString(answer.SDP)
+						link.Answer = answer
+						encoded, err := util.EncodeObject(answer)
 						if err != nil {
-							fmt.Println("SendAnswers EncodeString error", link.LinkAccount, err)
+							fmt.Println("SendAnswers EncodeObject error", link.LinkAccount, err)
 						}
 						_, err = dynamicd.SendLinkMessage(link.MyAccount, link.LinkAccount, encoded)
 						if err != nil {
@@ -76,9 +74,9 @@ func GetAnswers(stopchan chan struct{}) bool {
 						fmt.Println("GetAnswers for", link.LinkAccount, "not found")
 						continue
 					}
-					link.Answer, err = util.DecodeString(answer.Message)
+					err = util.DecodeObject(answer.Message, &link.Answer)
 					if err != nil {
-						fmt.Println("GetAnswers DecodeString error", link.LinkAccount, err)
+						fmt.Println("GetAnswers DecodeObject error", link.LinkAccount, err)
 						continue
 					}
 					go EstablishRTC(link)

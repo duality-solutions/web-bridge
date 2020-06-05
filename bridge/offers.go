@@ -23,7 +23,11 @@ func GetAllOffers(stopchan chan struct{}, links dynamic.ActiveLinks, accounts []
 				linkBridge := NewLinkBridge(offer.Sender, offer.Receiver, accounts)
 				pc, err := ConnectToIceServices(config)
 				if err == nil {
-					linkBridge.Offer, _ = util.DecodeString(offer.GetValue)
+					err = util.DecodeObject(offer.GetValue, &linkBridge.Offer)
+					if err != nil {
+						fmt.Println("GetAllOffers error with DecodeObject", linkBridge.LinkAccount, linkBridge.LinkID(), err)
+						continue
+					}
 					linkBridge.PeerConnection = pc
 					linkBridge.State = 2
 					fmt.Println("Offer found for", linkBridge.LinkAccount, linkBridge.LinkID())
@@ -65,7 +69,11 @@ func GetOffers(stopchan chan struct{}) bool {
 			offer := <-getOffers
 			if len(offer.GetValue) > 10 {
 				linkBridge := NewLinkBridge(offer.Sender, offer.Receiver, accounts)
-				linkBridge.Offer, _ = util.DecodeString(offer.GetValue)
+				err := util.DecodeObject(offer.GetValue, &linkBridge.Offer)
+				if err != nil {
+					fmt.Println("Error DecodeObject", linkBridge.LinkAccount, linkBridge.LinkID(), err)
+					continue
+				}
 				pc, _ := ConnectToIceServices(config)
 				linkBridge.PeerConnection = pc
 				linkBridge.State = 2
@@ -118,13 +126,12 @@ func PutOffers(stopchan chan struct{}) bool {
 					link.DataChannel = dataChannel
 				}
 			}
-			offer, _ := link.PeerConnection.CreateOffer(nil)
-			encoded, err := util.EncodeString(offer.SDP)
+			link.Offer, _ = link.PeerConnection.CreateOffer(nil)
+			encoded, err := util.EncodeObject(link.Offer)
 			if err != nil {
-				fmt.Println("PutOffers error EncodeString", err)
+				fmt.Println("PutOffers error EncodeObject", err)
 			}
 			dynamicd.PutLinkRecord(linkBridge.MyAccount, linkBridge.LinkAccount, encoded, putOffers)
-			link.Offer = offer.SDP
 		} else {
 			l--
 		}

@@ -15,8 +15,8 @@ import (
 type Bridge struct {
 	MyAccount      string
 	LinkAccount    string
-	Offer          string
-	Answer         string
+	Offer          webrtc.SessionDescription
+	Answer         webrtc.SessionDescription
 	State          uint16
 	LastPingEpoch  int
 	PeerConnection *webrtc.PeerConnection
