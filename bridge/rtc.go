@@ -61,16 +61,16 @@ func EstablishRTC(link *Bridge) {
 	sd := webrtc.SessionDescription{Type: 1, SDP: link.Offer}
 	err := link.PeerConnection.SetLocalDescription(sd)
 	if err != nil {
-		fmt.Println("GetAnswers error SetLocalDescription", err)
+		fmt.Println("EstablishRTC error SetLocalDescription", err)
 	}
 
 	// Set the remote SessionDescription
 	sd = webrtc.SessionDescription{Type: 2, SDP: link.Answer}
 	err = link.PeerConnection.SetRemoteDescription(sd)
 	if err != nil {
-		fmt.Println("GetAnswers SetRemoteDescription error ", err)
+		fmt.Println("EstablishRTC SetRemoteDescription error ", err)
 	}
-
+	fmt.Println("EstablishRTC SetRemoteDescription", link.LinkAccount)
 	// Block forever
 	select {}
 }
@@ -120,6 +120,7 @@ func WaitForRTC(link *Bridge, answer webrtc.SessionDescription) {
 	if err != nil {
 		fmt.Println("WaitForRTC SetLocalDescription error ", err)
 	}
+	fmt.Println("WaitForRTC SetLocalDescription", link.LinkAccount)
 	// Block forever
 	select {}
 }
