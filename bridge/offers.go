@@ -78,6 +78,7 @@ func GetOffers(stopchan chan struct{}) bool {
 				linkBridge.PeerConnection = pc
 				linkBridge.State = 2
 				fmt.Println("Offer found for", linkBridge.LinkAccount, linkBridge.LinkID())
+				// TODO: clear put offer in DHT
 				linkBridges.unconnected[linkBridge.LinkID()] = &linkBridge
 			}
 		case <-stopchan:

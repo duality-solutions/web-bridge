@@ -41,6 +41,11 @@ func initializeBridges(stopchan chan struct{}) bool {
 		fmt.Println("Get all offers complete. unconnected", len(linkBridges.unconnected))
 		// respond to all offers with a WebRTC answer and send it to the link using instant VGP messages
 		if SendAnswers(stopchan) {
+			if GetOffers(stopchan) {
+				fmt.Println("get offers completed", len(linkBridges.unconnected))
+			} else {
+				return false
+			}
 			// put WebRTC offers for unconnected links
 			if PutOffers(stopchan) {
 				fmt.Println("Put offers completed", len(linkBridges.unconnected))
