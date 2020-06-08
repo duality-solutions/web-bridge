@@ -36,6 +36,8 @@ func SendAnswers(stopchan chan struct{}) bool {
 						}
 						go WaitForRTC(link, answer)
 						link.State = 3
+						delete(linkBridges.unconnected, link.LinkID())
+						linkBridges.connected[link.LinkID()] = link
 					}
 				}
 			}
@@ -81,6 +83,8 @@ func GetAnswers(stopchan chan struct{}) bool {
 					}
 					go EstablishRTC(link)
 					link.State = 4
+					delete(linkBridges.unconnected, link.LinkID())
+					linkBridges.connected[link.LinkID()] = link
 				}
 			}
 		case <-stopchan:
