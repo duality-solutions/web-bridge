@@ -183,14 +183,14 @@ func Init(version, githash string) error {
 				}
 			}
 		}
-		stopWatcher := make(chan struct{})
-		dynamic.WatchProcess(stopWatcher, 10, walletpassphrase)
 		al, errLinks := dynamicd.GetActiveLinks()
 		if errLinks != nil {
 			fmt.Println("GetActiveLinks error", errLinks)
+		} else {
+			fmt.Printf("Found %v links\n", len(al.Links))
 		}
-		// TODO: Establishing WebRTC connections with links
-		// TODO: Starting HTTP bridges for active links
+		stopWatcher := make(chan struct{})
+		dynamic.WatchProcess(stopWatcher, 10, walletpassphrase)
 		// TODO: REST API running
 		// TODO: Admin console running
 		var sync = false
