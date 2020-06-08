@@ -32,16 +32,16 @@ func EstablishRTC(link *Bridge) {
 	// Set the handler for ICE connection state
 	// This will notify you when the peer has connected/disconnected
 	link.PeerConnection.OnICEConnectionStateChange(func(connectionState webrtc.ICEConnectionState) {
-		fmt.Printf("ICE Connection State has changed: %s\n", connectionState.String())
+		fmt.Printf("ICE Connection State has changed for %s: %s\n", link.LinkParticipants(), connectionState.String())
 	})
 
 	// Register channel opening handling
 	link.DataChannel.OnOpen(func() {
 		fmt.Printf("Data channel '%s'-'%d' open. Random messages will now be sent to any connected DataChannels every 5 seconds\n", link.DataChannel.Label(), link.DataChannel.ID())
 
-		for range time.NewTicker(5 * time.Second).C {
-			rand, _ := util.RandomString(32)
-			message := "From " + link.MyAccount + " " + rand
+		for range time.NewTicker(30 * time.Second).C {
+			rand, _ := util.RandomString(7)
+			message := "From " + link.MyAccount + " to " + link.LinkAccount + " :" + rand
 			fmt.Printf("Sending '%s'\n", message)
 
 			// Send the message as text
@@ -60,13 +60,13 @@ func EstablishRTC(link *Bridge) {
 	// Set the local SessionDescription
 	err := link.PeerConnection.SetLocalDescription(link.Offer)
 	if err != nil {
-		fmt.Println("EstablishRTC error SetLocalDescription", err)
+		fmt.Println("EstablishRTC error SetLocalDescription", link.LinkParticipants(), err)
 	}
 
 	// Set the remote SessionDescription
 	err = link.PeerConnection.SetRemoteDescription(link.Answer)
 	if err != nil {
-		fmt.Println("EstablishRTC SetRemoteDescription error ", err)
+		fmt.Println("EstablishRTC SetRemoteDescription error ", link.LinkParticipants(), err)
 	}
 	fmt.Println("EstablishRTC SetRemoteDescription", link.LinkAccount)
 	// Block forever
@@ -84,7 +84,7 @@ func WaitForRTC(link *Bridge, answer webrtc.SessionDescription) {
 	// Set the handler for ICE connection state
 	// This will notify you when the peer has connected/disconnected
 	link.PeerConnection.OnICEConnectionStateChange(func(connectionState webrtc.ICEConnectionState) {
-		fmt.Printf("ICE Connection State has changed: %s\n", connectionState.String())
+		fmt.Printf("ICE Connection State has changed for %s: %s\n", link.LinkParticipants(), connectionState.String())
 	})
 
 	// Register data channel creation handling
@@ -94,9 +94,9 @@ func WaitForRTC(link *Bridge, answer webrtc.SessionDescription) {
 		d.OnOpen(func() {
 			fmt.Printf("Data channel '%s'-'%d' open. Random messages will now be sent to any connected DataChannels every 5 seconds\n", d.Label(), d.ID())
 
-			for range time.NewTicker(5 * time.Second).C {
-				rand, _ := util.RandomString(16)
-				message := "From " + link.MyAccount + " " + rand
+			for range time.NewTicker(30 * time.Second).C {
+				rand, _ := util.RandomString(7)
+				message := "From " + link.MyAccount + " to " + link.LinkAccount + " :" + rand
 				fmt.Printf("Sending '%s'\n", message)
 
 				// Send the message as text
@@ -116,7 +116,7 @@ func WaitForRTC(link *Bridge, answer webrtc.SessionDescription) {
 	// Set the local SessionDescription
 	err := link.PeerConnection.SetLocalDescription(answer)
 	if err != nil {
-		fmt.Println("WaitForRTC SetLocalDescription error ", err)
+		fmt.Println("WaitForRTC SetLocalDescription error ", link.LinkParticipants(), err)
 	}
 	fmt.Println("WaitForRTC SetLocalDescription", link.LinkAccount)
 	// Block forever
