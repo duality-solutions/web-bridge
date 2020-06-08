@@ -29,14 +29,13 @@ type Account struct {
 // GetMyAccounts returns all BDAP accounts from the wallet
 func (d *Dynamicd) GetMyAccounts() (*[]Account, error) {
 	var accountsGeneric map[string]interface{}
+	var accounts = []Account{}
 	req, _ := NewRequest("dynamic-cli mybdapaccounts")
 	rawResp := []byte(<-d.ExecCmdRequest(req))
 	errUnmarshal := json.Unmarshal(rawResp, &accountsGeneric)
 	if errUnmarshal != nil {
-		fmt.Println("Outer error", errUnmarshal)
-		return nil, errUnmarshal
+		return &accounts, errUnmarshal
 	}
-	var accounts []Account
 	for _, v := range accountsGeneric {
 		b, err := json.Marshal(v)
 		if err == nil {
