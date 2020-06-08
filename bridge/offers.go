@@ -119,7 +119,7 @@ func PutOffers(stopchan chan struct{}) bool {
 					continue
 				} else {
 					link.PeerConnection = pc
-					dataChannel, err := link.PeerConnection.CreateDataChannel(link.MyAccount, nil)
+					dataChannel, err := link.PeerConnection.CreateDataChannel(link.LinkParticipants(), nil)
 					if err != nil {
 						fmt.Println("PutOffers error creating dataChannel for", link.LinkAccount, link.LinkID())
 						continue

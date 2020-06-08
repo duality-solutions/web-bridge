@@ -125,3 +125,8 @@ func (b *Bridge) LinkID() string {
 	hs := fmt.Sprintf("%x", bs)
 	return hs
 }
+
+// LinkParticipants returns link participants
+func (b *Bridge) LinkParticipants() string {
+	return (b.MyAccount + "-" + b.LinkAccount)
+}
