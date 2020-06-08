@@ -143,9 +143,9 @@ func Init(version, githash string) error {
 		fmt.Println(err)
 		// start again or exit app ???
 	}
-	// make sure wallet is created
-	dynamicd.WaitForWalletCreated()
 	if !test {
+		// make sure wallet is created
+		dynamicd.WaitForWalletCreated()
 		status, errStatus := dynamicd.GetSyncStatus()
 		if errStatus != nil {
 			return fmt.Errorf("GetSyncStatus %v", errStatus)
