@@ -12,17 +12,23 @@ type ActiveLinks struct {
 	LockedLinks int    `json:"locked_links"`
 }
 
+func newActiveLinks() ActiveLinks {
+	var links ActiveLinks
+	links.Links = []Link{}
+	links.LockedLinks = 0
+	return links
+}
+
 // GetActiveLinks returns all the active links
 func (d *Dynamicd) GetActiveLinks() (*ActiveLinks, error) {
 	var linksGeneric map[string]interface{}
+	var links ActiveLinks = newActiveLinks()
 	req, _ := NewRequest("dynamic-cli link complete")
 	rawResp := []byte(<-d.ExecCmdRequest(req))
 	errUnmarshal := json.Unmarshal(rawResp, &linksGeneric)
 	if errUnmarshal != nil {
-		fmt.Println("Outer error", errUnmarshal)
-		return nil, errUnmarshal
+		return &links, errUnmarshal
 	}
-	var links ActiveLinks
 	for k, v := range linksGeneric {
 		if strings.HasPrefix(k, "link-") {
 			b, err := json.Marshal(v)
