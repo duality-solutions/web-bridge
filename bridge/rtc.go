@@ -24,6 +24,7 @@ Offer Peer (EstablishRTC)					 Answer Peer (WaitForRTC)
 
 // EstablishRTC tries to establish a real time connection (RTC) bridge with the link
 func EstablishRTC(link *Bridge) {
+	keepAlive := true
 	if link.PeerConnection == nil {
 		fmt.Println("EstablishRTC PeerConnection nil for", link.LinkAccount)
 		return
@@ -33,28 +34,39 @@ func EstablishRTC(link *Bridge) {
 	// This will notify you when the peer has connected/disconnected
 	link.PeerConnection.OnICEConnectionStateChange(func(connectionState webrtc.ICEConnectionState) {
 		fmt.Printf("ICE Connection State has changed for %s: %s\n", link.LinkParticipants(), connectionState.String())
+		if connectionState.String() == "disconnected" {
+			keepAlive = false
+		}
 	})
 
 	// Register channel opening handling
 	link.DataChannel.OnOpen(func() {
-		fmt.Printf("Data channel '%s'-'%d' open. Random messages will now be sent to any connected DataChannels every 5 seconds\n", link.DataChannel.Label(), link.DataChannel.ID())
+		fmt.Printf("EstablishRTC Data channel '%s'-'%d' open. Random messages will now be sent to any connected DataChannels every 30 seconds\n", link.DataChannel.Label(), link.DataChannel.ID())
 
 		for range time.NewTicker(30 * time.Second).C {
+			if !keepAlive {
+				break
+			}
 			rand, _ := util.RandomString(7)
 			message := "From " + link.MyAccount + " to " + link.LinkAccount + " :" + rand
-			fmt.Printf("Sending '%s'\n", message)
+			fmt.Printf("EstablishRTC Sending '%s'\n", message)
 
 			// Send the message as text
 			sendErr := link.DataChannel.SendText(message)
 			if sendErr != nil {
-				fmt.Printf("SendText error: %s\n", sendErr)
+				fmt.Printf("EstablishRTC SendText error: %s\n", sendErr)
 			}
 		}
 	})
 
 	// Register text message handling
 	link.DataChannel.OnMessage(func(msg webrtc.DataChannelMessage) {
-		fmt.Printf("Message from DataChannel '%s': '%s'\n", link.DataChannel.Label(), string(msg.Data))
+		fmt.Printf("EstablishRTC Message from DataChannel '%s': '%s'\n", link.DataChannel.Label(), string(msg.Data))
+	})
+
+	link.DataChannel.OnError(func(err error) {
+		fmt.Printf("EstablishRTC DataChannel OnError '%s': '%s'\n", link.DataChannel.Label(), err.Error())
+		keepAlive = false
 	})
 
 	// Set the local SessionDescription
@@ -69,14 +81,17 @@ func EstablishRTC(link *Bridge) {
 		fmt.Println("EstablishRTC SetRemoteDescription error ", link.LinkParticipants(), err)
 	}
 	fmt.Println("EstablishRTC SetRemoteDescription", link.LinkAccount)
-	// Block forever
-	select {}
+	for keepAlive {
+		select {}
+	}
+	fmt.Println("EstablishRTC stopped", link.LinkParticipants())
 }
 
 // WaitForRTC waits for a real time connection (RTC) bridge with the link
 func WaitForRTC(link *Bridge, answer webrtc.SessionDescription) {
+	keepAlive := true
 	if link.PeerConnection == nil {
-		fmt.Println("EstablishRTC PeerConnection nil for", link.LinkAccount)
+		fmt.Println("WaitForRTC PeerConnection nil for", link.LinkAccount)
 		return
 	}
 	fmt.Println("WaitForRTC created answer!", link.LinkAccount, link.LinkID())
@@ -84,32 +99,43 @@ func WaitForRTC(link *Bridge, answer webrtc.SessionDescription) {
 	// Set the handler for ICE connection state
 	// This will notify you when the peer has connected/disconnected
 	link.PeerConnection.OnICEConnectionStateChange(func(connectionState webrtc.ICEConnectionState) {
-		fmt.Printf("ICE Connection State has changed for %s: %s\n", link.LinkParticipants(), connectionState.String())
+		fmt.Printf("WaitForRTC ICE Connection State has changed for %s: %s\n", link.LinkParticipants(), connectionState.String())
+		if connectionState.String() == "disconnected" {
+			keepAlive = false
+		}
 	})
 
 	// Register data channel creation handling
 	link.PeerConnection.OnDataChannel(func(d *webrtc.DataChannel) {
-		fmt.Printf("New DataChannel %s %d\n", d.Label(), d.ID())
+		fmt.Printf("WaitForRTC New DataChannel %s %d\n", d.Label(), d.ID())
 		// Register channel opening handling
 		d.OnOpen(func() {
-			fmt.Printf("Data channel '%s'-'%d' open. Random messages will now be sent to any connected DataChannels every 5 seconds\n", d.Label(), d.ID())
+			fmt.Printf("WaitForRTC Data channel '%s'-'%d' open. Random messages will now be sent to any connected DataChannels every 30 seconds\n", d.Label(), d.ID())
 
 			for range time.NewTicker(30 * time.Second).C {
+				if !keepAlive {
+					break
+				}
 				rand, _ := util.RandomString(7)
 				message := "From " + link.MyAccount + " to " + link.LinkAccount + " :" + rand
-				fmt.Printf("Sending '%s'\n", message)
+				fmt.Printf("WaitForRTC Sending '%s'\n", message)
 
 				// Send the message as text
 				sendErr := d.SendText(message)
 				if sendErr != nil {
-					fmt.Printf("SendText error: %s\n", sendErr)
+					fmt.Printf("WaitForRTC SendText error: %s\n", sendErr)
 				}
 			}
 		})
 
 		// Register text message handling
 		d.OnMessage(func(msg webrtc.DataChannelMessage) {
-			fmt.Printf("Message from DataChannel '%s': '%s'\n", d.Label(), string(msg.Data))
+			fmt.Printf("WaitForRTC Message from DataChannel '%s': '%s'\n", d.Label(), string(msg.Data))
+		})
+
+		d.OnError(func(err error) {
+			fmt.Printf("WaitForRTC DataChannel OnError '%s': '%s'\n", link.DataChannel.Label(), err.Error())
+			keepAlive = false
 		})
 	})
 
@@ -119,6 +145,9 @@ func WaitForRTC(link *Bridge, answer webrtc.SessionDescription) {
 		fmt.Println("WaitForRTC SetLocalDescription error ", link.LinkParticipants(), err)
 	}
 	fmt.Println("WaitForRTC SetLocalDescription", link.LinkAccount)
-	// Block forever
-	select {}
+
+	for keepAlive {
+		select {}
+	}
+	fmt.Println("WaitForRTC stopped", link.LinkParticipants())
 }
