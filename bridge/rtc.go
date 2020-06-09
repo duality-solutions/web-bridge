@@ -105,6 +105,11 @@ func EstablishRTC(link *Bridge) {
 	}
 	link.State = 1
 	delete(linkBridges.connected, link.LinkID())
+	pc, err := ConnectToIceServices(config)
+	if err != nil {
+		fmt.Println("EstablishRTC error after ConnectToIceServices", link.LinkParticipants(), err)
+	}
+	link.PeerConnection = pc
 	linkBridges.unconnected[link.LinkID()] = link
 	fmt.Println("EstablishRTC stopped!", link.LinkParticipants())
 }
@@ -191,6 +196,11 @@ func WaitForRTC(link *Bridge, answer webrtc.SessionDescription) {
 	}
 	link.State = 1
 	delete(linkBridges.connected, link.LinkID())
+	pc, err := ConnectToIceServices(config)
+	if err != nil {
+		fmt.Println("EstablishRTC error after ConnectToIceServices", link.LinkParticipants(), err)
+	}
+	link.PeerConnection = pc
 	linkBridges.unconnected[link.LinkID()] = link
 	fmt.Println("WaitForRTC stopped!", link.LinkParticipants())
 }

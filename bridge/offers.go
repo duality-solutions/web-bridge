@@ -55,7 +55,7 @@ func GetOffers(stopchan chan struct{}) bool {
 	l := len(linkBridges.unconnected)
 	getOffers := make(chan dynamic.DHTGetReturn, l)
 	for _, link := range linkBridges.unconnected {
-		if link.State == 1 {
+		if link.State == 1 || link.State == 2 {
 			var linkBridge = NewLinkBridge(link.LinkAccount, link.MyAccount, accounts)
 			dynamicd.GetLinkRecord(linkBridge.LinkAccount, linkBridge.MyAccount, getOffers)
 		} else {
