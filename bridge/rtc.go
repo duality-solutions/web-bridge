@@ -44,6 +44,9 @@ func EstablishRTC(link *Bridge) {
 		fmt.Printf("EstablishRTC Data channel '%s'-'%d' open. Random messages will now be sent to any connected DataChannels every 30 seconds\n", link.DataChannel.Label(), link.DataChannel.ID())
 
 		for range time.NewTicker(30 * time.Second).C {
+			if !keepAlive {
+				break
+			}
 			rand, _ := util.RandomString(7)
 			message := "From " + link.MyAccount + " to " + link.LinkAccount + " :" + rand
 			fmt.Printf("EstablishRTC Sending '%s'\n", message)
@@ -110,6 +113,9 @@ func WaitForRTC(link *Bridge, answer webrtc.SessionDescription) {
 			fmt.Printf("WaitForRTC Data channel '%s'-'%d' open. Random messages will now be sent to any connected DataChannels every 30 seconds\n", d.Label(), d.ID())
 
 			for range time.NewTicker(30 * time.Second).C {
+				if !keepAlive {
+					break
+				}
 				rand, _ := util.RandomString(7)
 				message := "From " + link.MyAccount + " to " + link.LinkAccount + " :" + rand
 				fmt.Printf("WaitForRTC Sending '%s'\n", message)
