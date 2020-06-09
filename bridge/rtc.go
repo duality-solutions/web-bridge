@@ -25,6 +25,7 @@ Offer Peer (EstablishRTC)					 Answer Peer (WaitForRTC)
 // EstablishRTC tries to establish a real time connection (RTC) bridge with the link
 func EstablishRTC(link *Bridge) {
 	keepAlive := true
+	stopchan := make(chan struct{})
 	if link.PeerConnection == nil {
 		fmt.Println("EstablishRTC PeerConnection nil for", link.LinkAccount)
 		return
@@ -33,9 +34,10 @@ func EstablishRTC(link *Bridge) {
 	// Set the handler for ICE connection state
 	// This will notify you when the peer has connected/disconnected
 	link.PeerConnection.OnICEConnectionStateChange(func(connectionState webrtc.ICEConnectionState) {
-		fmt.Printf("ICE Connection State has changed for %s: %s\n", link.LinkParticipants(), connectionState.String())
+		fmt.Printf("EstablishRTC ICE Connection State has changed for %s: %s\n", link.LinkParticipants(), connectionState.String())
 		if connectionState.String() == "disconnected" {
 			keepAlive = false
+			close(stopchan)
 		}
 	})
 
@@ -45,6 +47,14 @@ func EstablishRTC(link *Bridge) {
 
 		for range time.NewTicker(30 * time.Second).C {
 			if !keepAlive {
+				err := link.DataChannel.Close()
+				if err != nil {
+					fmt.Printf("EstablishRTC error closing DataChannel %s %s\n", link.DataChannel.Label(), err.Error())
+				}
+				err = link.PeerConnection.Close()
+				if err != nil {
+					fmt.Printf("EstablishRTC error closing PeerConnection %s %s\n", link.LinkParticipants(), err.Error())
+				}
 				break
 			}
 			rand, _ := util.RandomString(7)
@@ -67,6 +77,7 @@ func EstablishRTC(link *Bridge) {
 	link.DataChannel.OnError(func(err error) {
 		fmt.Printf("EstablishRTC DataChannel OnError '%s': '%s'\n", link.DataChannel.Label(), err.Error())
 		keepAlive = false
+		close(stopchan)
 	})
 
 	// Set the local SessionDescription
@@ -81,15 +92,24 @@ func EstablishRTC(link *Bridge) {
 		fmt.Println("EstablishRTC SetRemoteDescription error ", link.LinkParticipants(), err)
 	}
 	fmt.Println("EstablishRTC SetRemoteDescription", link.LinkAccount)
+
 	for keepAlive {
-		select {}
+		select {
+		default:
+			if !keepAlive {
+				break
+			}
+		case <-stopchan:
+			break
+		}
 	}
-	fmt.Println("EstablishRTC stopped", link.LinkParticipants())
+	fmt.Println("EstablishRTC stopped!", link.LinkParticipants())
 }
 
 // WaitForRTC waits for a real time connection (RTC) bridge with the link
 func WaitForRTC(link *Bridge, answer webrtc.SessionDescription) {
 	keepAlive := true
+	stopchan := make(chan struct{})
 	if link.PeerConnection == nil {
 		fmt.Println("WaitForRTC PeerConnection nil for", link.LinkAccount)
 		return
@@ -102,6 +122,7 @@ func WaitForRTC(link *Bridge, answer webrtc.SessionDescription) {
 		fmt.Printf("WaitForRTC ICE Connection State has changed for %s: %s\n", link.LinkParticipants(), connectionState.String())
 		if connectionState.String() == "disconnected" {
 			keepAlive = false
+			close(stopchan)
 		}
 	})
 
@@ -114,6 +135,14 @@ func WaitForRTC(link *Bridge, answer webrtc.SessionDescription) {
 
 			for range time.NewTicker(30 * time.Second).C {
 				if !keepAlive {
+					err := d.Close()
+					if err != nil {
+						fmt.Printf("WaitForRTC error closing DataChannel %s %s\n", d.Label(), err.Error())
+					}
+					err = link.PeerConnection.Close()
+					if err != nil {
+						fmt.Printf("WaitForRTC error closing PeerConnection %s %s\n", link.LinkParticipants(), err.Error())
+					}
 					break
 				}
 				rand, _ := util.RandomString(7)
@@ -136,6 +165,7 @@ func WaitForRTC(link *Bridge, answer webrtc.SessionDescription) {
 		d.OnError(func(err error) {
 			fmt.Printf("WaitForRTC DataChannel OnError '%s': '%s'\n", link.DataChannel.Label(), err.Error())
 			keepAlive = false
+			close(stopchan)
 		})
 	})
 
@@ -147,7 +177,14 @@ func WaitForRTC(link *Bridge, answer webrtc.SessionDescription) {
 	fmt.Println("WaitForRTC SetLocalDescription", link.LinkAccount)
 
 	for keepAlive {
-		select {}
+		select {
+		default:
+			if !keepAlive {
+				break
+			}
+		case <-stopchan:
+			break
+		}
 	}
-	fmt.Println("WaitForRTC stopped", link.LinkParticipants())
+	fmt.Println("WaitForRTC stopped!", link.LinkParticipants())
 }
