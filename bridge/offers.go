@@ -98,6 +98,10 @@ func ClearOffers() {
 		var linkBridge = NewLinkBridge(link.LinkAccount, link.MyAccount, accounts)
 		dynamicd.ClearLinkRecord(linkBridge.MyAccount, linkBridge.LinkAccount, clearOffers)
 	}
+	for _, link := range linkBridges.connected {
+		var linkBridge = NewLinkBridge(link.LinkAccount, link.MyAccount, accounts)
+		dynamicd.ClearLinkRecord(linkBridge.MyAccount, linkBridge.LinkAccount, clearOffers)
+	}
 	for i := 0; i < l; i++ {
 		offer := <-clearOffers
 		fmt.Println("Offer cleared", offer)
