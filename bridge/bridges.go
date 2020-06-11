@@ -93,6 +93,9 @@ func StartBridges(stopchan chan struct{}, c settings.Configuration, d dynamic.Dy
 					if !SendAnswers(stopchan) {
 						return
 					}
+					if !DisconnectedLinks(stopchan) {
+						return
+					}
 					time.Sleep(time.Second * 20)
 				case <-stopchan:
 					fmt.Println("StartBridges stopped")

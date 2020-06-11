@@ -5,6 +5,7 @@ import (
 
 	util "github.com/duality-solutions/web-bridge/internal/utilities"
 	"github.com/duality-solutions/web-bridge/rpc/dynamic"
+	"github.com/pion/webrtc/v2"
 )
 
 // SendAnswers uses VPG instant messages to send an answer to a WebRTC offer
@@ -13,7 +14,7 @@ func SendAnswers(stopchan chan struct{}) bool {
 	for _, link := range linkBridges.unconnected {
 		select {
 		default:
-			if link.State == 2 && link.PeerConnection != nil && len(link.Offer.SDP) > 10 {
+			if link.State == 3 && link.PeerConnection != nil && len(link.Offer.SDP) > 10 {
 				err := link.PeerConnection.SetRemoteDescription(link.Offer)
 				if err != nil {
 					// move to unconnected
@@ -35,7 +36,7 @@ func SendAnswers(stopchan chan struct{}) bool {
 							fmt.Println("SendAnswers dynamicd.SendLinkMessage error", link.LinkAccount, err)
 						}
 						go WaitForRTC(link, answer)
-						link.State = 3
+						link.State = 4
 						delete(linkBridges.unconnected, link.LinkID())
 						linkBridges.connected[link.LinkID()] = link
 					}
@@ -61,7 +62,7 @@ func GetAnswers(stopchan chan struct{}) bool {
 					link.PeerConnection = pc
 				}
 			}
-			if link.PeerConnection != nil && link.State == 1 {
+			if link.PeerConnection != nil && link.State == 2 {
 				answers, err := dynamicd.GetLinkMessages(link.MyAccount, link.LinkAccount)
 				if err != nil {
 					fmt.Println("GetAnswers error", link.LinkAccount, err)
@@ -76,15 +77,19 @@ func GetAnswers(stopchan chan struct{}) bool {
 						fmt.Println("GetAnswers for", link.LinkAccount, "not found")
 						continue
 					}
-					err = util.DecodeObject(answer.Message, &link.Answer)
+					var newAnswer webrtc.SessionDescription
+					err = util.DecodeObject(answer.Message, &newAnswer)
 					if err != nil {
 						fmt.Println("GetAnswers DecodeObject error", link.LinkAccount, err)
 						continue
 					}
-					go EstablishRTC(link)
-					link.State = 4
-					delete(linkBridges.unconnected, link.LinkID())
-					linkBridges.connected[link.LinkID()] = link
+					if newAnswer != link.Answer {
+						link.Answer = newAnswer
+						go EstablishRTC(link)
+						link.State = 5
+						delete(linkBridges.unconnected, link.LinkID())
+						linkBridges.connected[link.LinkID()] = link
+					}
 				}
 			}
 		case <-stopchan:

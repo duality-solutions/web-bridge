@@ -29,7 +29,7 @@ func GetAllOffers(stopchan chan struct{}, links dynamic.ActiveLinks, accounts []
 						continue
 					}
 					linkBridge.PeerConnection = pc
-					linkBridge.State = 2
+					linkBridge.State = 3
 					fmt.Println("Offer found for", linkBridge.LinkAccount, linkBridge.LinkID())
 					linkBridges.unconnected[linkBridge.LinkID()] = &linkBridge
 				} else {
@@ -71,18 +71,20 @@ func GetOffers(stopchan chan struct{}) bool {
 				linkBridge := NewLinkBridge(offer.Sender, offer.Receiver, accounts)
 				err := util.DecodeObject(offer.GetValue, &linkBridge.Offer)
 				if err != nil {
-					fmt.Println("Error DecodeObject", linkBridge.LinkAccount, linkBridge.LinkID(), err)
+					fmt.Println("GetOffers Error DecodeObject", linkBridge.LinkAccount, linkBridge.LinkID(), err)
 					continue
 				}
-				pc, _ := ConnectToIceServices(config)
-				linkBridge.PeerConnection = pc
-				linkBridge.State = 2
-				fmt.Println("Offer found for", linkBridge.LinkAccount, linkBridge.LinkID())
-				// TODO: clear put offer in DHT
-				linkBridges.unconnected[linkBridge.LinkID()] = &linkBridge
+				link := linkBridges.unconnected[linkBridge.LinkID()]
+				if link.Offer != linkBridge.Offer {
+					pc, _ := ConnectToIceServices(config)
+					linkBridge.PeerConnection = pc
+					linkBridge.State = 3
+					fmt.Println("GetOffers Offer found for", linkBridge.LinkAccount, linkBridge.LinkID())
+					linkBridges.unconnected[linkBridge.LinkID()] = &linkBridge
+				}
 			}
 		case <-stopchan:
-			fmt.Println("PutOffers stopped")
+			fmt.Println("GetOffers stopped")
 			return false
 		}
 	}
@@ -115,6 +117,7 @@ func PutOffers(stopchan chan struct{}) bool {
 	putOffers := make(chan dynamic.DHTPutReturn, l)
 	for _, link := range linkBridges.unconnected {
 		if link.State == 1 {
+			fmt.Println("PutOffers for", link.LinkParticipants())
 			var linkBridge = NewLinkBridge(link.LinkAccount, link.MyAccount, accounts)
 			if link.PeerConnection == nil {
 				pc, err := ConnectToIceServices(config)
@@ -137,6 +140,7 @@ func PutOffers(stopchan chan struct{}) bool {
 				fmt.Println("PutOffers error EncodeObject", err)
 			}
 			dynamicd.PutLinkRecord(linkBridge.MyAccount, linkBridge.LinkAccount, encoded, putOffers)
+			link.State = 2
 		} else {
 			l--
 		}
@@ -145,9 +149,56 @@ func PutOffers(stopchan chan struct{}) bool {
 		select {
 		default:
 			offer := <-putOffers
-			fmt.Println("Offer saved", offer)
+			fmt.Println("PutOffers Offer saved", offer)
 		case <-stopchan:
 			fmt.Println("PutOffers stopped")
+			return false
+		}
+	}
+	return true
+}
+
+// DisconnectedLinks reinitializes the WebRTC link bridge struct
+func DisconnectedLinks(stopchan chan struct{}) bool {
+	l := len(linkBridges.unconnected)
+	putOffers := make(chan dynamic.DHTPutReturn, l)
+	for _, link := range linkBridges.unconnected {
+		if link.State == 0 {
+			fmt.Println("DisconnectedLinks for", link.LinkParticipants())
+			var linkBridge = NewLinkBridge(link.LinkAccount, link.MyAccount, accounts)
+			pc, err := ConnectToIceServices(config)
+			if err != nil {
+				fmt.Println("DisconnectedLinks error connecting tot ICE services", err)
+				continue
+			} else {
+				linkBridge.PeerConnection = pc
+				dataChannel, err := linkBridge.PeerConnection.CreateDataChannel(link.LinkParticipants(), nil)
+				if err != nil {
+					fmt.Println("DisconnectedLinks error creating dataChannel for", link.LinkAccount, link.LinkID())
+					continue
+				}
+				linkBridge.DataChannel = dataChannel
+			}
+			linkBridge.Offer, _ = linkBridge.PeerConnection.CreateOffer(nil)
+			linkBridge.Answer = link.Answer
+			encoded, err := util.EncodeObject(linkBridge.Offer)
+			if err != nil {
+				fmt.Println("DisconnectedLinks error EncodeObject", err)
+			}
+			dynamicd.PutLinkRecord(linkBridge.MyAccount, linkBridge.LinkAccount, encoded, putOffers)
+			linkBridge.State = 2
+			linkBridges.unconnected[linkBridge.LinkID()] = &linkBridge
+		} else {
+			l--
+		}
+	}
+	for i := 0; i < l; i++ {
+		select {
+		default:
+			offer := <-putOffers
+			fmt.Println("DisconnectedLinks Offer saved", offer)
+		case <-stopchan:
+			fmt.Println("DisconnectedLinks stopped")
 			return false
 		}
 	}

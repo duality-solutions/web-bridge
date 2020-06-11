@@ -44,17 +44,8 @@ func EstablishRTC(link *Bridge) {
 	// Register channel opening handling
 	link.DataChannel.OnOpen(func() {
 		fmt.Printf("EstablishRTC Data channel '%s'-'%d' open. Random messages will now be sent to any connected DataChannels every 30 seconds\n", link.DataChannel.Label(), link.DataChannel.ID())
-
 		for range time.NewTicker(30 * time.Second).C {
 			if !keepAlive {
-				err := link.DataChannel.Close()
-				if err != nil {
-					fmt.Printf("EstablishRTC error closing DataChannel %s %s\n", link.DataChannel.Label(), err.Error())
-				}
-				err = link.PeerConnection.Close()
-				if err != nil {
-					fmt.Printf("EstablishRTC error closing PeerConnection %s %s\n", link.LinkParticipants(), err.Error())
-				}
 				break
 			}
 			rand, _ := util.RandomString(7)
@@ -103,15 +94,13 @@ func EstablishRTC(link *Bridge) {
 			break
 		}
 	}
-	link.State = 1
-	delete(linkBridges.connected, link.LinkID())
-	pc, err := ConnectToIceServices(config)
-	if err != nil {
-		fmt.Println("EstablishRTC error after ConnectToIceServices", link.LinkParticipants(), err)
+	if link.DataChannel != nil {
+		link.DataChannel = nil
 	}
-	link.PeerConnection = pc
+	delete(linkBridges.connected, link.LinkID())
 	linkBridges.unconnected[link.LinkID()] = link
 	fmt.Println("EstablishRTC stopped!", link.LinkParticipants())
+	link.State = 0
 }
 
 // WaitForRTC waits for a real time connection (RTC) bridge with the link
@@ -136,21 +125,13 @@ func WaitForRTC(link *Bridge, answer webrtc.SessionDescription) {
 
 	// Register data channel creation handling
 	link.PeerConnection.OnDataChannel(func(d *webrtc.DataChannel) {
-		fmt.Printf("WaitForRTC New DataChannel %s %d\n", d.Label(), d.ID())
+		link.DataChannel = d
+		fmt.Printf("WaitForRTC New DataChannel %s %d\n", link.DataChannel.Label(), link.DataChannel.ID())
 		// Register channel opening handling
-		d.OnOpen(func() {
-			fmt.Printf("WaitForRTC Data channel '%s'-'%d' open. Random messages will now be sent to any connected DataChannels every 30 seconds\n", d.Label(), d.ID())
-
+		link.DataChannel.OnOpen(func() {
+			fmt.Printf("WaitForRTC Data channel '%s'-'%d' open. Random messages will now be sent to any connected DataChannels every 30 seconds\n", link.DataChannel.Label(), link.DataChannel.ID())
 			for range time.NewTicker(30 * time.Second).C {
 				if !keepAlive {
-					err := d.Close()
-					if err != nil {
-						fmt.Printf("WaitForRTC error closing DataChannel %s %s\n", d.Label(), err.Error())
-					}
-					err = link.PeerConnection.Close()
-					if err != nil {
-						fmt.Printf("WaitForRTC error closing PeerConnection %s %s\n", link.LinkParticipants(), err.Error())
-					}
 					break
 				}
 				rand, _ := util.RandomString(7)
@@ -158,7 +139,7 @@ func WaitForRTC(link *Bridge, answer webrtc.SessionDescription) {
 				fmt.Printf("WaitForRTC Sending '%s'\n", message)
 
 				// Send the message as text
-				sendErr := d.SendText(message)
+				sendErr := link.DataChannel.SendText(message)
 				if sendErr != nil {
 					fmt.Printf("WaitForRTC SendText error: %s\n", sendErr)
 				}
@@ -166,11 +147,11 @@ func WaitForRTC(link *Bridge, answer webrtc.SessionDescription) {
 		})
 
 		// Register text message handling
-		d.OnMessage(func(msg webrtc.DataChannelMessage) {
-			fmt.Printf("WaitForRTC Message from DataChannel '%s': '%s'\n", d.Label(), string(msg.Data))
+		link.DataChannel.OnMessage(func(msg webrtc.DataChannelMessage) {
+			fmt.Printf("WaitForRTC Message from DataChannel '%s': '%s'\n", link.DataChannel.Label(), string(msg.Data))
 		})
 
-		d.OnError(func(err error) {
+		link.DataChannel.OnError(func(err error) {
 			fmt.Printf("WaitForRTC DataChannel OnError '%s': '%s'\n", link.DataChannel.Label(), err.Error())
 			keepAlive = false
 			close(stopchan)
@@ -194,13 +175,11 @@ func WaitForRTC(link *Bridge, answer webrtc.SessionDescription) {
 			break
 		}
 	}
-	link.State = 1
-	delete(linkBridges.connected, link.LinkID())
-	pc, err := ConnectToIceServices(config)
-	if err != nil {
-		fmt.Println("EstablishRTC error after ConnectToIceServices", link.LinkParticipants(), err)
+	if link.DataChannel != nil {
+		link.DataChannel = nil
 	}
-	link.PeerConnection = pc
+	delete(linkBridges.connected, link.LinkID())
 	linkBridges.unconnected[link.LinkID()] = link
 	fmt.Println("WaitForRTC stopped!", link.LinkParticipants())
+	link.State = 0
 }
