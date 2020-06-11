@@ -53,16 +53,22 @@ func EstablishRTC(link *Bridge) {
 			fmt.Printf("EstablishRTC Sending '%s'\n", message)
 
 			// Send the message as text
-			sendErr := link.DataChannel.SendText(message)
-			if sendErr != nil {
-				fmt.Printf("EstablishRTC SendText error: %s\n", sendErr)
+			if link.DataChannel != nil {
+				sendErr := link.DataChannel.SendText(message)
+				if sendErr != nil {
+					fmt.Printf("EstablishRTC SendText error: %s\n", sendErr)
+				}
+			} else {
+				break
 			}
 		}
 	})
 
 	// Register text message handling
 	link.DataChannel.OnMessage(func(msg webrtc.DataChannelMessage) {
-		fmt.Printf("EstablishRTC Message from DataChannel '%s': '%s'\n", link.DataChannel.Label(), string(msg.Data))
+		if link.DataChannel != nil {
+			fmt.Printf("EstablishRTC Message from DataChannel '%s': '%s'\n", link.DataChannel.Label(), string(msg.Data))
+		}
 	})
 
 	link.DataChannel.OnError(func(err error) {
@@ -137,18 +143,23 @@ func WaitForRTC(link *Bridge, answer webrtc.SessionDescription) {
 				rand, _ := util.RandomString(7)
 				message := "From " + link.MyAccount + " to " + link.LinkAccount + " :" + rand
 				fmt.Printf("WaitForRTC Sending '%s'\n", message)
-
-				// Send the message as text
-				sendErr := link.DataChannel.SendText(message)
-				if sendErr != nil {
-					fmt.Printf("WaitForRTC SendText error: %s\n", sendErr)
+				if link.DataChannel != nil {
+					// Send the message as text
+					sendErr := link.DataChannel.SendText(message)
+					if sendErr != nil {
+						fmt.Printf("WaitForRTC SendText error: %s\n", sendErr)
+					}
+				} else {
+					break
 				}
 			}
 		})
 
 		// Register text message handling
 		link.DataChannel.OnMessage(func(msg webrtc.DataChannelMessage) {
-			fmt.Printf("WaitForRTC Message from DataChannel '%s': '%s'\n", link.DataChannel.Label(), string(msg.Data))
+			if link.DataChannel != nil {
+				fmt.Printf("WaitForRTC Message from DataChannel '%s': '%s'\n", link.DataChannel.Label(), string(msg.Data))
+			}
 		})
 
 		link.DataChannel.OnError(func(err error) {
