@@ -26,6 +26,7 @@ func GetAllOffers(stopchan chan struct{}, links dynamic.ActiveLinks, accounts []
 					err = util.DecodeObject(offer.GetValue, &linkBridge.Offer)
 					if err != nil {
 						fmt.Println("GetAllOffers error with DecodeObject", linkBridge.LinkAccount, linkBridge.LinkID(), err)
+						linkBridges.unconnected[linkBridge.LinkID()] = &linkBridge
 						continue
 					}
 					linkBridge.PeerConnection = pc
@@ -33,7 +34,6 @@ func GetAllOffers(stopchan chan struct{}, links dynamic.ActiveLinks, accounts []
 					fmt.Println("Offer found for", linkBridge.LinkAccount, linkBridge.LinkID())
 					linkBridges.unconnected[linkBridge.LinkID()] = &linkBridge
 				} else {
-					//fmt.Println("Offer found for", offer.Sender, "ConnectToIceServices failed", err)
 					linkBridges.unconnected[linkBridge.LinkID()] = &linkBridge
 				}
 			} else {
