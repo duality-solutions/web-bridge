@@ -91,20 +91,18 @@ func Init(version, githash string) error {
 		}
 	}
 	// initilize debug.log file
-	InitDebugLogFile(debug)
-	Info.Println("Version:", version, "Hash", githash)
-	Info.Println("OS: ", runtime.GOOS)
+	util.InitDebugLogFile(debug)
+	util.Info.Println("Version:", version, "Hash", githash)
+	util.Info.Println("OS: ", runtime.GOOS)
 	if debug {
-		Info.Println("Running WebBridge in debug log mode.")
-		Info.Println("Args", args)
+		util.Info.Println("Running WebBridge in debug log mode.")
+		util.Info.Println("Args", args)
 	}
 	if test {
-		fmt.Println("Running WebBridge in test mode.")
+		util.Info.Println("Running WebBridge in test mode.")
 	}
 	config.Load()
-	if debug {
-		fmt.Println("Config", config)
-	}
+	util.Info.Println("Config", config)
 
 	if testCreateOffer || testWaitForOffer {
 		if testCreateOffer {
@@ -122,12 +120,11 @@ func Init(version, githash string) error {
 	if err != nil {
 		return fmt.Errorf("NewPeerConnection %v", err)
 	}
-	if debug {
-		fmt.Println("Connected to ICE services.")
-	}
+	util.Info.Println("Connected to ICE services.")
+
 	proc, err := dynamic.FindDynamicdProcess()
 	if err == nil {
-		fmt.Println("dynamicd already running. Attempting to kill the process.")
+		util.Warning.Println("dynamicd already running. Attempting to kill the process.")
 		err = proc.Kill()
 		if err != nil {
 			return fmt.Errorf("Fatal error, dynamicd process (%v) is running but can't be stopped %v", proc.Pid, err)
@@ -140,9 +137,9 @@ func Init(version, githash string) error {
 	}
 	proc, err = dynamic.FindDynamicdProcess()
 	if proc != nil {
-		fmt.Println("Running dynamicd process found Pid", proc.Pid)
+		util.Info.Println("Running dynamicd process found Pid", proc.Pid)
 	} else {
-		fmt.Println(err)
+		util.Error.Println(err)
 		// start again or exit app ???
 	}
 	if !test {
@@ -152,25 +149,25 @@ func Init(version, githash string) error {
 		if errStatus != nil {
 			return fmt.Errorf("GetSyncStatus %v", errStatus)
 		}
-		fmt.Println("dynamicd running... Sync " + fmt.Sprintf("%f", status.SyncProgress*100) + " percent complete!")
+		util.Info.Println("dynamicd running... Sync " + fmt.Sprintf("%f", status.SyncProgress*100) + " percent complete!")
 
 		info, errInfo := dynamicd.GetInfo()
 		if errInfo != nil {
 			return fmt.Errorf("GetInfo %v", errInfo)
 		}
-		fmt.Println("dynamic connections", info.Connections)
+		util.Info.Println("dynamic connections", info.Connections)
 
 		acc, errAccounts := dynamicd.GetMyAccounts()
 		if errAccounts != nil {
-			fmt.Println("GetActiveLinks error", errAccounts)
+			util.Error.Println("GetActiveLinks error", errAccounts)
 		} else {
 			for i, account := range *acc {
-				fmt.Println("Account", i+1, account.CommonName, account.ObjectFullPath, account.WalletAddress, account.LinkAddress)
+				util.Info.Println("Account", i+1, account.CommonName, account.ObjectFullPath, account.WalletAddress, account.LinkAddress)
 			}
 		}
 		errUnlock := dynamicd.UnlockWallet("")
 		if errUnlock != nil {
-			fmt.Println("Wallet locked. Please unlock the wallet to continue.")
+			util.Info.Println("Wallet locked. Please unlock the wallet to continue.")
 			var unlocked = false
 			for !unlocked {
 				fmt.Print("wallet passphrase> ")
@@ -178,18 +175,18 @@ func Init(version, githash string) error {
 				walletpassphrase = strings.Trim(string(bytePassword), "\r\n ")
 				errUnlock = dynamicd.UnlockWallet(walletpassphrase)
 				if errUnlock == nil {
-					fmt.Println("Wallet unlocked.")
+					util.Info.Println("Wallet unlocked.")
 					unlocked = true
 				} else {
-					fmt.Println(errUnlock)
+					util.Error.Println(errUnlock)
 				}
 			}
 		}
 		al, errLinks := dynamicd.GetActiveLinks()
 		if errLinks != nil {
-			fmt.Println("GetActiveLinks error", errLinks)
+			util.Error.Println("GetActiveLinks error", errLinks)
 		} else {
-			fmt.Printf("Found %v links\n", len(al.Links))
+			util.Info.Printf("Found %v links\n", len(al.Links))
 		}
 		stopWatcher := make(chan struct{})
 		dynamic.WatchProcess(stopWatcher, 10, walletpassphrase)
@@ -208,7 +205,7 @@ func Init(version, githash string) error {
 				cmdText = strings.Trim(cmdText, "\r\n ") //cmdText[:len(cmdText)-2]
 			}
 			if strings.HasPrefix(cmdText, "exit") || strings.HasPrefix(cmdText, "shutdown") || strings.HasPrefix(cmdText, "stop") {
-				fmt.Println("Exit command. Stopping services.")
+				util.Info.Println("Exit command. Stopping services.")
 				shutdown = true
 				close(stopWatcher)
 				close(stopBridges)
@@ -216,21 +213,21 @@ func Init(version, githash string) error {
 			} else if strings.HasPrefix(cmdText, "dynamic-cli") {
 				req, errNewRequest := dynamic.NewRequest(cmdText)
 				if errNewRequest != nil {
-					fmt.Println("Error:", errNewRequest)
+					util.Error.Println("Error:", errNewRequest)
 				} else {
 					strResp, _ := util.BeautifyJSON(<-dynamicd.ExecCmdRequest(req))
-					fmt.Println(strResp)
+					util.Info.Println(strResp)
 				}
 			} else {
-				fmt.Println("Invalid command", cmdText)
+				util.Warning.Println("Invalid command", cmdText)
 				status, errStatus = dynamicd.GetSyncStatus()
 			}
 			status, errStatus = dynamicd.GetSyncStatus()
 			if errStatus != nil {
-				fmt.Println("syncstatus unmarshal error", errStatus)
+				util.Error.Println("syncstatus unmarshal error", errStatus)
 			} else {
 				if !sync {
-					fmt.Println("Sync " + fmt.Sprintf("%f", status.SyncProgress*100) + " percent complete!")
+					util.Info.Println("Sync " + fmt.Sprintf("%f", status.SyncProgress*100) + " percent complete!")
 					if status.SyncProgress == 1 {
 						sync = true
 					}
@@ -241,21 +238,22 @@ func Init(version, githash string) error {
 		// Stop dynamicd
 		reqStop, _ := dynamic.NewRequest("dynamic-cli stop")
 		respStop, _ := util.BeautifyJSON(<-dynamicd.ExecCmdRequest(reqStop))
-		fmt.Println(respStop)
+		util.Info.Println(respStop)
 		time.Sleep(time.Second * 5)
 	}
 
-	fmt.Println("Looking for dynamicd process pid", dynamicd.Cmd.Process.Pid)
+	util.Info.Println("Looking for dynamicd process pid", dynamicd.Cmd.Process.Pid)
 	_, errFindProcess := os.FindProcess(dynamicd.Cmd.Process.Pid)
 	if errFindProcess == nil {
-		fmt.Println("Process found. Killing dynamicd process.")
+		util.Info.Println("Process found. Killing dynamicd process.")
 		if errKill := dynamicd.Cmd.Process.Kill(); err != errKill {
-			fmt.Println("failed to kill process: ", errKill)
+			util.Error.Println("failed to kill process: ", errKill)
 		}
 	} else {
-		fmt.Println("Dynamicd process not found")
+		util.Info.Println("Dynamicd process not found")
 	}
 
-	fmt.Println("Exit.")
+	util.Info.Println("Exit.")
+	util.EndDebugLogFile(30)
 	return nil
 }

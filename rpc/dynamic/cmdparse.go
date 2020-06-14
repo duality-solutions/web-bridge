@@ -60,6 +60,8 @@ import (
 	"io"
 	"unicode"
 	"unicode/utf8"
+
+	util "github.com/duality-solutions/web-bridge/internal/utilities"
 )
 
 // A ParseError is returned for parsing errors.
@@ -365,7 +367,7 @@ parseField:
 					fullLine = line
 				} else {
 					// Abrupt end of file (EOF or error).
-					fmt.Println("Abrupt end of file (EOF or error).")
+					util.Error.Println("Abrupt end of file (EOF or error).")
 					if !r.LazyQuotes && errRead == nil {
 						col := utf8.RuneCount(fullLine)
 						err = &ParseError{StartLine: recLine, Line: r.numLine, Column: col, Err: ErrQuote}

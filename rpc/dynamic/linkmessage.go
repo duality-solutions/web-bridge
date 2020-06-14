@@ -2,7 +2,8 @@ package dynamic
 
 import (
 	"encoding/json"
-	"fmt"
+
+	util "github.com/duality-solutions/web-bridge/internal/utilities"
 )
 
 // MessageReturnJSON stores dynamic RPC send message response
@@ -55,18 +56,18 @@ func (d *Dynamicd) GetLinkMessages(receiver, sender string) (*[]GetMessageReturn
 	var messagesGeneric map[string]interface{}
 	err = json.Unmarshal([]byte(res), &messagesGeneric)
 	if err != nil {
-		fmt.Println("GetLinkMessages messagesGeneric error", err)
+		util.Error.Println("GetLinkMessages messagesGeneric error", err)
 		return nil, err
 	}
 	for _, v := range messagesGeneric {
 		b, err := json.Marshal(v)
 		if err != nil {
-			fmt.Println("GetLinkMessages json.Marshal error", err)
+			util.Error.Println("GetLinkMessages json.Marshal error", err)
 		} else {
 			var message GetMessageReturnJSON
 			err := json.Unmarshal(b, &message)
 			if err != nil {
-				fmt.Println("GetLinkMessages json.Unmarshal error", err)
+				util.Error.Println("GetLinkMessages json.Unmarshal error", err)
 			} else {
 				ret = append(ret, message)
 			}

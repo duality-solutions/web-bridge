@@ -151,17 +151,17 @@ func loadDynamicd(_os string, archiveExt string) (*Dynamicd, error) {
 				rpcUser = user
 				userFound = true
 			} else {
-				fmt.Println("loadDynamicd error after ParseDynamicConfValue rpcUser", err)
+				util.Error.Println("loadDynamicd error after ParseDynamicConfValue rpcUser", err)
 			}
 			pass, err := ParseDynamicConfigValue(conf, "rpcpassword=")
 			if err == nil {
 				rpcPassword = pass
 				passFound = true
 			} else {
-				fmt.Println("loadDynamicd error after ParseDynamicConfValue rpcPassword", err)
+				util.Error.Println("loadDynamicd error after ParseDynamicConfValue rpcPassword", err)
 			}
 		} else {
-			fmt.Println("loadDynamicd error after GetDynamicConf", err)
+			util.Error.Println("loadDynamicd error after GetDynamicConf", err)
 		}
 		if userFound && passFound {
 			cmd = exec.CommandContext(ctx, dynDir+dynamicdName,
@@ -198,13 +198,13 @@ func loadDynamicd(_os string, archiveExt string) (*Dynamicd, error) {
 		RPCPassword: rpcPassword,
 		NoTLS:       true,
 	}
-	fmt.Println("dynamicd starting...")
+	util.Info.Println("dynamicd starting...")
 	dynamicd := newDynamicd(ctx, cancel, dataDirPath, rpcUser, rpcPassword, defaultPort, defaultRPCPort, defaultBind, defaultBind, cmd, configRPC)
 	if errStart := dynamicd.Cmd.Start(); errStart != nil {
 		return nil, fmt.Errorf("loadDynamicd failed at dynamicd.Cmd.Start(). %v", errStart)
 	}
 	time.Sleep(time.Second * 5)
-	fmt.Println("dynamicd started")
+	util.Info.Println("dynamicd started")
 	return dynamicd, nil
 }
 

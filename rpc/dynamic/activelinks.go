@@ -2,8 +2,9 @@ package dynamic
 
 import (
 	"encoding/json"
-	"fmt"
 	"strings"
+
+	util "github.com/duality-solutions/web-bridge/internal/utilities"
 )
 
 // ActiveLinks stores the completed link list returned by
@@ -36,7 +37,7 @@ func (d *Dynamicd) GetActiveLinks() (*ActiveLinks, error) {
 				var link Link
 				errUnmarshal = json.Unmarshal(b, &link)
 				if errUnmarshal != nil {
-					fmt.Println("Inner error", errUnmarshal)
+					util.Error.Println("Inner error", errUnmarshal)
 					return nil, errUnmarshal
 				}
 

@@ -1,7 +1,8 @@
-package webbridge
+package util
 
 import (
 	"fmt"
+	"io"
 	"log"
 	"os"
 )
@@ -25,7 +26,6 @@ var (
 
 // InitDebugLogFile is used to initialize the debug log file path.
 func InitDebugLogFile(console bool) {
-
 	file, err := os.OpenFile("debug.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 	if err != nil {
 		fmt.Println("Failed to open log file", err)
@@ -52,6 +52,18 @@ func InitDebugLogFile(console bool) {
 		log.Ldate|log.Ltime|log.Lshortfile)
 }
 
+// EndDebugLogFile adds x blank lines to debug.log file
+func EndDebugLogFile(x int) {
+	file, err := os.OpenFile("debug.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	if err != nil {
+		fmt.Println("Failed to open log file", err)
+	}
+	exitLog := log.New(file, "", 0)
+	for n := 0; n < x; n++ {
+		exitLog.Println()
+	}
+}
+
 // Println logs to debug.log file and console
 func (d *DebugLog) Println(a ...interface{}) {
 	d.Logger.Println(a...)
@@ -65,5 +77,21 @@ func (d *DebugLog) Print(a ...interface{}) {
 	d.Logger.Print(a...)
 	if d.Console {
 		fmt.Print(a...)
+	}
+}
+
+// Printf logs to debug.log file and console
+func (d *DebugLog) Printf(format string, a ...interface{}) {
+	d.Logger.Printf(format, a...)
+	if d.Console {
+		fmt.Printf(format, a...)
+	}
+}
+
+// Fprintf logs to debug.log file and console
+func (d *DebugLog) Fprintf(w io.Writer, format string, a ...interface{}) {
+	d.Logger.Printf(format, a...)
+	if d.Console {
+		fmt.Fprintf(w, format, a...)
 	}
 }

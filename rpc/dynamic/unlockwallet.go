@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strings"
 	"time"
+
+	util "github.com/duality-solutions/web-bridge/internal/utilities"
 )
 
 func checkPrefix(r string) bool {
@@ -32,7 +34,7 @@ func (d *Dynamicd) UnlockWallet(password string) error {
 	}
 	var loadingMessage string = "Loading wallet..."
 	if strings.Contains(response, loadingMessage) {
-		fmt.Println(loadingMessage)
+		util.Info.Println(loadingMessage)
 		time.Sleep(time.Second * 5)
 		for strings.Contains(response, loadingMessage) {
 			response, _ = <-d.ExecCmdRequest(req)
@@ -42,7 +44,7 @@ func (d *Dynamicd) UnlockWallet(password string) error {
 				}
 				return nil
 			}
-			fmt.Println(loadingMessage)
+			util.Info.Println(loadingMessage)
 			time.Sleep(time.Second * 5)
 		}
 	}

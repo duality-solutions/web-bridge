@@ -2,7 +2,8 @@ package dynamic
 
 import (
 	"encoding/json"
-	"fmt"
+
+	util "github.com/duality-solutions/web-bridge/internal/utilities"
 )
 
 // WaitForWalletCreated waits until the Dynamic wallet is loaded
@@ -19,7 +20,7 @@ func (d *Dynamicd) WaitForWalletCreated() {
 			var rpcError RPCErrorResponse
 			err = json.Unmarshal([]byte(res), &rpcError)
 			if err == nil {
-				fmt.Println("WaitForWalletCreated ...", rpcError.Error.Message)
+				util.Error.Println("WaitForWalletCreated ...", rpcError.Error.Message)
 			}
 		}
 	}

@@ -2,7 +2,8 @@ package dynamic
 
 import (
 	"encoding/json"
-	"fmt"
+
+	util "github.com/duality-solutions/web-bridge/internal/utilities"
 )
 
 // DHTPutJSON used to store information returned by dht putlinkrecord dev test01 pshare "<offer>"
@@ -54,7 +55,7 @@ func (d *Dynamicd) PutLinkRecord(sender, receiver, offer string, out chan<- DHTP
 		cmd := "dynamic-cli dht putlinkrecord " + sender + " " + receiver + " pshare " + `"` + offer + `"`
 		req, err := NewRequest(cmd)
 		if err != nil {
-			fmt.Println("PutLinkRecord error", err)
+			util.Error.Println("PutLinkRecord error", err)
 			out <- ret
 		} else {
 			var r DHTPutJSON
@@ -79,7 +80,7 @@ func (d *Dynamicd) ClearLinkRecord(sender, receiver string, out chan<- DHTPutRet
 		cmd := "dynamic-cli dht clearlinkrecord " + sender + " " + receiver + " pshare"
 		req, err := NewRequest(cmd)
 		if err != nil {
-			fmt.Println("ClearLinkRecord error", err)
+			util.Error.Println("ClearLinkRecord error", err)
 			out <- ret
 		} else {
 			var r DHTPutJSON
@@ -104,7 +105,7 @@ func (d *Dynamicd) GetLinkRecord(sender, receiver string, out chan<- DHTGetRetur
 		cmd := "dynamic-cli dht getlinkrecord " + sender + " " + receiver + " pshare"
 		req, err := NewRequest(cmd)
 		if err != nil {
-			fmt.Println("GetLinkRecord error", err)
+			util.Error.Println("GetLinkRecord error", err)
 			out <- ret
 		} else {
 			var r DHTGetJSON

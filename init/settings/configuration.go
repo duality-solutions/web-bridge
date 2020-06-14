@@ -2,9 +2,10 @@ package settings
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"os"
+
+	util "github.com/duality-solutions/web-bridge/internal/utilities"
 )
 
 // TODO: Support different ICE service authentication mechanisms
@@ -49,7 +50,7 @@ func (c *Configuration) createDefault() {
 	file, _ := json.Marshal(&c)
 	err := ioutil.WriteFile(ConfigurationFileName, file, 0644)
 	if isErr(err) {
-		fmt.Println("Error writting default configuration file.")
+		util.Error.Println("Error writting default configuration file.")
 	}
 }
 
@@ -57,7 +58,7 @@ func (c *Configuration) createDefault() {
 func (c *Configuration) Load() {
 	_, errOpen := os.Open(ConfigurationFileName)
 	if isErr(errOpen) {
-		fmt.Println("Configuration file doesn't exist. Creating new configuration with default values.")
+		util.Error.Println("Configuration file doesn't exist. Creating new configuration with default values.")
 		c.createDefault()
 	} else {
 		file, errRead := ioutil.ReadFile(ConfigurationFileName)
@@ -67,9 +68,9 @@ func (c *Configuration) Load() {
 		}
 		errUnmarshal := json.Unmarshal([]byte(file), c)
 		if isErr(errUnmarshal) {
-			fmt.Println("Error unmarshal configuration file. Overwritting file with default values.")
+			util.Error.Println("Error unmarshal configuration file. Overwritting file with default values.")
 			c.createDefault()
 		}
-		fmt.Println("Configuration loaded.")
+		util.Info.Println("Configuration loaded.")
 	}
 }

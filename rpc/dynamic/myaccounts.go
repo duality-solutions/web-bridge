@@ -2,7 +2,8 @@ package dynamic
 
 import (
 	"encoding/json"
-	"fmt"
+
+	util "github.com/duality-solutions/web-bridge/internal/utilities"
 )
 
 // Account stores a BDAP account object
@@ -42,7 +43,7 @@ func (d *Dynamicd) GetMyAccounts() (*[]Account, error) {
 			var account Account
 			errUnmarshal = json.Unmarshal(b, &account)
 			if errUnmarshal != nil {
-				fmt.Println("Inner error", errUnmarshal)
+				util.Error.Println("Inner error", errUnmarshal)
 				return nil, errUnmarshal
 			}
 			accounts = append(accounts, account)

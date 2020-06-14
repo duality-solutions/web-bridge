@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/duality-solutions/web-bridge/init/settings"
+	util "github.com/duality-solutions/web-bridge/internal/utilities"
 	webrtc "github.com/pion/webrtc/v2"
 )
 
@@ -42,14 +43,14 @@ func ConnectToIceServices(config settings.Configuration) (*webrtc.PeerConnection
 // DisconnectBridgeIceServices calls the close method for a WebRTC peer connection
 func DisconnectBridgeIceServices(bridges *Bridges) error {
 	for i, v := range bridges.connected {
-		fmt.Println("DisconnectBridgeIceServices", i, v)
+		util.Info.Println("DisconnectBridgeIceServices", i, v)
 		DisconnectIceService(v.PeerConnection)
 	}
 	for i, v := range bridges.unconnected {
-		fmt.Println("DisconnectBridgeIceServices", i, v)
+		util.Info.Println("DisconnectBridgeIceServices", i, v)
 		err := DisconnectIceService(v.PeerConnection)
 		if err != nil {
-			fmt.Println("DisconnectBridgeIceServices error", i, err)
+			util.Error.Println("DisconnectBridgeIceServices error", i, err)
 		}
 	}
 	return nil

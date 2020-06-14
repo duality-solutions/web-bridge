@@ -1,10 +1,10 @@
 package main
 
 import (
-	"fmt"
 	"os"
 
 	webbridge "github.com/duality-solutions/web-bridge/internal"
+	util "github.com/duality-solutions/web-bridge/internal/utilities"
 )
 
 // Version is the WebBridge version number in ISO date format
@@ -18,7 +18,7 @@ var GitHash string
 
 func main() {
 	if err := webbridge.Init(Version, GitHash); err != nil {
-		fmt.Fprintf(os.Stderr, "%s\n", err)
+		util.Error.Fprintf(os.Stderr, "%s\n", err)
 		os.Exit(1)
 	}
 }

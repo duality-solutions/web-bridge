@@ -1,8 +1,9 @@
 package dynamic
 
 import (
-	"fmt"
 	"time"
+
+	util "github.com/duality-solutions/web-bridge/internal/utilities"
 )
 
 // WatchProcess creates a go routine that watches for the dynamicd process and restarts if stopped
@@ -10,7 +11,7 @@ func WatchProcess(stopchan chan struct{}, sleepSecs uint16, walletpassphrase str
 	go func(stopchan chan struct{}) {
 		//i := 1
 		restarts := 0
-		//fmt.Println("WatchProcess chan", stopchan, stoppedchan)
+		//util.Info.Println("WatchProcess chan", stopchan, stoppedchan)
 		//defer func() {
 		// tear down here
 		//}()
@@ -18,13 +19,13 @@ func WatchProcess(stopchan chan struct{}, sleepSecs uint16, walletpassphrase str
 			select {
 			default:
 				proc, _ := FindDynamicdProcess()
-				//fmt.Println("WatchProcess FindDynamicdProcess", i)
+				//util.Info.Println("WatchProcess FindDynamicdProcess", i)
 				if proc == nil {
 					restarts++
-					fmt.Println("WatchProcess restarting dynamicd process", restarts)
+					util.Info.Println("WatchProcess restarting dynamicd process", restarts)
 					dynamicd, err := LoadRPCDynamicd()
 					if err != nil {
-						fmt.Println("WatchProcess error restarting dynamicd process", restarts, err)
+						util.Error.Println("WatchProcess error restarting dynamicd process", restarts, err)
 						continue
 					}
 					time.Sleep(time.Duration(sleepSecs) * time.Second)
@@ -36,10 +37,10 @@ func WatchProcess(stopchan chan struct{}, sleepSecs uint16, walletpassphrase str
 				time.Sleep(time.Duration(sleepSecs) * time.Second)
 				//i++
 			case <-stopchan:
-				fmt.Println("WatchProcess stopped")
+				util.Info.Println("WatchProcess stopped")
 				return
 			}
 		}
 	}(stopchan)
-	fmt.Println("WatchProcess started")
+	util.Info.Println("WatchProcess started")
 }

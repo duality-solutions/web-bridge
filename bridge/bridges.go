@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/duality-solutions/web-bridge/init/settings"
+	util "github.com/duality-solutions/web-bridge/internal/utilities"
 	"github.com/duality-solutions/web-bridge/rpc/dynamic"
 	"github.com/pion/webrtc/v2"
 )
@@ -38,27 +39,27 @@ var links dynamic.ActiveLinks
 func initializeBridges(stopchan chan struct{}) bool {
 	// check all links for WebRTC offers in the DHT
 	if GetAllOffers(stopchan, links, accounts) {
-		fmt.Println("Get all offers complete. unconnected", len(linkBridges.unconnected))
+		util.Info.Println("Get all offers complete. unconnected", len(linkBridges.unconnected))
 		// respond to all offers with a WebRTC answer and send it to the link using instant VGP messages
 		if SendAnswers(stopchan) {
 			if GetOffers(stopchan) {
-				fmt.Println("get offers completed", len(linkBridges.unconnected))
+				util.Info.Println("get offers completed", len(linkBridges.unconnected))
 			} else {
 				return false
 			}
 			// put WebRTC offers for unconnected links
 			if PutOffers(stopchan) {
-				fmt.Println("Put offers completed", len(linkBridges.unconnected))
+				util.Info.Println("Put offers completed", len(linkBridges.unconnected))
 			} else {
-				fmt.Println("StartBridges stopped after PutOffers")
+				util.Info.Println("StartBridges stopped after PutOffers")
 				return false
 			}
 		} else {
-			fmt.Println("StartBridges stopped after SendAnswers")
+			util.Info.Println("StartBridges stopped after SendAnswers")
 			return false
 		}
 	} else {
-		fmt.Println("StartBridges stopped after GetAllOffers")
+		util.Info.Println("StartBridges stopped after GetAllOffers")
 		return false
 	}
 	return true
@@ -98,13 +99,13 @@ func StartBridges(stopchan chan struct{}, c settings.Configuration, d dynamic.Dy
 					}
 					time.Sleep(time.Second * 20)
 				case <-stopchan:
-					fmt.Println("StartBridges stopped")
+					util.Info.Println("StartBridges stopped")
 					return
 				}
 			}
 		}
 	} else {
-		fmt.Println("StartBridges stopped after WaitForSync")
+		util.Info.Println("StartBridges stopped after WaitForSync")
 	}
 }
 
