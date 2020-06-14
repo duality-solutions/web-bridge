@@ -21,6 +21,9 @@
 # setting configuration file
 .webbridge.settings.json
 
-# Dynamic binaries
+# Binaries
 dynamic/*
 web-bridge
+
+# Log files
+debug.log

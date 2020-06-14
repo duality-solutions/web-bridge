@@ -75,8 +75,6 @@ var testWaitForOffer = false
 
 // Init is used to begin all WebBridge tasks
 func Init(version, githash string) error {
-	fmt.Println("Version:", version, "Hash", githash)
-	fmt.Println("OS: ", runtime.GOOS)
 	args := os.Args[1:]
 	if len(args) > 0 {
 		for _, v := range args {
@@ -92,9 +90,13 @@ func Init(version, githash string) error {
 			}
 		}
 	}
+	// initilize debug.log file
+	InitDebugLogFile(debug)
+	Info.Println("Version:", version, "Hash", githash)
+	Info.Println("OS: ", runtime.GOOS)
 	if debug {
-		fmt.Println("Running WebBridge in debug log mode.")
-		fmt.Println("Args", args)
+		Info.Println("Running WebBridge in debug log mode.")
+		Info.Println("Args", args)
 	}
 	if test {
 		fmt.Println("Running WebBridge in test mode.")
