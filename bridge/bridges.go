@@ -9,32 +9,19 @@ import (
 	"github.com/duality-solutions/web-bridge/init/settings"
 	util "github.com/duality-solutions/web-bridge/internal/utilities"
 	"github.com/duality-solutions/web-bridge/rpc/dynamic"
-	"github.com/pion/webrtc/v2"
 )
-
-// Bridge hold information about a link WebRTC bridge connection
-type Bridge struct {
-	MyAccount      string
-	LinkAccount    string
-	Offer          webrtc.SessionDescription
-	Answer         webrtc.SessionDescription
-	State          uint16
-	LastPingEpoch  int
-	PeerConnection *webrtc.PeerConnection
-	DataChannel    *webrtc.DataChannel
-}
-
-// Bridges hold all link WebRTC bridges
-type Bridges struct {
-	connected   map[string]*Bridge
-	unconnected map[string]*Bridge
-}
 
 var linkBridges Bridges
 var dynamicd dynamic.Dynamicd
 var config settings.Configuration
 var accounts []dynamic.Account
 var links dynamic.ActiveLinks
+
+// Bridges hold all link WebRTC bridges
+type Bridges struct {
+	connected   map[string]*Bridge
+	unconnected map[string]*Bridge
+}
 
 func initializeBridges(stopchan chan struct{}) bool {
 	// check all links for WebRTC offers in the DHT

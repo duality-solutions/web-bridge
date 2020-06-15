@@ -12,7 +12,7 @@ func SendAnswers(stopchan chan struct{}) bool {
 	for _, link := range linkBridges.unconnected {
 		select {
 		default:
-			if link.State == 3 && link.PeerConnection != nil && len(link.Offer.SDP) > 10 {
+			if link.State == StateSendAnswer && link.PeerConnection != nil && len(link.Offer.SDP) > 10 {
 				err := link.PeerConnection.SetRemoteDescription(link.Offer)
 				if err != nil {
 					// move to unconnected
@@ -34,7 +34,7 @@ func SendAnswers(stopchan chan struct{}) bool {
 							util.Error.Println("SendAnswers dynamicd.SendLinkMessage error", link.LinkAccount, err)
 						}
 						go WaitForRTC(link, answer)
-						link.State = 4
+						link.State = StateWaitForRTC
 						delete(linkBridges.unconnected, link.LinkID())
 						linkBridges.connected[link.LinkID()] = link
 					}
@@ -60,7 +60,7 @@ func GetAnswers(stopchan chan struct{}) bool {
 					link.PeerConnection = pc
 				}
 			}
-			if link.PeerConnection != nil && link.State == 2 {
+			if link.PeerConnection != nil && link.State == StateWaitForAnswer {
 				answers, err := dynamicd.GetLinkMessages(link.MyAccount, link.LinkAccount)
 				if err != nil {
 					util.Error.Println("GetAnswers error", link.LinkAccount, err)
@@ -84,7 +84,7 @@ func GetAnswers(stopchan chan struct{}) bool {
 					if newAnswer != link.Answer {
 						link.Answer = newAnswer
 						go EstablishRTC(link)
-						link.State = 5
+						link.State = StateEstablishRTC
 						delete(linkBridges.unconnected, link.LinkID())
 						linkBridges.connected[link.LinkID()] = link
 					}

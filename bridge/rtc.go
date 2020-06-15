@@ -105,7 +105,7 @@ func EstablishRTC(link *Bridge) {
 	delete(linkBridges.connected, link.LinkID())
 	linkBridges.unconnected[link.LinkID()] = link
 	util.Info.Println("EstablishRTC stopped!", link.LinkParticipants())
-	link.State = 0
+	link.State = StateInit
 }
 
 // WaitForRTC waits for a real time connection (RTC) bridge with the link
@@ -191,5 +191,5 @@ func WaitForRTC(link *Bridge, answer webrtc.SessionDescription) {
 	delete(linkBridges.connected, link.LinkID())
 	linkBridges.unconnected[link.LinkID()] = link
 	util.Info.Println("WaitForRTC stopped!", link.LinkParticipants())
-	link.State = 0
+	link.State = StateInit
 }

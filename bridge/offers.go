@@ -28,7 +28,7 @@ func GetAllOffers(stopchan chan struct{}, links dynamic.ActiveLinks, accounts []
 						continue
 					}
 					linkBridge.PeerConnection = pc
-					linkBridge.State = 3
+					linkBridge.State = StateSendAnswer
 					util.Info.Println("Offer found for", linkBridge.LinkAccount, linkBridge.LinkID())
 					linkBridges.unconnected[linkBridge.LinkID()] = &linkBridge
 				} else {
@@ -53,7 +53,7 @@ func GetOffers(stopchan chan struct{}) bool {
 	l := len(linkBridges.unconnected)
 	getOffers := make(chan dynamic.DHTGetReturn, l)
 	for _, link := range linkBridges.unconnected {
-		if link.State == 1 || link.State == 2 {
+		if link.State == StateNew || link.State == StateWaitForAnswer {
 			var linkBridge = NewLinkBridge(link.LinkAccount, link.MyAccount, accounts)
 			dynamicd.GetLinkRecord(linkBridge.LinkAccount, linkBridge.MyAccount, getOffers)
 		} else {
@@ -76,7 +76,7 @@ func GetOffers(stopchan chan struct{}) bool {
 				if link.Offer != linkBridge.Offer {
 					pc, _ := ConnectToIceServices(config)
 					linkBridge.PeerConnection = pc
-					linkBridge.State = 3
+					linkBridge.State = StateSendAnswer
 					util.Info.Println("GetOffers Offer found for", linkBridge.LinkAccount, linkBridge.LinkID())
 					linkBridges.unconnected[linkBridge.LinkID()] = &linkBridge
 				}
@@ -114,7 +114,7 @@ func PutOffers(stopchan chan struct{}) bool {
 	l := len(linkBridges.unconnected)
 	putOffers := make(chan dynamic.DHTPutReturn, l)
 	for _, link := range linkBridges.unconnected {
-		if link.State == 1 {
+		if link.State == StateNew {
 			util.Info.Println("PutOffers for", link.LinkParticipants())
 			var linkBridge = NewLinkBridge(link.LinkAccount, link.MyAccount, accounts)
 			if link.PeerConnection == nil {
@@ -138,7 +138,7 @@ func PutOffers(stopchan chan struct{}) bool {
 				util.Error.Println("PutOffers error EncodeObject", err)
 			}
 			dynamicd.PutLinkRecord(linkBridge.MyAccount, linkBridge.LinkAccount, encoded, putOffers)
-			link.State = 2
+			link.State = StateWaitForAnswer
 		} else {
 			l--
 		}
@@ -161,7 +161,7 @@ func DisconnectedLinks(stopchan chan struct{}) bool {
 	l := len(linkBridges.unconnected)
 	putOffers := make(chan dynamic.DHTPutReturn, l)
 	for _, link := range linkBridges.unconnected {
-		if link.State == 0 {
+		if link.State == StateInit {
 			util.Info.Println("DisconnectedLinks for", link.LinkParticipants())
 			var linkBridge = NewLinkBridge(link.LinkAccount, link.MyAccount, accounts)
 			pc, err := ConnectToIceServices(config)
@@ -184,7 +184,7 @@ func DisconnectedLinks(stopchan chan struct{}) bool {
 				util.Info.Println("DisconnectedLinks error EncodeObject", err)
 			}
 			dynamicd.PutLinkRecord(linkBridge.MyAccount, linkBridge.LinkAccount, encoded, putOffers)
-			linkBridge.State = 2
+			linkBridge.State = StateWaitForAnswer
 			linkBridges.unconnected[linkBridge.LinkID()] = &linkBridge
 		} else {
 			l--
