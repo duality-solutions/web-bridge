@@ -2,6 +2,7 @@ package dynamic
 
 import (
 	"encoding/json"
+	"time"
 
 	util "github.com/duality-solutions/web-bridge/internal/utilities"
 )
@@ -14,6 +15,7 @@ type DHTPutJSON struct {
 	PutOperation  string `json:"put_operation"`
 	PutSeq        int    `json:"put_seq"`
 	PutDataSize   int    `json:"put_data_size"`
+	TimeStamp     int64  `json:"timestamp"`
 }
 
 // DHTPutReturn used to store information returned by dht putlinkrecord dev test01 pshare "<offer>"
@@ -36,6 +38,8 @@ type DHTGetJSON struct {
 	GetValue        string `json:"get_value"`
 	GetValueSize    int    `json:"get_value_size"`
 	GetMilliseconds uint32 `json:"get_milliseconds"`
+	NullRecord      string `json:"null_record"`
+	Timestamp       int64  `json:"timestamp"`
 }
 
 // DHTGetReturn used to store information returned by dht putlinkrecord dev test01 pshare "<offer>"
@@ -114,6 +118,11 @@ func (d *Dynamicd) GetLinkRecord(sender, receiver string, out chan<- DHTGetRetur
 				Sender:     sender,
 				Receiver:   receiver,
 				DHTGetJSON: r,
+			}
+			recordEpoch := time.Unix(ret.DHTGetJSON.Timestamp, 0).Unix()
+			if recordEpoch > 0 {
+				currentEpoch := time.Now().Unix()
+				util.Info.Println("GetLinkRecord:", sender, "record timestamp", (currentEpoch-recordEpoch)/60, "minutes ago")
 			}
 			out <- ret
 		}

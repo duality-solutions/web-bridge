@@ -17,6 +17,10 @@ func GetAllOffers(stopchan chan struct{}, links dynamic.ActiveLinks, accounts []
 		select {
 		default:
 			offer := <-getOffers
+			if offer.DHTGetJSON.NullRecord == "true" {
+				util.Info.Println("GetAllOffers null", offer.Sender, offer.Receiver)
+				continue
+			}
 			if offer.GetValueSize > 10 {
 				linkBridge := NewLinkBridge(offer.Sender, offer.Receiver, accounts)
 				pc, err := ConnectToIceServices(config)
@@ -65,6 +69,10 @@ func GetOffers(stopchan chan struct{}) bool {
 		select {
 		default:
 			offer := <-getOffers
+			if offer.DHTGetJSON.NullRecord == "true" {
+				util.Info.Println("GetOffers null", offer.Sender, offer.Receiver)
+				continue
+			}
 			if len(offer.GetValue) > 10 {
 				linkBridge := NewLinkBridge(offer.Sender, offer.Receiver, accounts)
 				err := util.DecodeObject(offer.GetValue, &linkBridge.Offer)
