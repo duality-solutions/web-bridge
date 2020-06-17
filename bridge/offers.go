@@ -18,7 +18,9 @@ func GetAllOffers(stopchan chan struct{}, links dynamic.ActiveLinks, accounts []
 		default:
 			offer := <-getOffers
 			if offer.DHTGetJSON.NullRecord == "true" {
-				util.Info.Println("GetAllOffers null", offer.Sender, offer.Receiver)
+				util.Info.Println("GetAllOffers null offer found for", offer.Sender, offer.Receiver)
+				linkBridge := NewLinkBridge(offer.Sender, offer.Receiver, accounts)
+				linkBridges.unconnected[linkBridge.LinkID()] = &linkBridge
 				continue
 			}
 			if offer.GetValueSize > 10 {
