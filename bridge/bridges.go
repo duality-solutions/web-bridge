@@ -1,9 +1,6 @@
 package bridge
 
 import (
-	"crypto/sha256"
-	"fmt"
-	"sort"
 	"time"
 
 	"github.com/duality-solutions/web-bridge/init/settings"
@@ -103,24 +100,4 @@ func ShutdownBridges() {
 	ClearOffers()
 	// sleep for 20 seconds to make sure all clear take effect.
 	time.Sleep(time.Second * 20)
-}
-
-// LinkID returns an hashed id for the link
-func (b *Bridge) LinkID() string {
-	var ret string = ""
-	strs := []string{b.MyAccount, b.LinkAccount}
-	sort.Strings(strs)
-	for _, str := range strs {
-		ret += str
-	}
-	hash := sha256.New()
-	hash.Write([]byte(ret))
-	bs := hash.Sum(nil)
-	hs := fmt.Sprintf("%x", bs)
-	return hs
-}
-
-// LinkParticipants returns link participants
-func (b *Bridge) LinkParticipants() string {
-	return (b.MyAccount + "-" + b.LinkAccount)
 }
