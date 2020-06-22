@@ -12,7 +12,7 @@ func SendAnswers(stopchan chan struct{}) bool {
 	for _, link := range linkBridges.unconnected {
 		select {
 		default:
-			if link.State == StateSendAnswer && link.PeerConnection != nil && len(link.Offer.SDP) > 10 {
+			if link.State == StateSendAnswer && link.PeerConnection != nil && len(link.Offer.SDP) > MinimumOfferValueLength {
 				err := link.PeerConnection.SetRemoteDescription(link.Offer)
 				if err != nil {
 					// move to unconnected
@@ -71,7 +71,7 @@ func GetAnswers(stopchan chan struct{}) bool {
 							answer = res
 						}
 					}
-					if len(answer.Message) < 10 {
+					if len(answer.Message) < MinimumAnswerValueLength {
 						util.Info.Println("GetAnswers for", link.LinkAccount, "not found")
 						continue
 					}

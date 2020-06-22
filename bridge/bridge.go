@@ -48,14 +48,20 @@ func (s State) String() string {
 
 // Bridge hold information about a link WebRTC bridge connection
 type Bridge struct {
-	MyAccount   string
-	LinkAccount string
-	Offer       webrtc.SessionDescription
-	Answer      webrtc.SessionDescription
+	MyAccount          string
+	LinkAccount        string
+	Offer              webrtc.SessionDescription
+	Answer             webrtc.SessionDescription
+	OnOpenEpoch        int64
+	OnErrorEpoch       int64
+	OnStateChangeEpoch int64
+	RTCState           string
+	LastDataEpoch      int64
+	PeerConnection     *webrtc.PeerConnection
+	DataChannel        *webrtc.DataChannel
+	Get                dynamic.DHTGetJSON
+	Put                dynamic.DHTPutJSON
 	State
-	LastPingEpoch  int
-	PeerConnection *webrtc.PeerConnection
-	DataChannel    *webrtc.DataChannel
 }
 
 // NewBridge creates a new bridge struct
@@ -120,8 +126,12 @@ func (b Bridge) String() string {
 		"\nLinkID: ", b.LinkID(),
 		"\nOffer: ", b.Offer.SDP,
 		"\nAnswer: ", b.Answer.SDP,
+		"\nOnOpenEpoch: ", b.OnOpenEpoch,
+		"\nOnErrorEpoch: ", b.OnErrorEpoch,
+		"\nOnStateChangeEpoch: ", b.OnStateChangeEpoch,
+		"\nRTCStatus: ", b.RTCState,
+		"\nLastDataEpoch: ", b.LastDataEpoch,
 		"\nState: ", b.State.String(),
-		"\nLastPingEpoch: ", b.LastPingEpoch,
 	)
 	if b.PeerConnection != nil {
 		result += fmt.Sprint("\nPeerConnection.ICEConnectionState: ", b.PeerConnection.ICEConnectionState().String(),
