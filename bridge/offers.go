@@ -17,14 +17,14 @@ func GetAllOffers(stopchan chan struct{}, links dynamic.ActiveLinks, accounts []
 		select {
 		default:
 			offer := <-getOffers
+			linkBridge := NewLinkBridge(offer.Sender, offer.Receiver, accounts)
+			linkBridge.Get = offer.DHTGetJSON
 			if offer.DHTGetJSON.NullRecord == "true" {
 				util.Info.Println("GetAllOffers null offer found for", offer.Sender, offer.Receiver)
-				linkBridge := NewLinkBridge(offer.Sender, offer.Receiver, accounts)
 				linkBridges.unconnected[linkBridge.LinkID()] = &linkBridge
 				continue
 			}
-			if offer.GetValueSize > 10 {
-				linkBridge := NewLinkBridge(offer.Sender, offer.Receiver, accounts)
+			if offer.GetValueSize > MinimumOfferValueLength && offer.Minutes() <= OfferExpireMinutes {
 				pc, err := ConnectToIceServices(config)
 				if err == nil {
 					err = util.DecodeObject(offer.GetValue, &linkBridge.Offer)
@@ -40,8 +40,10 @@ func GetAllOffers(stopchan chan struct{}, links dynamic.ActiveLinks, accounts []
 				} else {
 					linkBridges.unconnected[linkBridge.LinkID()] = &linkBridge
 				}
+			} else if offer.Minutes() > OfferExpireMinutes && offer.GetValueSize > MinimumOfferValueLength {
+				util.Info.Println("Stale Offer found for", linkBridge.LinkAccount, linkBridge.LinkID(), "minutes", offer.Minutes())
+				linkBridges.unconnected[linkBridge.LinkID()] = &linkBridge
 			} else {
-				linkBridge := NewLinkBridge(offer.Sender, offer.Receiver, accounts)
 				util.Info.Println("Offer NOT found for", linkBridge.LinkAccount, linkBridge.LinkID())
 				linkBridges.unconnected[linkBridge.LinkID()] = &linkBridge
 			}
@@ -62,6 +64,7 @@ func GetOffers(stopchan chan struct{}) bool {
 		if link.State == StateNew || link.State == StateWaitForAnswer {
 			var linkBridge = NewLinkBridge(link.LinkAccount, link.MyAccount, accounts)
 			dynamicd.GetLinkRecord(linkBridge.LinkAccount, linkBridge.MyAccount, getOffers)
+			util.Info.Println("GetOffer for", link.LinkAccount)
 		} else {
 			util.Info.Println("GetOffers skipped", link.LinkAccount)
 			l--
@@ -71,24 +74,28 @@ func GetOffers(stopchan chan struct{}) bool {
 		select {
 		default:
 			offer := <-getOffers
-			if offer.DHTGetJSON.NullRecord == "true" {
-				util.Info.Println("GetOffers null", offer.Sender, offer.Receiver)
-				continue
-			}
-			if len(offer.GetValue) > 10 {
-				linkBridge := NewLinkBridge(offer.Sender, offer.Receiver, accounts)
-				err := util.DecodeObject(offer.GetValue, &linkBridge.Offer)
-				if err != nil {
-					util.Info.Println("GetOffers Error DecodeObject", linkBridge.LinkAccount, linkBridge.LinkID(), err)
+			linkBridge := NewLinkBridge(offer.Sender, offer.Receiver, accounts)
+			link := linkBridges.unconnected[linkBridge.LinkID()]
+			if link.Get.GetValue != offer.DHTGetJSON.GetValue {
+				link.Get = offer.DHTGetJSON
+				if link.Get.NullRecord == "true" {
+					util.Info.Println("GetOffers null", offer.Sender, offer.Receiver)
 					continue
 				}
-				link := linkBridges.unconnected[linkBridge.LinkID()]
-				if link.Offer != linkBridge.Offer {
-					pc, _ := ConnectToIceServices(config)
-					linkBridge.PeerConnection = pc
-					linkBridge.State = StateSendAnswer
-					util.Info.Println("GetOffers Offer found for", linkBridge.LinkAccount, linkBridge.LinkID())
-					linkBridges.unconnected[linkBridge.LinkID()] = &linkBridge
+				if link.Get.Minutes() <= OfferExpireMinutes && link.Get.GetValueSize > MinimumOfferValueLength {
+					pc, err := ConnectToIceServices(config)
+					if err == nil {
+						err = util.DecodeObject(offer.GetValue, &link.Offer)
+						if err != nil {
+							util.Info.Println("GetOffers error with DecodeObject", link.LinkAccount, link.LinkID(), err)
+							continue
+						}
+						link.PeerConnection = pc
+						link.State = StateSendAnswer
+						util.Info.Println("GetOffers: Offer found for", link.LinkAccount, link.LinkID())
+					}
+				} else if link.Get.Minutes() > OfferExpireMinutes && link.Get.GetValueSize > MinimumOfferValueLength {
+					util.Info.Println("GetOffers: Stale offer found for", link.LinkAccount, link.LinkID(), "minutes", link.Get.Minutes())
 				}
 			}
 		case <-stopchan:
@@ -108,6 +115,11 @@ func ClearOffers() {
 		var linkBridge = NewLinkBridge(link.LinkAccount, link.MyAccount, accounts)
 		dynamicd.ClearLinkRecord(linkBridge.MyAccount, linkBridge.LinkAccount, clearOffers)
 	}
+	for i := 0; i < l; i++ {
+		offer := <-clearOffers
+		util.Info.Println("Offer cleared", offer)
+	}
+	l = len(linkBridges.connected)
 	for _, link := range linkBridges.connected {
 		var linkBridge = NewLinkBridge(link.LinkAccount, link.MyAccount, accounts)
 		dynamicd.ClearLinkRecord(linkBridge.MyAccount, linkBridge.LinkAccount, clearOffers)
@@ -157,6 +169,9 @@ func PutOffers(stopchan chan struct{}) bool {
 		select {
 		default:
 			offer := <-putOffers
+			linkBridge := NewLinkBridge(offer.Sender, offer.Receiver, accounts)
+			link := linkBridges.unconnected[linkBridge.LinkID()]
+			link.Put = offer.DHTPutJSON
 			util.Info.Println("PutOffers Offer saved", offer)
 		case <-stopchan:
 			util.Info.Println("PutOffers stopped")
@@ -172,7 +187,7 @@ func DisconnectedLinks(stopchan chan struct{}) bool {
 	putOffers := make(chan dynamic.DHTPutReturn, l)
 	for _, link := range linkBridges.unconnected {
 		if link.State == StateInit {
-			util.Info.Println("DisconnectedLinks for", link.LinkParticipants())
+			util.Info.Println("DisconnectedLinks for", link.LinkParticipants(), link.LinkID())
 			var linkBridge = NewLinkBridge(link.LinkAccount, link.MyAccount, accounts)
 			pc, err := ConnectToIceServices(config)
 			if err != nil {
@@ -204,6 +219,9 @@ func DisconnectedLinks(stopchan chan struct{}) bool {
 		select {
 		default:
 			offer := <-putOffers
+			linkBridge := NewLinkBridge(offer.Sender, offer.Receiver, accounts)
+			link := linkBridges.unconnected[linkBridge.LinkID()]
+			link.Put = offer.DHTPutJSON
 			util.Info.Println("DisconnectedLinks Offer saved", offer)
 		case <-stopchan:
 			util.Info.Println("DisconnectedLinks stopped")

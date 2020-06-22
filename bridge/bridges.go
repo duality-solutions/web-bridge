@@ -8,6 +8,15 @@ import (
 	"github.com/duality-solutions/web-bridge/rpc/dynamic"
 )
 
+const (
+	// OfferExpireMinutes is the number of minutes an offer found in the DHT is valid.
+	OfferExpireMinutes = 360
+	// MinimumOfferValueLength is the minimum offer value size to be considered
+	MinimumOfferValueLength = 10
+	// MinimumAnswerValueLength is the minimum offer value size to be considered
+	MinimumAnswerValueLength = 10
+)
+
 var linkBridges Bridges
 var dynamicd dynamic.Dynamicd
 var config settings.Configuration
@@ -79,6 +88,9 @@ func StartBridges(stopchan chan struct{}, c settings.Configuration, d dynamic.Dy
 						return
 					}
 					if !DisconnectedLinks(stopchan) {
+						return
+					}
+					if !StopDisconnected(stopchan) {
 						return
 					}
 					time.Sleep(time.Second * 20)

@@ -15,7 +15,7 @@ type DHTPutJSON struct {
 	PutOperation  string `json:"put_operation"`
 	PutSeq        int    `json:"put_seq"`
 	PutDataSize   int    `json:"put_data_size"`
-	TimeStamp     int64  `json:"timestamp"`
+	Timestamp     int64  `json:"timestamp"`
 }
 
 // DHTPutReturn used to store information returned by dht putlinkrecord dev test01 pshare "<offer>"
@@ -40,6 +40,22 @@ type DHTGetJSON struct {
 	GetMilliseconds uint32 `json:"get_milliseconds"`
 	NullRecord      string `json:"null_record"`
 	Timestamp       int64  `json:"timestamp"`
+}
+
+// Minutes from DHT timestamp to now.
+func (d DHTGetJSON) Minutes() int64 {
+	if d.Timestamp > 0 {
+		return (time.Now().Unix() - d.Timestamp) / 60
+	}
+	return -1
+}
+
+// Minutes from DHT timestamp to now.
+func (d DHTPutJSON) Minutes() int64 {
+	if d.Timestamp > 0 {
+		return (time.Now().Unix() - d.Timestamp) / 60
+	}
+	return -1
 }
 
 // DHTGetReturn used to store information returned by dht putlinkrecord dev test01 pshare "<offer>"
