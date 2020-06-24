@@ -136,7 +136,7 @@ func (d *Dynamicd) GetLinkRecord(sender, receiver string, out chan<- DHTGetRetur
 				DHTGetJSON: r,
 			}
 			recordEpoch := time.Unix(ret.DHTGetJSON.Timestamp, 0).Unix()
-			if recordEpoch > 0 {
+			if recordEpoch > 0 && r.NullRecord == "false" {
 				currentEpoch := time.Now().Unix()
 				util.Info.Println("GetLinkRecord:", sender, "record timestamp", (currentEpoch-recordEpoch)/60, "minutes ago")
 			}
