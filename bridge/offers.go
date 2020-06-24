@@ -19,6 +19,7 @@ func GetAllOffers(stopchan chan struct{}, links dynamic.ActiveLinks, accounts []
 			offer := <-getOffers
 			linkBridge := NewLinkBridge(offer.Sender, offer.Receiver, accounts)
 			linkBridge.Get = offer.DHTGetJSON
+			linkBridge.SessionID = i
 			if offer.DHTGetJSON.NullRecord == "true" {
 				util.Info.Println("GetAllOffers null offer found for", offer.Sender, offer.Receiver)
 				linkBridges.unconnected[linkBridge.LinkID()] = &linkBridge
@@ -76,26 +77,28 @@ func GetOffers(stopchan chan struct{}) bool {
 			offer := <-getOffers
 			linkBridge := NewLinkBridge(offer.Sender, offer.Receiver, accounts)
 			link := linkBridges.unconnected[linkBridge.LinkID()]
-			if link.Get.GetValue != offer.DHTGetJSON.GetValue {
-				link.Get = offer.DHTGetJSON
-				if link.Get.NullRecord == "true" {
-					util.Info.Println("GetOffers null", offer.Sender, offer.Receiver)
-					continue
-				}
-				if link.Get.Minutes() <= OfferExpireMinutes && link.Get.GetValueSize > MinimumOfferValueLength {
-					pc, err := ConnectToIceServices(config)
-					if err == nil {
-						err = util.DecodeObject(offer.GetValue, &link.Offer)
-						if err != nil {
-							util.Info.Println("GetOffers error with DecodeObject", link.LinkAccount, link.LinkID(), err)
-							continue
-						}
-						link.PeerConnection = pc
-						link.State = StateSendAnswer
-						util.Info.Println("GetOffers: Offer found for", link.LinkAccount, link.LinkID())
+			if link.Get.GetValue != offer.GetValue {
+				if offer.GetSeq > link.Get.GetSeq {
+					link.Get = offer.DHTGetJSON
+					if link.Get.NullRecord == "true" {
+						util.Info.Println("GetOffers null", offer.Sender, offer.Receiver)
+						continue
 					}
-				} else if link.Get.Minutes() > OfferExpireMinutes && link.Get.GetValueSize > MinimumOfferValueLength {
-					util.Info.Println("GetOffers: Stale offer found for", link.LinkAccount, link.LinkID(), "minutes", link.Get.Minutes())
+					if link.Get.Minutes() <= OfferExpireMinutes && link.Get.GetValueSize > MinimumOfferValueLength {
+						pc, err := ConnectToIceServices(config)
+						if err == nil {
+							err = util.DecodeObject(offer.GetValue, &link.Offer)
+							if err != nil {
+								util.Info.Println("GetOffers error with DecodeObject", link.LinkAccount, link.LinkID(), err)
+								continue
+							}
+							link.PeerConnection = pc
+							link.State = StateSendAnswer
+							util.Info.Println("GetOffers: Offer found for", link.LinkAccount, link.LinkID())
+						}
+					} else if link.Get.Minutes() > OfferExpireMinutes && link.Get.GetValueSize > MinimumOfferValueLength {
+						util.Info.Println("GetOffers: Stale offer found for", link.LinkAccount, link.LinkID(), "minutes", link.Get.Minutes())
+					}
 				}
 			}
 		case <-stopchan:
@@ -189,6 +192,8 @@ func DisconnectedLinks(stopchan chan struct{}) bool {
 		if link.State == StateInit {
 			util.Info.Println("DisconnectedLinks for", link.LinkParticipants(), link.LinkID())
 			var linkBridge = NewLinkBridge(link.LinkAccount, link.MyAccount, accounts)
+			linkBridge.SessionID = link.SessionID
+			linkBridge.Get = link.Get
 			pc, err := ConnectToIceServices(config)
 			if err != nil {
 				util.Error.Println("DisconnectedLinks error connecting tot ICE services", err)
