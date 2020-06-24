@@ -48,6 +48,7 @@ func (s State) String() string {
 
 // Bridge hold information about a link WebRTC bridge connection
 type Bridge struct {
+	SessionID          int
 	MyAccount          string
 	LinkAccount        string
 	Offer              webrtc.SessionDescription
@@ -121,7 +122,9 @@ func (b Bridge) LinkParticipants() string {
 }
 
 func (b Bridge) String() string {
-	result := fmt.Sprint("Bridge {\nMyAccount: ", b.MyAccount,
+	result := fmt.Sprint("Bridge {",
+		"\nSessionID: ", b.SessionID,
+		"\nMyAccount: ", b.MyAccount,
 		"\nLinkAccount: ", b.LinkAccount,
 		"\nLinkID: ", b.LinkID(),
 		"\nOffer: ", b.Offer.SDP,
