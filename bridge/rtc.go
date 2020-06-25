@@ -108,6 +108,11 @@ func EstablishRTC(link *Bridge) {
 	if link.DataChannel != nil {
 		link.DataChannel = nil
 	}
+	failedICEConnection := (link.PeerConnection.ICEConnectionState().String() == "failed")
+	if failedICEConnection {
+		util.Info.Println("EstablishRTC close peer connection", link.LinkParticipants(), link.LinkID())
+		link.PeerConnection.Close()
+	}
 	delete(linkBridges.connected, link.LinkID())
 	linkBridges.unconnected[link.LinkID()] = link
 	util.Info.Println("EstablishRTC stopped!", link.LinkParticipants())
@@ -199,6 +204,13 @@ func WaitForRTC(link *Bridge, answer webrtc.SessionDescription) {
 	}
 	if link.DataChannel != nil {
 		link.DataChannel = nil
+	}
+	failedICEConnection := (link.PeerConnection.ICEConnectionState().String() == "failed")
+	if failedICEConnection {
+		util.Info.Println("WaitForRTC close peer connection", link.LinkParticipants(), link.LinkID())
+		link.PeerConnection.Close()
+	} else {
+		util.Info.Println("WaitForRTC ICEConnectionState", link.LinkParticipants(), link.PeerConnection.ICEConnectionState().String())
 	}
 	delete(linkBridges.connected, link.LinkID())
 	linkBridges.unconnected[link.LinkID()] = link

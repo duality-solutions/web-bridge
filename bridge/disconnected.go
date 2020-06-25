@@ -23,15 +23,23 @@ func StopDisconnected(stopchan chan struct{}) bool {
 					} else if failedICEConnection {
 						util.Info.Println("StopDisconnected failed ICE connection", link.LinkParticipants(), link.LinkID())
 					}
+					if failedICEConnection {
+						util.Info.Println("StopDisconnected close peer connection", link.LinkParticipants(), link.LinkID())
+						link.PeerConnection.Close()
+					}
 					link.State = StateInit
 					delete(linkBridges.connected, link.LinkID())
 					linkBridges.unconnected[link.LinkID()] = link
 					continue
 				}
 			}
-		}
-		if (link.State == StateWaitForRTC || link.State == StateEstablishRTC) && link.RTCState == "failed" && (currentEpoch-link.OnStateChangeEpoch > 180) {
+		} else if (link.State == StateWaitForRTC || link.State == StateEstablishRTC) && link.RTCState == "failed" && (currentEpoch-link.OnStateChangeEpoch > 180) {
 			util.Info.Println("StopDisconnected failed state found", link.LinkParticipants(), link.LinkID())
+			failedICEConnection := (link.PeerConnection.ICEConnectionState().String() == "failed")
+			if failedICEConnection {
+				util.Info.Println("StopDisconnected close peer connection", link.LinkParticipants(), link.LinkID())
+				link.PeerConnection.Close()
+			}
 			link.State = StateInit
 			delete(linkBridges.connected, link.LinkID())
 			linkBridges.unconnected[link.LinkID()] = link
