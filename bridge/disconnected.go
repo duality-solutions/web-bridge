@@ -33,7 +33,7 @@ func StopDisconnected(stopchan chan struct{}) bool {
 					continue
 				}
 			}
-		} else if (link.State == StateWaitForRTC || link.State == StateEstablishRTC) && link.RTCState == "failed" && (currentEpoch-link.OnStateChangeEpoch > 180) {
+		} else if (link.State == StateWaitForRTC || link.State == StateEstablishRTC) && link.RTCState == "failed" && (currentEpoch-link.OnStateChangeEpoch > 360) {
 			util.Info.Println("StopDisconnected failed state found", link.LinkParticipants(), link.LinkID())
 			failedICEConnection := (link.PeerConnection.ICEConnectionState().String() == "failed")
 			if failedICEConnection {
