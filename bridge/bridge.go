@@ -25,6 +25,8 @@ const (
 	StateWaitForRTC
 	// StateEstablishRTC offer sent and answer received  = 5
 	StateEstablishRTC
+	// StateOpenConnection when WebRTC is connected and open = 6
+	StateOpenConnection
 )
 
 func (s State) String() string {
@@ -41,6 +43,8 @@ func (s State) String() string {
 		return "StateWaitForRTC"
 	case StateEstablishRTC:
 		return "StateEstablishRTC"
+	case StateOpenConnection:
+		return "StateOpenConnection"
 	default:
 		return "Undefined"
 	}
