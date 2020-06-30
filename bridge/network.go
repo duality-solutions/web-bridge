@@ -3,12 +3,14 @@
 package bridge
 
 import (
+	"bytes"
 	"crypto/tls"
 	"io"
+	"io/ioutil"
 	"net"
 	"net/http"
+	"net/http/httputil"
 	"strconv"
-	"time"
 
 	util "github.com/duality-solutions/web-bridge/internal/utilities"
 )
@@ -18,19 +20,17 @@ const (
 	StartHTTPPortNumber = 8889
 )
 
-func transferCloser(dest io.WriteCloser, src io.ReadCloser) {
-	defer dest.Close()
-	defer src.Close()
-	io.Copy(dest, src)
-}
-
 // StartBridgeNetwork listens to a port for http traffic and routes it through a link's WebRTC channel
 func (l *Bridge) StartBridgeNetwork() {
 	util.Info.Println("StartBridgeNetwork", l.LinkParticipants(), "port", l.ListenPort())
 	server := &http.Server{
 		Addr: ":" + strconv.Itoa(int(l.ListenPort())),
 		Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			l.handleTunnel(w, r)
+			if r.Method == http.MethodConnect {
+				l.handleTunnel(w, r)
+			} else {
+				l.handleHTTP(w, r)
+			}
 		}),
 		ConnState: l.onConnStateEvent,
 		// Disable HTTP/2.
@@ -42,14 +42,23 @@ func (l *Bridge) StartBridgeNetwork() {
 	util.Info.Println("StartBridgeNetwork after ListenAndServe IdleTimeout", l.HTTPServer.IdleTimeout)
 }
 
+func transferCloser(dest io.WriteCloser, src io.ReadCloser) {
+	defer dest.Close()
+	defer src.Close()
+	io.Copy(dest, src)
+}
+
 // handleTunnel handles link bridge tunnel connection
 func (l *Bridge) handleTunnel(w http.ResponseWriter, r *http.Request) {
 	util.Info.Println("handleTunnel", l.LinkParticipants(), r.Host)
-	destConn, err := net.DialTimeout("tcp", r.Host, 10*time.Second)
+	byteRequest, err := httputil.DumpRequest(r, true)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusServiceUnavailable)
+		http.Error(w, err.Error(), http.StatusRequestTimeout)
 		return
 	}
+	reqReader := bytes.NewReader(byteRequest)
+	reqCloser := ioutil.NopCloser(reqReader)
+	transferCloser(l.ReadWriteCloser, reqCloser)
 	w.WriteHeader(http.StatusOK)
 	hijacker, ok := w.(http.Hijacker)
 	if !ok {
@@ -61,8 +70,7 @@ func (l *Bridge) handleTunnel(w http.ResponseWriter, r *http.Request) {
 		util.Info.Println("handleTunnel Hijack error", l.LinkParticipants(), r.Host)
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
 	}
-	go transferCloser(destConn, l.ReadWriteCloser)
-	go transferCloser(l.ReadWriteCloser, clientConn)
+	go transferCloser(clientConn, l.ReadWriteCloser)
 }
 
 // StopBridgeNetwork stops listening to port p for http traffic and routes it through a link
@@ -72,4 +80,27 @@ func (l *Bridge) StopBridgeNetwork() error {
 
 func (l *Bridge) onConnStateEvent(conn net.Conn, state http.ConnState) {
 	util.Info.Println("onChangeConnState", l.LinkParticipants(), "state", state.String())
+}
+
+func copyHeader(dst, src http.Header) {
+	for k, vv := range src {
+		for _, v := range vv {
+			dst.Add(k, v)
+		}
+	}
+}
+
+func (l *Bridge) handleHTTP(w http.ResponseWriter, req *http.Request) {
+	resp, err := http.DefaultTransport.RoundTrip(req)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusServiceUnavailable)
+		return
+	}
+
+	defer resp.Body.Close()
+	copyHeader(w.Header(), resp.Header)
+	w.WriteHeader(resp.StatusCode)
+	io.Copy(l.ReadWriteCloser, resp.Body)
+	defer l.ReadWriteCloser.Close()
+	io.Copy(w, l.ReadWriteCloser)
 }
