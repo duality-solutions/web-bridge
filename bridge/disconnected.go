@@ -11,7 +11,7 @@ func StopDisconnected(stopchan chan struct{}) bool {
 	util.Info.Println("StopDisconnected started")
 	currentEpoch := time.Now().Unix()
 	for _, link := range linkBridges.connected {
-		if link.State == StateWaitForRTC || link.State == StateEstablishRTC {
+		if (link.State == StateWaitForRTC || link.State == StateEstablishRTC) && (currentEpoch-link.OnStateChangeEpoch > 360) {
 			if link.PeerConnection != nil {
 				failedPeerConnection := (link.PeerConnection.ConnectionState().String() == "failed")
 				failedICEConnection := (link.PeerConnection.ICEConnectionState().String() == "failed")
