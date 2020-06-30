@@ -38,8 +38,7 @@ func (l *Bridge) StartBridgeNetwork() {
 	}
 	util.Info.Println("StartBridgeNetwork before ListenAndServe", l.LinkParticipants())
 	l.HTTPServer = server
-	server.ListenAndServe()
-	util.Info.Println("StartBridgeNetwork after ListenAndServe IdleTimeout", l.HTTPServer.IdleTimeout)
+	go server.ListenAndServe()
 }
 
 func transferCloser(dest io.WriteCloser, src io.ReadCloser) {
