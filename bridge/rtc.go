@@ -3,7 +3,6 @@ package bridge
 import (
 	"bufio"
 	"bytes"
-	"io"
 	"net"
 	"net/http"
 	"time"
@@ -25,36 +24,6 @@ Offer Peer (EstablishRTC)					 Answer Peer (WaitForRTC)
 7- SetLocalDescription
 8- SetRemoteDescription
 */
-
-// ResponseLoop shows how to read from the datachannel directly
-func ResponseLoop(r io.Reader, w io.Writer) {
-	for {
-		var buffer []byte
-		n, err := r.Read(buffer)
-		if n > 10 {
-			util.Info.Println("Message from DataChannel:", string(buffer[:n]))
-			if err != nil {
-				util.Info.Println("Datachannel Read error", err)
-				continue
-			}
-			buf := bytes.NewReader(buffer)
-			buf2 := bufio.NewReader(buf)
-			var req *http.Request
-			if req, err = http.ReadRequest(buf2); err != nil { // deserialize request
-				util.Error.Println("Datachannel deserialize error", err)
-				continue
-			}
-			destConn, err2 := net.DialTimeout("tcp", req.Host, 10*time.Second)
-			if err2 != nil {
-				util.Error.Println("Datachannel DialTimeout error", err)
-				continue
-			}
-			var buffer2 []byte
-			destConn.Read(buffer2)
-			w.Write(buffer2)
-		}
-	}
-}
 
 // EstablishRTC tries to establish a real time connection (RTC) bridge with the link
 func EstablishRTC(link *Bridge) {
@@ -82,13 +51,7 @@ func EstablishRTC(link *Bridge) {
 		link.OnOpenEpoch = time.Now().Unix()
 		link.State = StateOpenConnection
 		util.Info.Printf("EstablishRTC Data channel '%s'-'%d' open.\n", link.DataChannel.Label(), link.DataChannel.ID())
-		raw, dErr := link.DataChannel.Detach()
-		if dErr != nil {
-			util.Error.Println("EstablishRTC Data channel error", link.LinkParticipants(), dErr)
-		}
-		link.ReadWriteCloser = raw
 		link.StartBridgeNetwork()
-		go ResponseLoop(raw, raw)
 	})
 
 	// Register text message handling
@@ -96,6 +59,23 @@ func EstablishRTC(link *Bridge) {
 		if link.DataChannel != nil {
 			link.LastDataEpoch = time.Now().Unix()
 			util.Info.Printf("EstablishRTC Message from DataChannel '%s': '%s'\n", link.DataChannel.Label(), string(msg.Data))
+			if len(msg.Data) > 10 {
+				bufReader := bytes.NewReader(msg.Data)
+				bufIO := bufio.NewReader(bufReader)
+				req, err := http.ReadRequest(bufIO) // deserialize request
+				if err != nil {                     // handle response
+					util.Error.Println("Datachannel ReadRequest error", err)
+				} else {
+					destConn, err2 := net.DialTimeout("tcp", req.Host, 10*time.Second)
+					if err2 != nil {
+						util.Error.Println("Datachannel DialTimeout error", err)
+						return
+					}
+					var buffer []byte
+					destConn.Read(buffer)
+					link.DataChannel.Send(buffer)
+				}
+			}
 		}
 	})
 
@@ -148,7 +128,7 @@ func WaitForRTC(link *Bridge, answer webrtc.SessionDescription) {
 	keepAlive := true
 	stopchan := make(chan struct{})
 	if link.PeerConnection == nil {
-		util.Info.Println("WaitForRTC PeerConnection nil for", link.LinkAccount)
+		util.Error.Println("WaitForRTC PeerConnection nil for", link.LinkAccount)
 		return
 	}
 	util.Info.Println("WaitForRTC created answer!", link.LinkAccount, link.LinkID())
@@ -174,13 +154,7 @@ func WaitForRTC(link *Bridge, answer webrtc.SessionDescription) {
 			link.OnOpenEpoch = time.Now().Unix()
 			link.State = StateOpenConnection
 			util.Info.Printf("WaitForRTC Data channel '%s'-'%d' open.\n", link.DataChannel.Label(), link.DataChannel.ID())
-			raw, dErr := link.DataChannel.Detach()
-			if dErr != nil {
-				util.Error.Println("WaitForRTC Data channel error", link.LinkParticipants(), dErr)
-			}
-			link.ReadWriteCloser = raw
 			link.StartBridgeNetwork()
-			go ResponseLoop(raw, raw)
 		})
 
 		// Register text message handling
@@ -188,6 +162,23 @@ func WaitForRTC(link *Bridge, answer webrtc.SessionDescription) {
 			if link.DataChannel != nil {
 				link.LastDataEpoch = time.Now().Unix()
 				util.Info.Printf("WaitForRTC Message from DataChannel '%s': '%s'\n", link.DataChannel.Label(), string(msg.Data))
+				if len(msg.Data) > 10 {
+					bufReader := bytes.NewReader(msg.Data)
+					bufIO := bufio.NewReader(bufReader)
+					req, err := http.ReadRequest(bufIO) // deserialize request
+					if err != nil {                     // this is a response
+						util.Error.Println("Datachannel ReadRequest error", err)
+					} else {
+						destConn, err2 := net.DialTimeout("tcp", req.Host, 10*time.Second)
+						if err2 != nil {
+							util.Error.Println("Datachannel DialTimeout error", err)
+							return
+						}
+						var buffer []byte
+						destConn.Read(buffer)
+						link.DataChannel.Send(buffer)
+					}
+				}
 			}
 		})
 

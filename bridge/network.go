@@ -29,7 +29,8 @@ func (l *Bridge) StartBridgeNetwork() {
 			if r.Method == http.MethodConnect {
 				l.handleTunnel(w, r)
 			} else {
-				l.handleHTTP(w, r)
+				http.Error(w, "HTTP not supported", http.StatusNotImplemented)
+				return
 			}
 		}),
 		ConnState: l.onConnStateEvent,
@@ -52,24 +53,33 @@ func (l *Bridge) handleTunnel(w http.ResponseWriter, r *http.Request) {
 	util.Info.Println("handleTunnel", l.LinkParticipants(), r.Host)
 	byteRequest, err := httputil.DumpRequest(r, true)
 	if err != nil {
+		util.Error.Println("handleTunnel DumpRequest error", l.LinkParticipants(), r.Host, err.Error())
 		http.Error(w, err.Error(), http.StatusRequestTimeout)
 		return
 	}
+	util.Info.Println("handleTunnel", l.LinkParticipants(), "byteRequest len", len(byteRequest))
 	reqReader := bytes.NewReader(byteRequest)
 	reqCloser := ioutil.NopCloser(reqReader)
-	transferCloser(l.ReadWriteCloser, reqCloser)
-	w.WriteHeader(http.StatusOK)
+	// todo: wrap send with standard envelop so receive knows if it is a request or response
+	err = l.DataChannel.Send(byteRequest)
+	if err != nil {
+		util.Error.Println("handleTunnel Send error", l.LinkParticipants(), r.Host, err.Error())
+		http.Error(w, err.Error(), http.StatusRequestTimeout)
+		return
+	}
+	// todo: get response from WebRTC messages
 	hijacker, ok := w.(http.Hijacker)
 	if !ok {
+		util.Error.Println("Hijacking not supported", l.LinkParticipants(), r.Host)
 		http.Error(w, "Hijacking not supported", http.StatusInternalServerError)
 		return
 	}
 	clientConn, _, err := hijacker.Hijack()
 	if err != nil {
-		util.Info.Println("handleTunnel Hijack error", l.LinkParticipants(), r.Host)
+		util.Error.Println("handleTunnel Hijack error", l.LinkParticipants(), r.Host)
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
 	}
-	go transferCloser(clientConn, l.ReadWriteCloser)
+	go transferCloser(clientConn, reqCloser)
 }
 
 // StopBridgeNetwork stops listening to port p for http traffic and routes it through a link
@@ -79,27 +89,4 @@ func (l *Bridge) StopBridgeNetwork() error {
 
 func (l *Bridge) onConnStateEvent(conn net.Conn, state http.ConnState) {
 	util.Info.Println("onChangeConnState", l.LinkParticipants(), "state", state.String())
-}
-
-func copyHeader(dst, src http.Header) {
-	for k, vv := range src {
-		for _, v := range vv {
-			dst.Add(k, v)
-		}
-	}
-}
-
-func (l *Bridge) handleHTTP(w http.ResponseWriter, req *http.Request) {
-	resp, err := http.DefaultTransport.RoundTrip(req)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusServiceUnavailable)
-		return
-	}
-
-	defer resp.Body.Close()
-	copyHeader(w.Header(), resp.Header)
-	w.WriteHeader(resp.StatusCode)
-	io.Copy(l.ReadWriteCloser, resp.Body)
-	defer l.ReadWriteCloser.Close()
-	io.Copy(w, l.ReadWriteCloser)
 }

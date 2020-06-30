@@ -7,7 +7,6 @@ import (
 	"sort"
 
 	"github.com/duality-solutions/web-bridge/rpc/dynamic"
-	"github.com/pion/datachannel"
 	"github.com/pion/webrtc/v2"
 )
 
@@ -70,7 +69,6 @@ type Bridge struct {
 	Get                dynamic.DHTGetJSON
 	Put                dynamic.DHTPutJSON
 	State
-	datachannel.ReadWriteCloser
 }
 
 // NewBridge creates a new bridge struct

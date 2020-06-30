@@ -26,7 +26,7 @@ func GetAllOffers(stopchan chan struct{}, links dynamic.ActiveLinks, accounts []
 				continue
 			}
 			if offer.GetValueSize > MinimumOfferValueLength && offer.Minutes() <= OfferExpireMinutes {
-				pc, err := ConnectToIceServicesDetached(config)
+				pc, err := ConnectToIceServices(config)
 				if err == nil {
 					err = util.DecodeObject(offer.GetValue, &linkBridge.Offer)
 					if err != nil {
@@ -85,7 +85,7 @@ func GetOffers(stopchan chan struct{}) bool {
 						continue
 					}
 					if link.Get.Minutes() <= OfferExpireMinutes && link.Get.GetValueSize > MinimumOfferValueLength {
-						pc, err := ConnectToIceServicesDetached(config)
+						pc, err := ConnectToIceServices(config)
 						if err == nil {
 							err = util.DecodeObject(offer.GetValue, &link.Offer)
 							if err != nil {
@@ -143,7 +143,7 @@ func PutOffers(stopchan chan struct{}) bool {
 			util.Info.Println("PutOffers for", link.LinkParticipants())
 			var linkBridge = NewLinkBridge(link.LinkAccount, link.MyAccount, accounts)
 			if link.PeerConnection == nil {
-				pc, err := ConnectToIceServicesDetached(config)
+				pc, err := ConnectToIceServices(config)
 				if err != nil {
 					util.Error.Println("PutOffers error connecting tot ICE services", err)
 					continue
@@ -194,7 +194,7 @@ func DisconnectedLinks(stopchan chan struct{}) bool {
 			var linkBridge = NewLinkBridge(link.LinkAccount, link.MyAccount, accounts)
 			linkBridge.SessionID = link.SessionID
 			linkBridge.Get = link.Get
-			pc, err := ConnectToIceServicesDetached(config)
+			pc, err := ConnectToIceServices(config)
 			if err != nil {
 				util.Error.Println("DisconnectedLinks error connecting tot ICE services", err)
 				continue

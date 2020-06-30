@@ -55,7 +55,7 @@ func GetAnswers(stopchan chan struct{}) bool {
 		select {
 		default:
 			if link.PeerConnection == nil {
-				pc, err := ConnectToIceServicesDetached(config)
+				pc, err := ConnectToIceServices(config)
 				if err == nil {
 					link.PeerConnection = pc
 				}
