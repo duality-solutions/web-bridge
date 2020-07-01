@@ -51,6 +51,10 @@ func transferCloser(dest io.WriteCloser, src io.ReadCloser) {
 // handleTunnel handles link bridge tunnel connection
 func (l *Bridge) handleTunnel(w http.ResponseWriter, r *http.Request) {
 	util.Info.Println("handleTunnel", l.LinkParticipants(), r.Host)
+	if l.DataChannel == nil {
+		http.Error(w, "WebRTC datachannel nil. Please re-establish link bridge connection", http.StatusGatewayTimeout)
+		return
+	}
 	byteRequest, err := httputil.DumpRequest(r, true)
 	if err != nil {
 		util.Error.Println("handleTunnel DumpRequest error", l.LinkParticipants(), r.Host, err.Error())
