@@ -1,0 +1,1 @@
+go build -i -v -ldflags="-s -w"
