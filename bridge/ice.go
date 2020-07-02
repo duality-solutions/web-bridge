@@ -23,21 +23,37 @@ func newIceSetting(config settings.Configuration) (*webrtc.ICEServer, error) {
 	return &iceSettings, nil
 }
 
-// ConnectToIceServices uses the configuration settings to establish a connection with ICE servers
-func ConnectToIceServices(config settings.Configuration) (*webrtc.PeerConnection, error) {
+func connectToIceServicesOption(config settings.Configuration, detached bool) (*webrtc.PeerConnection, error) {
 	iceSettings, err := newIceSetting(config)
 	if err != nil {
-		return nil, fmt.Errorf("NewIceSetting", err)
+		return nil, fmt.Errorf("NewIceSetting %v", err)
 	}
 	configICE := webrtc.Configuration{
 		ICEServers: []webrtc.ICEServer{*iceSettings},
 	}
 
-	peerConnection, err := webrtc.NewPeerConnection(configICE)
+	s := webrtc.SettingEngine{}
+	if detached {
+		s.DetachDataChannels()
+	}
+
+	// Create an API object with the engine
+	api := webrtc.NewAPI(webrtc.WithSettingEngine(s))
+	peerConnection, err := api.NewPeerConnection(configICE)
 	if err != nil {
-		return nil, fmt.Errorf("NewPeerConnection", err)
+		return nil, fmt.Errorf("NewPeerConnection %v", err)
 	}
 	return peerConnection, nil
+}
+
+// ConnectToIceServices uses the configuration settings to establish a connection with ICE servers
+func ConnectToIceServices(config settings.Configuration) (*webrtc.PeerConnection, error) {
+	return connectToIceServicesOption(config, false)
+}
+
+// ConnectToIceServicesDetached uses the configuration settings to establish a connection with ICE servers with detached channels
+func ConnectToIceServicesDetached(config settings.Configuration) (*webrtc.PeerConnection, error) {
+	return connectToIceServicesOption(config, true)
 }
 
 // DisconnectBridgeIceServices calls the close method for a WebRTC peer connection

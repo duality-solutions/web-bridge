@@ -11,7 +11,7 @@ func StopDisconnected(stopchan chan struct{}) bool {
 	util.Info.Println("StopDisconnected started")
 	currentEpoch := time.Now().Unix()
 	for _, link := range linkBridges.connected {
-		if link.State == StateWaitForRTC || link.State == StateEstablishRTC {
+		if (link.State == StateWaitForRTC || link.State == StateEstablishRTC) && (currentEpoch-link.OnStateChangeEpoch > 360) {
 			if link.PeerConnection != nil {
 				failedPeerConnection := (link.PeerConnection.ConnectionState().String() == "failed")
 				failedICEConnection := (link.PeerConnection.ICEConnectionState().String() == "failed")
@@ -33,7 +33,7 @@ func StopDisconnected(stopchan chan struct{}) bool {
 					continue
 				}
 			}
-		} else if (link.State == StateWaitForRTC || link.State == StateEstablishRTC) && link.RTCState == "failed" && (currentEpoch-link.OnStateChangeEpoch > 180) {
+		} else if (link.State == StateWaitForRTC || link.State == StateEstablishRTC) && link.RTCState == "failed" && (currentEpoch-link.OnStateChangeEpoch > 360) {
 			util.Info.Println("StopDisconnected failed state found", link.LinkParticipants(), link.LinkID())
 			failedICEConnection := (link.PeerConnection.ICEConnectionState().String() == "failed")
 			if failedICEConnection {

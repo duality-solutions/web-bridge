@@ -3,6 +3,7 @@ package bridge
 import (
 	"crypto/sha256"
 	"fmt"
+	"net/http"
 	"sort"
 
 	"github.com/duality-solutions/web-bridge/rpc/dynamic"
@@ -25,6 +26,8 @@ const (
 	StateWaitForRTC
 	// StateEstablishRTC offer sent and answer received  = 5
 	StateEstablishRTC
+	// StateOpenConnection when WebRTC is connected and open = 6
+	StateOpenConnection
 )
 
 func (s State) String() string {
@@ -41,6 +44,8 @@ func (s State) String() string {
 		return "StateWaitForRTC"
 	case StateEstablishRTC:
 		return "StateEstablishRTC"
+	case StateOpenConnection:
+		return "StateOpenConnection"
 	default:
 		return "Undefined"
 	}
@@ -60,6 +65,7 @@ type Bridge struct {
 	LastDataEpoch      int64
 	PeerConnection     *webrtc.PeerConnection
 	DataChannel        *webrtc.DataChannel
+	HTTPServer         *http.Server
 	Get                dynamic.DHTGetJSON
 	Put                dynamic.DHTPutJSON
 	State
@@ -116,6 +122,11 @@ func (b Bridge) LinkID() string {
 	return hs
 }
 
+// ListenPort returns the HTTP server listening port
+func (b Bridge) ListenPort() uint16 {
+	return uint16(b.SessionID + StartHTTPPortNumber)
+}
+
 // LinkParticipants returns link participants
 func (b Bridge) LinkParticipants() string {
 	return (b.MyAccount + "-" + b.LinkAccount)
@@ -124,6 +135,7 @@ func (b Bridge) LinkParticipants() string {
 func (b Bridge) String() string {
 	result := fmt.Sprint("Bridge {",
 		"\nSessionID: ", b.SessionID,
+		"\nListenPort: ", b.ListenPort(),
 		"\nMyAccount: ", b.MyAccount,
 		"\nLinkAccount: ", b.LinkAccount,
 		"\nLinkID: ", b.LinkID(),
