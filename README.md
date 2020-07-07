@@ -27,4 +27,7 @@ make
 ![Technical Details Diagram](docs/diagram-webbridge-tech-details.png)
 
 ### License
-See [LICENSE.md](./LICENSE.md "LICENSE.md") file for copying and use information.
+WebBridge: See [LICENSE.md](./LICENSE.md "LICENSE.md") file for copying and use information.
+Socks Library: Copyright (c) 2012-present, Samuel Stauffer <samuel@descolada.com>
+RPC-Client Library: Copyright (c) 2013-present The btcsuite developers and Copyright (c) 2015-2016 The Decred developers
+GoProxy Library: Copyright (c) 2012-present Elazar Leibovich. All rights reserved.
