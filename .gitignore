@@ -27,3 +27,8 @@ web-bridge
 
 # Log files
 debug.log
+
+#Test binaries
+tests/http-proxy/http-proxy
+tests/tunnel/data-channel-create/data-channel-create
+tests/tunnel/data-channel-wait/data-channel-wait
