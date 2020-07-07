@@ -137,7 +137,6 @@ func sendResponse(data []byte) {
 	}
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
-	datawriter.Write([]byte("pong"))
 	bodyLen := len(body)
 	if bodyLen > 50000 {
 		datawriter.Write(body[:50000])
