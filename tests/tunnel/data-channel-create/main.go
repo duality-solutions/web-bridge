@@ -1,16 +1,20 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
-	"crypto/tls"
+	"flag"
 	"fmt"
 	"io"
-	"io/ioutil"
+	"log"
 	"net"
 	"net/http"
-	"net/http/httputil"
+	"net/url"
+	"regexp"
 
+	goproxy "github.com/duality-solutions/web-bridge/goproxy"
 	util "github.com/duality-solutions/web-bridge/internal/utilities"
+	"github.com/inconshreveable/go-vhost"
 	"github.com/pion/webrtc/v2"
 )
 
@@ -106,10 +110,100 @@ func main() {
 	select {}
 }
 
+// StartBridgeNetwork listens to a port for http traffic and routes it through a link's WebRTC channel
+func StartBridgeNetwork() {
+	verbose := flag.Bool("v", true, "should every proxy request be logged to stdout")
+	httpAddr := flag.String("httpaddr", ":7777", "proxy http listen address")
+	httpsAddr := flag.String("httpsaddr", ":7778", "proxy https listen address")
+	flag.Parse()
+
+	proxy := goproxy.NewProxyHttpServer()
+	proxy.Verbose = *verbose
+	proxy.DataChannel = dataChannel
+	if proxy.Verbose {
+		log.Printf("Server starting up! - configured to listen on http interface %s and https interface %s", *httpAddr, *httpsAddr)
+	}
+
+	proxy.NonproxyHandler = http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		if req.Host == "" {
+			fmt.Fprintln(w, "Cannot handle requests without Host header, e.g., HTTP 1.0")
+			return
+		}
+		req.URL.Scheme = "http"
+		req.URL.Host = req.Host
+		proxy.ServeHTTP(w, req)
+	})
+	proxy.OnRequest(goproxy.ReqHostMatches(regexp.MustCompile("^.*$"))).
+		HandleConnect(goproxy.AlwaysMitm)
+	proxy.OnRequest(goproxy.ReqHostMatches(regexp.MustCompile("^.*:80$"))).
+		HijackConnect(func(req *http.Request, client net.Conn, ctx *goproxy.ProxyCtx) {
+			defer func() {
+				if e := recover(); e != nil {
+					ctx.Logf("error connecting to remote: %v", e)
+					client.Write([]byte("HTTP/1.1 500 Cannot reach destination\r\n\r\n"))
+				}
+				client.Close()
+			}()
+			clientBuf := bufio.NewReadWriter(bufio.NewReader(client), bufio.NewWriter(client))
+			remote, err := connectDial(proxy, "tcp", req.URL.Host)
+			orPanic(err)
+			remoteBuf := bufio.NewReadWriter(bufio.NewReader(remote), bufio.NewWriter(remote))
+			for {
+				req, err := http.ReadRequest(clientBuf.Reader)
+				orPanic(err)
+				orPanic(req.Write(remoteBuf))
+				orPanic(remoteBuf.Flush())
+				resp, err := http.ReadResponse(remoteBuf.Reader, req)
+				orPanic(err)
+				orPanic(resp.Write(clientBuf.Writer))
+				orPanic(clientBuf.Flush())
+			}
+		})
+
+	go func() {
+		log.Fatalln(http.ListenAndServe(*httpAddr, proxy))
+	}()
+
+	// listen to the TLS ClientHello but make it a CONNECT request instead
+	ln, err := net.Listen("tcp", *httpsAddr)
+	if err != nil {
+		log.Fatalf("Error listening for https connections - %v", err)
+	}
+	for {
+		c, err := ln.Accept()
+		if err != nil {
+			log.Printf("Error accepting new connection - %v", err)
+			continue
+		}
+		go func(c net.Conn) {
+			tlsConn, err := vhost.TLS(c)
+			if err != nil {
+				log.Printf("Error accepting new connection - %v", err)
+			}
+			if tlsConn.Host() == "" {
+				log.Printf("Cannot support non-SNI enabled clients")
+				return
+			}
+			connectReq := &http.Request{
+				Method: "CONNECT",
+				URL: &url.URL{
+					Opaque: tlsConn.Host(),
+					Host:   net.JoinHostPort(tlsConn.Host(), "443"),
+				},
+				Host:       tlsConn.Host(),
+				Header:     make(http.Header),
+				RemoteAddr: c.RemoteAddr().String(),
+			}
+			resp := dumbResponseWriter{tlsConn}
+			proxy.ServeHTTP(resp, connectReq)
+		}(c)
+	}
+}
+
 // ReadLoop shows how to read from the datachannel directly
 func ReadLoop(d io.Reader) {
 	for {
-		buffer := make([]byte, 64000)
+		buffer := make([]byte, 128000)
 		_, err := d.Read(buffer)
 		if err != nil {
 			fmt.Println("Datachannel closed; Exit the readloop:", err)
@@ -120,66 +214,53 @@ func ReadLoop(d io.Reader) {
 	}
 }
 
-// StartBridgeNetwork listens to a port for http traffic and routes it through a link's WebRTC channel
-func StartBridgeNetwork() {
-	server := &http.Server{
-		Addr: ":7777",
-		Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if r.Method == http.MethodConnect {
-				handleTunnel(w, r)
-			} else {
-				http.Error(w, "HTTP not supported", http.StatusNotImplemented)
-				return
-			}
-		}),
-		ConnState: onConnStateEvent,
-		// Disable HTTP/2.
-		TLSNextProto: make(map[string]func(*http.Server, *tls.Conn, http.Handler)),
+func orPanic(err error) {
+	if err != nil {
+		panic(err)
 	}
-	go server.ListenAndServe()
+}
+
+type dumbResponseWriter struct {
+	net.Conn
+}
+
+func (dumb dumbResponseWriter) Header() http.Header {
+	panic("Header() should not be called on this ResponseWriter")
+}
+
+func (dumb dumbResponseWriter) Write(buf []byte) (int, error) {
+	if bytes.Equal(buf, []byte("HTTP/1.0 200 OK\r\n\r\n")) {
+		return len(buf), nil // throw away the HTTP OK response from the faux CONNECT request
+	}
+	return dumb.Conn.Write(buf)
+}
+
+func (dumb dumbResponseWriter) WriteHeader(code int) {
+	panic("WriteHeader() should not be called on this ResponseWriter")
+}
+
+func (dumb dumbResponseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+	return dumb, bufio.NewReadWriter(bufio.NewReader(dumb), bufio.NewWriter(dumb)), nil
+}
+
+// copied/converted from https.go
+func dial(proxy *goproxy.ProxyHttpServer, network, addr string) (c net.Conn, err error) {
+	if proxy.Tr.Dial != nil {
+		return proxy.Tr.Dial(network, addr)
+	}
+	return net.Dial(network, addr)
+}
+
+// copied/converted from https.go
+func connectDial(proxy *goproxy.ProxyHttpServer, network, addr string) (c net.Conn, err error) {
+	if proxy.ConnectDial == nil {
+		return dial(proxy, network, addr)
+	}
+	return proxy.ConnectDial(network, addr)
 }
 
 func transferCloser(dest io.WriteCloser, src io.ReadCloser) {
 	defer dest.Close()
 	defer src.Close()
 	io.Copy(dest, src)
-}
-
-// handleTunnel handles link bridge tunnel connection
-func handleTunnel(w http.ResponseWriter, r *http.Request) {
-	counter++
-	fmt.Println("handleTunnel", r.Host, counter)
-	byteRequest, err := httputil.DumpRequest(r, true)
-	if err != nil {
-		fmt.Println("handleTunnel DumpRequest error", r.Host, err.Error())
-		http.Error(w, err.Error(), http.StatusRequestTimeout)
-		return
-	}
-	fmt.Println("handleTunnel", "byteRequest len", len(byteRequest))
-	fmt.Println("handleTunnel Request", string(byteRequest))
-	err = dataChannel.Send(byteRequest)
-	if err != nil {
-		fmt.Println("handleTunnel Send error", err)
-	}
-	reqReader := bytes.NewReader(byteRequest)
-	reqCloser := ioutil.NopCloser(reqReader)
-	//io.Copy(datawriter, reqCloser)
-	// todo: wrap send with standard envelop so receive knows if it is a request or response
-	// todo: get response from WebRTC messages
-	hijacker, ok := w.(http.Hijacker)
-	if !ok {
-		fmt.Println("Hijacking not supported", r.Host)
-		http.Error(w, "Hijacking not supported", http.StatusInternalServerError)
-		return
-	}
-	clientConn, _, err := hijacker.Hijack()
-	if err != nil {
-		fmt.Println("handleTunnel Hijack error", r.Host)
-		http.Error(w, err.Error(), http.StatusServiceUnavailable)
-	}
-	go transferCloser(clientConn, reqCloser)
-}
-
-func onConnStateEvent(conn net.Conn, state http.ConnState) {
-	fmt.Println("onConnStateEvent", state.String())
 }

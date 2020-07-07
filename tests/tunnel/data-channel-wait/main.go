@@ -1,13 +1,12 @@
 package main
 
 import (
-	"bufio"
 	"bytes"
+	"crypto/tls"
 	"fmt"
 	"io"
-	"net"
+	"io/ioutil"
 	"net/http"
-	"time"
 
 	util "github.com/duality-solutions/web-bridge/internal/utilities"
 	"github.com/pion/webrtc/v2"
@@ -102,7 +101,7 @@ func main() {
 // ReadLoop shows how to read from the datachannel directly
 func ReadLoop(d io.Reader) {
 	for {
-		buffer := make([]byte, 64000)
+		buffer := make([]byte, 128000)
 		_, err := d.Read(buffer)
 		if err != nil {
 			fmt.Println("Datachannel closed; Exit the readloop:", err)
@@ -116,28 +115,24 @@ func ReadLoop(d io.Reader) {
 }
 
 func sendResponse(data []byte) {
-	var w http.ResponseWriter
-	fmt.Println("sendResponse", string(data), w)
-	bufReader := bytes.NewReader(data)
-	bufIO := bufio.NewReader(bufReader)
-	req, err := http.ReadRequest(bufIO) // deserialize request
-	if err != nil {                     // this is a response
-		fmt.Println("Datachannel ReadRequest error", err)
-	} else {
-		fmt.Println("sendResponse before DialTimeout", req.Host)
-		destConn, err2 := net.DialTimeout("tcp", req.Host, 10*time.Second)
-		if err2 != nil {
-			fmt.Println("Datachannel DialTimeout error", err)
-			return
-		}
-		buffer := make([]byte, 64000)
-		defer destConn.Close()
-		destConn.Read(buffer)
-		buffer = bytes.Trim(buffer, "\x00")
-		fmt.Println("sendResponse destConn", string(buffer))
-		_, err = datawriter.Write(buffer)
-		if err != nil {
-			fmt.Println("sendResponse datawriter Write error", err)
-		}
+	targetURL := string(data)
+	fmt.Println("sendResponse before http.Client", targetURL)
+	client := &http.Client{
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: true,
+			},
+		},
 	}
+	resp, err := client.Get(targetURL)
+	if err != nil {
+		fmt.Println("sendResponse client.Get error: ", err)
+		return
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	datawriter.Write([]byte("pong"))
+	bodyLen := len(body)
+	datawriter.Write(body[:(bodyLen / 2)])
+	fmt.Println("sendResponse client.Get successful", len(string(body)))
 }
