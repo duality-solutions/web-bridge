@@ -26,8 +26,16 @@ make
 
 ![Technical Details Diagram](docs/diagram-webbridge-tech-details.png)
 
+### Copyrights
+#### WebBridge: 
+- Copyright (c) 2020, Duality Blockchain Solutions LLC. All rights reserved.
+#### Socks Library: 
+- Copyright (c) 2012-present, Samuel Stauffer <samuel@descolada.com>. All rights reserved.
+#### RPC-Client Library: 
+- Copyright (c) 2013-present The btcsuite developers. All rights reserved.
+- Copyright (c) 2015-present The Decred developers. All rights reserved.
+#### GoProxy Library: 
+- Copyright (c) 2012-present Elazar Leibovich. All rights reserved.
+
 ### License
-WebBridge: See [LICENSE.md](./LICENSE.md "LICENSE.md") file for copying and use information.
-Socks Library: Copyright (c) 2012-present, Samuel Stauffer <samuel@descolada.com>
-RPC-Client Library: Copyright (c) 2013-present The btcsuite developers and Copyright (c) 2015-2016 The Decred developers
-GoProxy Library: Copyright (c) 2012-present Elazar Leibovich. All rights reserved.
+See [LICENSE.md](./LICENSE.md "LICENSE.md") file for copyright, copying and use information.
