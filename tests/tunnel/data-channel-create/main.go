@@ -12,6 +12,7 @@ import (
 	"net/url"
 	"regexp"
 
+	"github.com/duality-solutions/web-bridge/bridge"
 	goproxy "github.com/duality-solutions/web-bridge/goproxy"
 	util "github.com/duality-solutions/web-bridge/internal/utilities"
 	"github.com/inconshreveable/go-vhost"
@@ -203,7 +204,7 @@ func StartBridgeNetwork() {
 // ReadLoop shows how to read from the datachannel directly
 func ReadLoop(d io.Reader) {
 	for {
-		buffer := make([]byte, 128000)
+		buffer := make([]byte, bridge.MaxTransmissionBytes)
 		_, err := d.Read(buffer)
 		if err != nil {
 			fmt.Println("Datachannel closed; Exit the readloop:", err)
@@ -263,10 +264,4 @@ func connectDial(proxy *goproxy.ProxyHttpServer, network, addr string) (c net.Co
 		return dial(proxy, network, addr)
 	}
 	return proxy.ConnectDial(network, addr)
-}
-
-func transferCloser(dest io.WriteCloser, src io.ReadCloser) {
-	defer dest.Close()
-	defer src.Close()
-	io.Copy(dest, src)
 }

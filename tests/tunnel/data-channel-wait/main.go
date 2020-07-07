@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"net/http"
 
+	"github.com/duality-solutions/web-bridge/bridge"
 	util "github.com/duality-solutions/web-bridge/internal/utilities"
 	"github.com/pion/webrtc/v2"
 )
@@ -101,7 +102,7 @@ func main() {
 // ReadLoop shows how to read from the datachannel directly
 func ReadLoop(d io.Reader) {
 	for {
-		buffer := make([]byte, 128000)
+		buffer := make([]byte, bridge.MaxTransmissionBytes)
 		_, err := d.Read(buffer)
 		if err != nil {
 			fmt.Println("Datachannel closed; Exit the readloop:", err)
@@ -138,8 +139,10 @@ func sendResponse(data []byte) {
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 	bodyLen := len(body)
-	if bodyLen > 50000 {
-		datawriter.Write(body[:50000])
+	if bodyLen > bridge.MaxTransmissionBytes {
+		datawriter.Write(body[:bridge.MaxTransmissionBytes])
+	} else {
+		datawriter.Write(body)
 	}
 
 	fmt.Println("sendResponse client.Get successful", len(string(body)))
