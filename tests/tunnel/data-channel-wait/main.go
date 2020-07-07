@@ -109,7 +109,13 @@ func ReadLoop(d io.Reader) {
 		}
 		buffer = bytes.Trim(buffer, "\x00")
 		counter++
-		fmt.Println("ReadLoop Message from DataChannel:", counter, string(buffer))
+		if len(buffer) > 100 {
+			fmt.Println("ReadLoop Message from DataChannel:", counter, string(buffer[:100]))
+			fmt.Println("ReadLoop Message from DataChannel Len:", counter, len(buffer))
+		} else {
+			fmt.Println("ReadLoop Message from DataChannel:", counter, string(buffer))
+		}
+
 		go sendResponse(buffer)
 	}
 }
@@ -133,6 +139,9 @@ func sendResponse(data []byte) {
 	body, err := ioutil.ReadAll(resp.Body)
 	datawriter.Write([]byte("pong"))
 	bodyLen := len(body)
-	datawriter.Write(body[:(bodyLen / 2)])
+	if bodyLen > 50000 {
+		datawriter.Write(body[:50000])
+	}
+
 	fmt.Println("sendResponse client.Get successful", len(string(body)))
 }

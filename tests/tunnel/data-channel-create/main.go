@@ -210,7 +210,13 @@ func ReadLoop(d io.Reader) {
 			return
 		}
 		buffer = bytes.Trim(buffer, "\x00")
-		fmt.Println("ReadLoop Message from DataChannel:", string(buffer))
+		if len(buffer) > 100 {
+			fmt.Println("ReadLoop Message from DataChannel:", counter, string(buffer[:100]))
+			fmt.Println("ReadLoop Message from DataChannel Len:", counter, len(buffer))
+		} else {
+			fmt.Println("ReadLoop Message from DataChannel:", counter, string(buffer))
+		}
+		counter++
 	}
 }
 
