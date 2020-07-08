@@ -32,3 +32,6 @@ debug.log
 tests/http-proxy/http-proxy
 tests/tunnel/data-channel-create/data-channel-create
 tests/tunnel/data-channel-wait/data-channel-wait
+
+# Protocol Buffer
+*.pb.go

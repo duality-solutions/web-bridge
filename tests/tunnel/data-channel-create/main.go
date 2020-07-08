@@ -17,6 +17,7 @@ import (
 	util "github.com/duality-solutions/web-bridge/internal/utilities"
 	"github.com/inconshreveable/go-vhost"
 	"github.com/pion/webrtc/v2"
+	"google.golang.org/protobuf/proto"
 )
 
 const messageSize = 15
@@ -207,15 +208,20 @@ func ReadLoop(d io.Reader) {
 		buffer := make([]byte, bridge.MaxTransmissionBytes)
 		_, err := d.Read(buffer)
 		if err != nil {
-			fmt.Println("Datachannel closed; Exit the readloop:", err)
+			fmt.Println("ReadLoop Read error:", err)
 			return
 		}
 		buffer = bytes.Trim(buffer, "\x00")
-		if len(buffer) > 100 {
-			fmt.Println("ReadLoop Message from DataChannel:", counter, string(buffer[:100]))
-			fmt.Println("ReadLoop Message from DataChannel Len:", counter, len(buffer))
+		wr := &bridge.WireResponse{}
+		err = proto.Unmarshal(buffer, wr)
+		if err != nil {
+			log.Fatal("ReadLoop unmarshaling error:", err)
+		}
+		if len(buffer) > 300 {
+			fmt.Println("ReadLoop Message from DataChannel:", counter, string(wr.BodyPayload[:300]))
+			fmt.Println("ReadLoop Message from DataChannel Len:", counter, len(wr.BodyPayload))
 		} else {
-			fmt.Println("ReadLoop Message from DataChannel:", counter, string(buffer))
+			fmt.Println("ReadLoop Message from DataChannel:", counter, string(wr.BodyPayload))
 		}
 		counter++
 	}

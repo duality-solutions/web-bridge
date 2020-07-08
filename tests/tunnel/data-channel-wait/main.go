@@ -6,11 +6,13 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
 	"net/http"
 
 	"github.com/duality-solutions/web-bridge/bridge"
 	util "github.com/duality-solutions/web-bridge/internal/utilities"
 	"github.com/pion/webrtc/v2"
+	"google.golang.org/protobuf/proto"
 )
 
 var datawriter io.Writer
@@ -105,24 +107,28 @@ func ReadLoop(d io.Reader) {
 		buffer := make([]byte, bridge.MaxTransmissionBytes)
 		_, err := d.Read(buffer)
 		if err != nil {
-			fmt.Println("Datachannel closed; Exit the readloop:", err)
+			fmt.Println("ReadLoop Read error:", err)
 			return
 		}
 		buffer = bytes.Trim(buffer, "\x00")
-		counter++
-		if len(buffer) > 100 {
-			fmt.Println("ReadLoop Message from DataChannel:", counter, string(buffer[:100]))
+		if len(buffer) > 300 {
+			fmt.Println("ReadLoop Message from DataChannel:", counter, string(buffer[:300]))
 			fmt.Println("ReadLoop Message from DataChannel Len:", counter, len(buffer))
 		} else {
 			fmt.Println("ReadLoop Message from DataChannel:", counter, string(buffer))
 		}
-
+		counter++
 		go sendResponse(buffer)
 	}
 }
 
 func sendResponse(data []byte) {
-	targetURL := string(data)
+	wrReq := &bridge.WireRequest{}
+	err := proto.Unmarshal(data, wrReq)
+	if err != nil {
+		log.Fatal("sendResponse unmarshaling error: ", err)
+	}
+	targetURL := string(wrReq.RequestURL)
 	fmt.Println("sendResponse before http.Client", targetURL)
 	client := &http.Client{
 		Transport: &http.Transport{
@@ -138,12 +144,24 @@ func sendResponse(data []byte) {
 	}
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
-	bodyLen := len(body)
-	if bodyLen > bridge.MaxTransmissionBytes {
-		datawriter.Write(body[:bridge.MaxTransmissionBytes])
+	bodyLen := uint32(len(body))
+	wrResp := bridge.WireResponse{
+		Id:          wrReq.Id,
+		BodyPayload: body,
+		Size:        bodyLen,
+		Oridinal:    0,
+		Compressed:  false,
+	}
+	protoData, err := proto.Marshal(wrResp.ProtoReflect().Interface())
+	if err != nil {
+		fmt.Println("sendResponse marshaling error: ", err)
+	}
+	protoLen := uint32(len(protoData))
+	if protoLen > bridge.MaxTransmissionBytes {
+		datawriter.Write(protoData[:bridge.MaxTransmissionBytes])
 	} else {
-		datawriter.Write(body)
+		datawriter.Write(protoData)
 	}
 
-	fmt.Println("sendResponse client.Get successful", len(string(body)))
+	fmt.Println("sendResponse client.Get successful bodyLen", bodyLen, "Proto len", len(protoData))
 }

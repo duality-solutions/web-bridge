@@ -6,6 +6,7 @@ import (
 	"errors"
 	"io"
 	"io/ioutil"
+	"log"
 	"net"
 	"net/http"
 	"net/url"
@@ -15,6 +16,9 @@ import (
 	"strings"
 	"sync"
 	"sync/atomic"
+
+	"github.com/duality-solutions/web-bridge/bridge"
+	"google.golang.org/protobuf/proto"
 )
 
 type ConnectActionLiteral int
@@ -213,7 +217,15 @@ func (proxy *ProxyHttpServer) handleTunnel(w http.ResponseWriter, r *http.Reques
 					req.URL, err = url.Parse("https://" + r.Host + req.URL.String())
 				}
 				byteURL := []byte(req.URL.String())
-				proxy.DataChannel.Send(byteURL)
+				wr := bridge.WireRequest{
+					Id:         "12345",
+					RequestURL: byteURL,
+				}
+				data, err := proto.Marshal(wr.ProtoReflect().Interface())
+				if err != nil {
+					log.Fatal("marshaling error: ", err)
+				}
+				proxy.DataChannel.Send(data)
 				req.Close = true
 				/*
 					// Bug fix which goproxy fails to provide request

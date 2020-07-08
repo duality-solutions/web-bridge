@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package bridge;
+
+option go_package = "bridge";
+
+// WireRequest used to transmit HTTP request across WebRTC
+message WireRequest {
+    string Id = 1;
+    bytes RequestURL = 2;
+}
+
+// WireResponse used to transmit HTTP body payload across WebRTC in chunks
+message WireResponse {
+    string Id = 1;
+    bytes BodyPayload = 2;
+    uint32 Size = 3;
+    uint32 Oridinal = 4;
+    bool Compressed = 5;
+}
