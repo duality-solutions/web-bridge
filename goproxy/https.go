@@ -217,9 +217,13 @@ func (proxy *ProxyHttpServer) handleTunnel(w http.ResponseWriter, r *http.Reques
 					req.URL, err = url.Parse("https://" + r.Host + req.URL.String())
 				}
 				byteURL := []byte(req.URL.String())
-				wr := bridge.WireRequest{
-					Id:         "12345",
-					RequestURL: byteURL,
+				wr := bridge.WireMessage{
+					Id:          "12345",
+					Type:        bridge.MessageType_request,
+					BodyPayload: byteURL,
+					Size:        uint32(len(byteURL)),
+					Oridinal:    0,
+					Compressed:  false,
 				}
 				data, err := proto.Marshal(wr.ProtoReflect().Interface())
 				if err != nil {

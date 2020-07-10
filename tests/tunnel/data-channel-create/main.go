@@ -212,7 +212,7 @@ func ReadLoop(d io.Reader) {
 			return
 		}
 		buffer = bytes.Trim(buffer, "\x00")
-		wr := &bridge.WireResponse{}
+		wr := &bridge.WireMessage{}
 		err = proto.Unmarshal(buffer, wr)
 		if err != nil {
 			log.Fatal("ReadLoop unmarshaling error:", err)

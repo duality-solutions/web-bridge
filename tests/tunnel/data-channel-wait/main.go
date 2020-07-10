@@ -123,12 +123,12 @@ func ReadLoop(d io.Reader) {
 }
 
 func sendResponse(data []byte) {
-	wrReq := &bridge.WireRequest{}
+	wrReq := &bridge.WireMessage{}
 	err := proto.Unmarshal(data, wrReq)
 	if err != nil {
 		log.Fatal("sendResponse unmarshaling error: ", err)
 	}
-	targetURL := string(wrReq.RequestURL)
+	targetURL := string(wrReq.BodyPayload)
 	fmt.Println("sendResponse before http.Client", targetURL)
 	client := &http.Client{
 		Transport: &http.Transport{
@@ -145,8 +145,9 @@ func sendResponse(data []byte) {
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 	bodyLen := uint32(len(body))
-	wrResp := bridge.WireResponse{
+	wrResp := bridge.WireMessage{
 		Id:          wrReq.Id,
+		Type:        bridge.MessageType_response,
 		BodyPayload: body,
 		Size:        bodyLen,
 		Oridinal:    0,

@@ -4,17 +4,17 @@ package bridge;
 
 option go_package = "bridge";
 
-// WireRequest used to transmit HTTP request across WebRTC
-message WireRequest {
-    string Id = 1;
-    bytes RequestURL = 2;
+enum MessageType {
+	request = 0;
+	response = 1;
 }
 
-// WireResponse used to transmit HTTP body payload across WebRTC in chunks
-message WireResponse {
+// WireMessage used to transmit HTTP body payload across WebRTC in chunks
+message WireMessage {
     string Id = 1;
-    bytes BodyPayload = 2;
-    uint32 Size = 3;
-    uint32 Oridinal = 4;
-    bool Compressed = 5;
+    MessageType Type = 2;
+    bytes BodyPayload = 3;
+    uint32 Size = 4;
+    uint32 Oridinal = 5;
+    bool Compressed = 6;
 }
