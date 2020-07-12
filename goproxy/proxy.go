@@ -21,7 +21,7 @@ type ProxyHTTPServer struct {
 	// setting Verbose to true will log information on each request sent to the proxy
 	Verbose         bool
 	Logger          Logger
-	NonproxyHandler http.Handler
+	NonProxyHandler http.Handler
 	reqHandlers     []ReqHandler
 	respHandlers    []RespHandler
 	httpsHandlers   []HttpsHandler
@@ -111,7 +111,7 @@ func (proxy *ProxyHTTPServer) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		var err error
 		ctx.Logf("Got request %v %v %v %v", r.URL.Path, r.Host, r.Method, r.URL.String())
 		if !r.URL.IsAbs() {
-			proxy.NonproxyHandler.ServeHTTP(w, r)
+			proxy.NonProxyHandler.ServeHTTP(w, r)
 			return
 		}
 		r, resp := proxy.filterRequest(r, ctx)
@@ -177,7 +177,7 @@ func NewProxyHTTPServer() *ProxyHTTPServer {
 		reqHandlers:   []ReqHandler{},
 		respHandlers:  []RespHandler{},
 		httpsHandlers: []HttpsHandler{},
-		NonproxyHandler: http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		NonProxyHandler: http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 			http.Error(w, "This is a proxy server. Does not respond to non-proxy requests.", 500)
 		}),
 		Tr: &http.Transport{TLSClientConfig: tlsClientSkipVerify, Proxy: http.ProxyFromEnvironment},
