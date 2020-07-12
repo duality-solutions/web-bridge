@@ -18,6 +18,7 @@ import (
 	"sync/atomic"
 
 	"github.com/duality-solutions/web-bridge/bridge"
+	util "github.com/duality-solutions/web-bridge/internal/utilities"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -218,7 +219,7 @@ func (proxy *ProxyHttpServer) handleTunnel(w http.ResponseWriter, r *http.Reques
 				}
 				byteURL := []byte(req.URL.String())
 				wr := bridge.WireMessage{
-					Id:          "12345",
+					SessionId:   util.UniqueId(byteURL),
 					Type:        bridge.MessageType_request,
 					BodyPayload: byteURL,
 					Size:        uint32(len(byteURL)),

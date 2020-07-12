@@ -129,7 +129,7 @@ func sendResponse(data []byte) {
 		log.Fatal("sendResponse unmarshaling error: ", err)
 	}
 	targetURL := string(wrReq.BodyPayload)
-	fmt.Println("sendResponse before http.Client", targetURL)
+	fmt.Println("sendResponse before http.Client", targetURL, "ReqID:", wrReq.SessionId)
 	client := &http.Client{
 		Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{
@@ -146,7 +146,7 @@ func sendResponse(data []byte) {
 	body, err := ioutil.ReadAll(resp.Body)
 	bodyLen := uint32(len(body))
 	wrResp := bridge.WireMessage{
-		Id:          wrReq.Id,
+		SessionId:   wrReq.SessionId,
 		Type:        bridge.MessageType_response,
 		BodyPayload: body,
 		Size:        bodyLen,

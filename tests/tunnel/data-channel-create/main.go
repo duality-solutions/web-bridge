@@ -218,10 +218,10 @@ func ReadLoop(d io.Reader) {
 			log.Fatal("ReadLoop unmarshaling error:", err)
 		}
 		if len(buffer) > 300 {
-			fmt.Println("ReadLoop Message from DataChannel:", counter, string(wr.BodyPayload[:300]))
+			fmt.Println("ReadLoop Message from DataChannel:", counter, "ID:", wr.SessionId, string(wr.BodyPayload[:300]))
 			fmt.Println("ReadLoop Message from DataChannel Len:", counter, len(wr.BodyPayload))
 		} else {
-			fmt.Println("ReadLoop Message from DataChannel:", counter, string(wr.BodyPayload))
+			fmt.Println("ReadLoop Message from DataChannel:", counter, "ID:", wr.SessionId, string(wr.BodyPayload))
 		}
 		counter++
 	}

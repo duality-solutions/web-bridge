@@ -6,6 +6,7 @@ import (
 	"time"
 )
 
+// UniqueId uses the input and the current nano epoch time to create a unique string id
 func UniqueId(data []byte) string {
 	timeByte := make([]byte, 8)
 	nanoSec := time.Now().UnixNano()
