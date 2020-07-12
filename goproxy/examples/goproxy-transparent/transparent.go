@@ -27,7 +27,7 @@ func main() {
 	https_addr := flag.String("httpsaddr", ":3128", "proxy https listen address")
 	flag.Parse()
 
-	proxy := goproxy.NewProxyHttpServer()
+	proxy := goproxy.NewProxyHTTPServer()
 	proxy.Verbose = *verbose
 	if proxy.Verbose {
 		log.Printf("Server starting up! - configured to listen on http interface %s and https interface %s", *http_addr, *https_addr)
@@ -110,7 +110,7 @@ func main() {
 }
 
 // copied/converted from https.go
-func dial(proxy *goproxy.ProxyHttpServer, network, addr string) (c net.Conn, err error) {
+func dial(proxy *goproxy.ProxyHTTPServer, network, addr string) (c net.Conn, err error) {
 	if proxy.Tr.Dial != nil {
 		return proxy.Tr.Dial(network, addr)
 	}
@@ -118,7 +118,7 @@ func dial(proxy *goproxy.ProxyHttpServer, network, addr string) (c net.Conn, err
 }
 
 // copied/converted from https.go
-func dial(proxy *goproxy.ProxyHttpServer, network, addr string) (c net.Conn, err error) {
+func dial(proxy *goproxy.ProxyHTTPServer, network, addr string) (c net.Conn, err error) {
 	if proxy.Tr.Dial != nil {
 		return proxy.Tr.Dial(network, addr)
 	}
@@ -126,7 +126,7 @@ func dial(proxy *goproxy.ProxyHttpServer, network, addr string) (c net.Conn, err
 }
 
 // copied/converted from https.go
-func connectDial(proxy *goproxy.ProxyHttpServer, network, addr string) (c net.Conn, err error) {
+func connectDial(proxy *goproxy.ProxyHTTPServer, network, addr string) (c net.Conn, err error) {
 	if proxy.ConnectDial == nil {
 		return dial(proxy, network, addr)
 	}

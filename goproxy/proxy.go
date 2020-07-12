@@ -11,8 +11,8 @@ import (
 	"sync/atomic"
 )
 
-// ProxyHttpServer is the basic proxy type. Implements http.Handler.
-type ProxyHttpServer struct {
+// ProxyHTTPServer is the basic proxy type. Implements http.Handler.
+type ProxyHTTPServer struct {
 	// session variable must be aligned in i386
 	// see http://golang.org/src/pkg/sync/atomic/doc.go#L41
 	sess int64
@@ -57,7 +57,7 @@ func isEof(r *bufio.Reader) bool {
 	return false
 }
 
-func (proxy *ProxyHttpServer) filterRequest(r *http.Request, ctx *ProxyCtx) (req *http.Request, resp *http.Response) {
+func (proxy *ProxyHTTPServer) filterRequest(r *http.Request, ctx *ProxyCtx) (req *http.Request, resp *http.Response) {
 	req = r
 	for _, h := range proxy.reqHandlers {
 		req, resp = h.Handle(r, ctx)
@@ -70,7 +70,7 @@ func (proxy *ProxyHttpServer) filterRequest(r *http.Request, ctx *ProxyCtx) (req
 	return
 }
 
-func (proxy *ProxyHttpServer) filterResponse(respOrig *http.Response, ctx *ProxyCtx) (resp *http.Response) {
+func (proxy *ProxyHTTPServer) filterResponse(respOrig *http.Response, ctx *ProxyCtx) (resp *http.Response) {
 	resp = respOrig
 	for _, h := range proxy.respHandlers {
 		ctx.Resp = resp
@@ -100,7 +100,7 @@ func removeProxyHeaders(ctx *ProxyCtx, r *http.Request) {
 }
 
 // Standard net/http function. Shouldn't be used directly, http.Serve will use it.
-func (proxy *ProxyHttpServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (proxy *ProxyHTTPServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	//r.Header["X-Forwarded-For"] = w.RemoteAddr()
 	go proxy.readWebRTCLoop()
 	if r.Method == "CONNECT" {
@@ -170,9 +170,9 @@ func (proxy *ProxyHttpServer) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	}
 }
 
-// NewProxyHttpServer creates and returns a proxy server, logging to stderr by default
-func NewProxyHttpServer() *ProxyHttpServer {
-	proxy := ProxyHttpServer{
+// NewProxyHTTPServer creates and returns a proxy server, logging to stderr by default
+func NewProxyHTTPServer() *ProxyHTTPServer {
+	proxy := ProxyHTTPServer{
 		Logger:        log.New(os.Stderr, "", log.LstdFlags),
 		reqHandlers:   []ReqHandler{},
 		respHandlers:  []RespHandler{},

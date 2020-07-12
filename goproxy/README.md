@@ -55,7 +55,7 @@ import (
 )
 
 func main() {
-    proxy := goproxy.NewProxyHttpServer()
+    proxy := goproxy.NewProxyHTTPServer()
     proxy.Verbose = true
     log.Fatal(http.ListenAndServe(":8080", proxy))
 }

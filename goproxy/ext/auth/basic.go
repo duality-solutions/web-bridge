@@ -73,7 +73,7 @@ func BasicConnect(realm string, f func(user, passwd string) bool) goproxy.HttpsH
 }
 
 // ProxyBasic will force HTTP authentication before any request to the proxy is processed
-func ProxyBasic(proxy *goproxy.ProxyHttpServer, realm string, f func(user, passwd string) bool) {
+func ProxyBasic(proxy *goproxy.ProxyHTTPServer, realm string, f func(user, passwd string) bool) {
 	proxy.OnRequest().Do(Basic(realm, f))
 	proxy.OnRequest().HandleConnect(BasicConnect(realm, f))
 }

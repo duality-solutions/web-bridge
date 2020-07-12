@@ -2,12 +2,13 @@ package main
 
 import (
 	"fmt"
-	"github.com/elazarl/goproxy"
-	"github.com/elazarl/goproxy/ext/html"
 	"io"
 	"log"
 	. "net/http"
 	"time"
+
+	"github.com/elazarl/goproxy"
+	goproxy_html "github.com/elazarl/goproxy/ext/html"
 )
 
 type Count struct {
@@ -32,7 +33,7 @@ func (c CountReadCloser) Close() error {
 }
 
 func main() {
-	proxy := goproxy.NewProxyHttpServer()
+	proxy := goproxy.NewProxyHTTPServer()
 	timer := make(chan bool)
 	ch := make(chan Count, 10)
 	go func() {

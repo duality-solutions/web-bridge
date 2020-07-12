@@ -110,7 +110,7 @@ func StartBridgeNetwork(reader io.Reader, writer io.Writer) {
 	httpsAddr := flag.String("httpsaddr", ":7778", "proxy https listen address")
 	flag.Parse()
 
-	proxy := goproxy.NewProxyHttpServer()
+	proxy := goproxy.NewProxyHTTPServer()
 	proxy.Verbose = *verbose
 	proxy.DataChannelReader = reader
 	proxy.DataChannelWriter = writer
@@ -224,7 +224,7 @@ func (dumb dumbResponseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 }
 
 // copied/converted from https.go
-func dial(proxy *goproxy.ProxyHttpServer, network, addr string) (c net.Conn, err error) {
+func dial(proxy *goproxy.ProxyHTTPServer, network, addr string) (c net.Conn, err error) {
 	if proxy.Tr.Dial != nil {
 		return proxy.Tr.Dial(network, addr)
 	}
@@ -232,7 +232,7 @@ func dial(proxy *goproxy.ProxyHttpServer, network, addr string) (c net.Conn, err
 }
 
 // copied/converted from https.go
-func connectDial(proxy *goproxy.ProxyHttpServer, network, addr string) (c net.Conn, err error) {
+func connectDial(proxy *goproxy.ProxyHTTPServer, network, addr string) (c net.Conn, err error) {
 	if proxy.ConnectDial == nil {
 		return dial(proxy, network, addr)
 	}

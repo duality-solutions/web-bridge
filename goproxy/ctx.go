@@ -22,7 +22,7 @@ type ProxyCtx struct {
 	// Will connect a request to a response
 	Session   int64
 	certStore CertStorage
-	Proxy     *ProxyHttpServer
+	Proxy     *ProxyHTTPServer
 }
 
 type RoundTripper interface {
@@ -50,8 +50,8 @@ func (ctx *ProxyCtx) printf(msg string, argv ...interface{}) {
 	ctx.Proxy.Logger.Printf("[%03d] "+msg+"\n", append([]interface{}{ctx.Session & 0xFF}, argv...)...)
 }
 
-// Logf prints a message to the proxy's log. Should be used in a ProxyHttpServer's filter
-// This message will be printed only if the Verbose field of the ProxyHttpServer is set to true
+// Logf prints a message to the proxy's log. Should be used in a ProxyHTTPServer's filter
+// This message will be printed only if the Verbose field of the ProxyHTTPServer is set to true
 //
 //	proxy.OnRequest().DoFunc(func(r *http.Request,ctx *goproxy.ProxyCtx) (*http.Request, *http.Response){
 //		nr := atomic.AddInt32(&counter,1)
@@ -64,7 +64,7 @@ func (ctx *ProxyCtx) Logf(msg string, argv ...interface{}) {
 	}
 }
 
-// Warnf prints a message to the proxy's log. Should be used in a ProxyHttpServer's filter
+// Warnf prints a message to the proxy's log. Should be used in a ProxyHTTPServer's filter
 // This message will always be printed.
 //
 //	proxy.OnRequest().DoFunc(func(r *http.Request,ctx *goproxy.ProxyCtx) (*http.Request, *http.Response){

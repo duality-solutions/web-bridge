@@ -177,19 +177,19 @@ func StatusCodeIs(codes ...int) RespCondition {
 	})
 }
 
-// ProxyHttpServer.OnRequest Will return a temporary ReqProxyConds struct, aggregating the given condtions.
+// ProxyHTTPServer.OnRequest Will return a temporary ReqProxyConds struct, aggregating the given condtions.
 // You will use the ReqProxyConds struct to register a ReqHandler, that would filter
 // the request, only if all the given ReqCondition matched.
 // Typical usage:
 //	proxy.OnRequest(UrlIs("example.com/foo"),UrlMatches(regexp.MustParse(`.*\.exampl.\com\./.*`)).Do(...)
-func (proxy *ProxyHttpServer) OnRequest(conds ...ReqCondition) *ReqProxyConds {
+func (proxy *ProxyHTTPServer) OnRequest(conds ...ReqCondition) *ReqProxyConds {
 	return &ReqProxyConds{proxy, conds}
 }
 
-// ReqProxyConds aggregate ReqConditions for a ProxyHttpServer. Upon calling Do, it will register a ReqHandler that would
+// ReqProxyConds aggregate ReqConditions for a ProxyHTTPServer. Upon calling Do, it will register a ReqHandler that would
 // handle the request if all conditions on the HTTP request are met.
 type ReqProxyConds struct {
-	proxy    *ProxyHttpServer
+	proxy    *ProxyHTTPServer
 	reqConds []ReqCondition
 }
 
@@ -268,11 +268,11 @@ func (pcond *ReqProxyConds) HijackConnect(f func(req *http.Request, client net.C
 		}))
 }
 
-// ProxyConds is used to aggregate RespConditions for a ProxyHttpServer.
+// ProxyConds is used to aggregate RespConditions for a ProxyHTTPServer.
 // Upon calling ProxyConds.Do, it will register a RespHandler that would
 // handle the HTTP response from remote server if all conditions on the HTTP response are met.
 type ProxyConds struct {
-	proxy    *ProxyHttpServer
+	proxy    *ProxyHTTPServer
 	reqConds []ReqCondition
 	respCond []RespCondition
 }
@@ -304,7 +304,7 @@ func (pcond *ProxyConds) Do(h RespHandler) {
 // OnResponse is used when adding a response-filter to the HTTP proxy, usual pattern is
 //	proxy.OnResponse(cond1,cond2).Do(handler) // handler.Handle(resp,ctx) will be used
 //				// if cond1.HandleResp(resp) && cond2.HandleResp(resp)
-func (proxy *ProxyHttpServer) OnResponse(conds ...RespCondition) *ProxyConds {
+func (proxy *ProxyHTTPServer) OnResponse(conds ...RespCondition) *ProxyConds {
 	return &ProxyConds{proxy, make([]ReqCondition, 0), conds}
 }
 

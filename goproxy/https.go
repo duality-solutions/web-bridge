@@ -61,14 +61,14 @@ func stripPort(s string) string {
 	return s[:ix]
 }
 
-func (proxy *ProxyHttpServer) dial(network, addr string) (c net.Conn, err error) {
+func (proxy *ProxyHTTPServer) dial(network, addr string) (c net.Conn, err error) {
 	if proxy.Tr.Dial != nil {
 		return proxy.Tr.Dial(network, addr)
 	}
 	return net.Dial(network, addr)
 }
 
-func (proxy *ProxyHttpServer) connectDial(network, addr string) (c net.Conn, err error) {
+func (proxy *ProxyHTTPServer) connectDial(network, addr string) (c net.Conn, err error) {
 	if proxy.ConnectDial == nil {
 		return proxy.dial(network, addr)
 	}
@@ -83,7 +83,7 @@ type halfClosable interface {
 
 var _ halfClosable = (*net.TCPConn)(nil)
 
-func (proxy *ProxyHttpServer) handleTunnel(w http.ResponseWriter, r *http.Request) {
+func (proxy *ProxyHTTPServer) handleTunnel(w http.ResponseWriter, r *http.Request) {
 	ctx := &ProxyCtx{Req: r, Session: atomic.AddInt64(&proxy.sess, 1), Proxy: proxy, certStore: proxy.CertStore}
 
 	hij, ok := w.(http.Hijacker)
@@ -321,7 +321,7 @@ func (proxy *ProxyHttpServer) handleTunnel(w http.ResponseWriter, r *http.Reques
 }
 
 // readWebRTCLoop creates a process to continues to read data from the WebRTC channel
-func (proxy *ProxyHttpServer) readWebRTCLoop() {
+func (proxy *ProxyHTTPServer) readWebRTCLoop() {
 	for {
 		buffer := make([]byte, bridge.MaxTransmissionBytes)
 		_, err := proxy.DataChannelReader.Read(buffer)
@@ -344,7 +344,7 @@ func (proxy *ProxyHttpServer) readWebRTCLoop() {
 	}
 }
 
-func (proxy *ProxyHttpServer) handleHTTPS(w http.ResponseWriter, r *http.Request) {
+func (proxy *ProxyHTTPServer) handleHTTPS(w http.ResponseWriter, r *http.Request) {
 	ctx := &ProxyCtx{Req: r, Session: atomic.AddInt64(&proxy.sess, 1), Proxy: proxy, certStore: proxy.CertStore}
 
 	hij, ok := w.(http.Hijacker)
@@ -585,7 +585,7 @@ func copyAndClose(ctx *ProxyCtx, dst, src halfClosable) {
 	src.CloseRead()
 }
 
-func dialerFromEnv(proxy *ProxyHttpServer) func(network, addr string) (net.Conn, error) {
+func dialerFromEnv(proxy *ProxyHTTPServer) func(network, addr string) (net.Conn, error) {
 	https_proxy := os.Getenv("HTTPS_PROXY")
 	if https_proxy == "" {
 		https_proxy = os.Getenv("https_proxy")
@@ -596,11 +596,11 @@ func dialerFromEnv(proxy *ProxyHttpServer) func(network, addr string) (net.Conn,
 	return proxy.NewConnectDialToProxy(https_proxy)
 }
 
-func (proxy *ProxyHttpServer) NewConnectDialToProxy(https_proxy string) func(network, addr string) (net.Conn, error) {
+func (proxy *ProxyHTTPServer) NewConnectDialToProxy(https_proxy string) func(network, addr string) (net.Conn, error) {
 	return proxy.NewConnectDialToProxyWithHandler(https_proxy, nil)
 }
 
-func (proxy *ProxyHttpServer) NewConnectDialToProxyWithHandler(https_proxy string, connectReqHandler func(req *http.Request)) func(network, addr string) (net.Conn, error) {
+func (proxy *ProxyHTTPServer) NewConnectDialToProxyWithHandler(https_proxy string, connectReqHandler func(req *http.Request)) func(network, addr string) (net.Conn, error) {
 	u, err := url.Parse(https_proxy)
 	if err != nil {
 		return nil

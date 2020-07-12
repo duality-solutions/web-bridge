@@ -51,7 +51,7 @@ func main() {
 	if _, err := os.Stat(*yuicompressor); os.IsNotExist(err) {
 		log.Fatal("Can't find yuicompressor jar specified ", *yuicompressor)
 	}
-	proxy := goproxy.NewProxyHttpServer()
+	proxy := goproxy.NewProxyHTTPServer()
 	proxy.Verbose = *verbose
 	proxy.OnResponse().DoFunc(func(resp *http.Response, ctx *goproxy.ProxyCtx) *http.Response {
 		contentType := resp.Header.Get("Content-Type")

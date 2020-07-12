@@ -9,7 +9,7 @@ The proxy itself is simply an `net/http` handler.
 
 Typical usage is
 
-	proxy := goproxy.NewProxyHttpServer()
+	proxy := goproxy.NewProxyHTTPServer()
 	proxy.OnRequest(..conditions..).Do(..requesthandler..)
 	proxy.OnRequest(..conditions..).DoFunc(..requesthandlerFunction..)
 	proxy.OnResponse(..conditions..).Do(..responesHandler..)
