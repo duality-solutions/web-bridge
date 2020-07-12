@@ -47,6 +47,7 @@ make
 - Copyright (c) 2015-present The Decred developers. All rights reserved.
 #### GoProxy Library: 
 - Copyright (c) 2012-present Elazar Leibovich. All rights reserved.
-
+#### Base58 Library: 
+- Copyright (c) 2018 shengdoushi
 ### License
 See [LICENSE.md](./LICENSE.md "LICENSE.md") file for copyright, copying and use information.
