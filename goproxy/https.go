@@ -2,8 +2,10 @@ package goproxy
 
 import (
 	"bufio"
+	"bytes"
 	"crypto/tls"
 	"errors"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
@@ -230,7 +232,11 @@ func (proxy *ProxyHttpServer) handleTunnel(w http.ResponseWriter, r *http.Reques
 				if err != nil {
 					log.Fatal("marshaling error: ", err)
 				}
-				proxy.DataChannel.Send(data)
+				_, err = proxy.DataChannelWriter.Write(data)
+				if err != nil {
+					log.Fatal("WebRTC DataChannel writer error: ", err)
+				}
+				ctx.Logf("Sent WireMessage request via WebRTC to %v", r.Host, wr.SessionId)
 				req.Close = true
 				/*
 					// Bug fix which goproxy fails to provide request
@@ -311,6 +317,30 @@ func (proxy *ProxyHttpServer) handleTunnel(w http.ResponseWriter, r *http.Reques
 			}
 		}
 		proxyClient.Close()
+	}
+}
+
+// readWebRTCLoop creates a process to continues to read data from the WebRTC channel
+func (proxy *ProxyHttpServer) readWebRTCLoop() {
+	for {
+		buffer := make([]byte, bridge.MaxTransmissionBytes)
+		_, err := proxy.DataChannelReader.Read(buffer)
+		if err != nil {
+			fmt.Println("Proxy readWebRTCLoop Read error:", err)
+			return
+		}
+		buffer = bytes.Trim(buffer, "\x00")
+		wr := &bridge.WireMessage{}
+		err = proto.Unmarshal(buffer, wr)
+		if err != nil {
+			log.Fatal("ReadLoop unmarshaling error:", err)
+		}
+		if len(buffer) > 300 {
+			fmt.Println("Proxy readWebRTCLoop Message from DataChannel SessionID:", wr.SessionId, string(wr.BodyPayload[:300]))
+			fmt.Println("Proxy readWebRTCLoop Message from DataChannel Len:", len(wr.BodyPayload))
+		} else {
+			fmt.Println("Proxy readWebRTCLoop Message from DataChannel SessionID:", wr.SessionId, string(wr.BodyPayload))
+		}
 	}
 }
 

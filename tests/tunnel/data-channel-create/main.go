@@ -12,19 +12,13 @@ import (
 	"net/url"
 	"regexp"
 
-	"github.com/duality-solutions/web-bridge/bridge"
 	goproxy "github.com/duality-solutions/web-bridge/goproxy"
 	util "github.com/duality-solutions/web-bridge/internal/utilities"
 	"github.com/inconshreveable/go-vhost"
 	"github.com/pion/webrtc/v2"
-	"google.golang.org/protobuf/proto"
 )
 
-const messageSize = 15
-
 var dataChannel *webrtc.DataChannel
-var datawriter io.Writer
-var counter = 0
 
 func main() {
 	// Since this behavior diverges from the WebRTC API it has to be
@@ -76,11 +70,8 @@ func main() {
 		if err != nil {
 			panic(err)
 		}
-
-		go ReadLoop(raw)
-		datawriter = raw
 		// Handle reading from the data channel
-		StartBridgeNetwork()
+		StartBridgeNetwork(raw, raw)
 	})
 
 	// Create an offer to send to the browser
@@ -113,7 +104,7 @@ func main() {
 }
 
 // StartBridgeNetwork listens to a port for http traffic and routes it through a link's WebRTC channel
-func StartBridgeNetwork() {
+func StartBridgeNetwork(reader io.Reader, writer io.Writer) {
 	verbose := flag.Bool("v", true, "should every proxy request be logged to stdout")
 	httpAddr := flag.String("httpaddr", ":7777", "proxy http listen address")
 	httpsAddr := flag.String("httpsaddr", ":7778", "proxy https listen address")
@@ -121,7 +112,8 @@ func StartBridgeNetwork() {
 
 	proxy := goproxy.NewProxyHttpServer()
 	proxy.Verbose = *verbose
-	proxy.DataChannel = dataChannel
+	proxy.DataChannelReader = reader
+	proxy.DataChannelWriter = writer
 	if proxy.Verbose {
 		log.Printf("Server starting up! - configured to listen on http interface %s and https interface %s", *httpAddr, *httpsAddr)
 	}
@@ -199,31 +191,6 @@ func StartBridgeNetwork() {
 			resp := dumbResponseWriter{tlsConn}
 			proxy.ServeHTTP(resp, connectReq)
 		}(c)
-	}
-}
-
-// ReadLoop shows how to read from the datachannel directly
-func ReadLoop(d io.Reader) {
-	for {
-		buffer := make([]byte, bridge.MaxTransmissionBytes)
-		_, err := d.Read(buffer)
-		if err != nil {
-			fmt.Println("ReadLoop Read error:", err)
-			return
-		}
-		buffer = bytes.Trim(buffer, "\x00")
-		wr := &bridge.WireMessage{}
-		err = proto.Unmarshal(buffer, wr)
-		if err != nil {
-			log.Fatal("ReadLoop unmarshaling error:", err)
-		}
-		if len(buffer) > 300 {
-			fmt.Println("ReadLoop Message from DataChannel:", counter, "ID:", wr.SessionId, string(wr.BodyPayload[:300]))
-			fmt.Println("ReadLoop Message from DataChannel Len:", counter, len(wr.BodyPayload))
-		} else {
-			fmt.Println("ReadLoop Message from DataChannel:", counter, "ID:", wr.SessionId, string(wr.BodyPayload))
-		}
-		counter++
 	}
 }
 

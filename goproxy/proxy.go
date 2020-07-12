@@ -9,8 +9,6 @@ import (
 	"os"
 	"regexp"
 	"sync/atomic"
-
-	"github.com/pion/webrtc/v2"
 )
 
 // ProxyHttpServer is the basic proxy type. Implements http.Handler.
@@ -30,9 +28,10 @@ type ProxyHttpServer struct {
 	Tr              *http.Transport
 	// ConnectDial will be used to create TCP connections for CONNECT requests
 	// if nil Tr.Dial will be used
-	ConnectDial func(network string, addr string) (net.Conn, error)
-	CertStore   CertStorage
-	*webrtc.DataChannel
+	ConnectDial       func(network string, addr string) (net.Conn, error)
+	CertStore         CertStorage
+	DataChannelWriter io.Writer
+	DataChannelReader io.Reader
 }
 
 var hasPort = regexp.MustCompile(`:\d+$`)
@@ -103,6 +102,7 @@ func removeProxyHeaders(ctx *ProxyCtx, r *http.Request) {
 // Standard net/http function. Shouldn't be used directly, http.Serve will use it.
 func (proxy *ProxyHttpServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	//r.Header["X-Forwarded-For"] = w.RemoteAddr()
+	go proxy.readWebRTCLoop()
 	if r.Method == "CONNECT" {
 		proxy.handleTunnel(w, r)
 	} else {
