@@ -9,7 +9,11 @@ import (
 	"os"
 	"regexp"
 	"sync/atomic"
+
+	"github.com/duality-solutions/web-bridge/bridge"
 )
+
+//var channelsMap map[string](chan *TestStruct)
 
 // ProxyHTTPServer is the basic proxy type. Implements http.Handler.
 type ProxyHTTPServer struct {
@@ -32,6 +36,7 @@ type ProxyHTTPServer struct {
 	CertStore         CertStorage
 	DataChannelWriter io.Writer
 	DataChannelReader io.Reader
+	mapWebRTCMessages map[string]*bridge.WireMessage
 }
 
 var hasPort = regexp.MustCompile(`:\d+$`)
@@ -103,6 +108,8 @@ func removeProxyHeaders(ctx *ProxyCtx, r *http.Request) {
 func (proxy *ProxyHTTPServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	//r.Header["X-Forwarded-For"] = w.RemoteAddr()
 	go proxy.readWebRTCLoop()
+	proxy.mapWebRTCMessages = make(map[string]*bridge.WireMessage, 0)
+
 	if r.Method == "CONNECT" {
 		proxy.handleTunnel(w, r)
 	} else {
