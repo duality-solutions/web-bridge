@@ -2,15 +2,20 @@ package goproxy
 
 import (
 	"bufio"
+	"bytes"
 	"io"
+	"io/ioutil"
 	"log"
 	"net"
 	"net/http"
 	"os"
 	"regexp"
 	"sync/atomic"
+	"time"
 
 	"github.com/duality-solutions/web-bridge/bridge"
+	util "github.com/duality-solutions/web-bridge/internal/utilities"
+	"google.golang.org/protobuf/proto"
 )
 
 //var channelsMap map[string](chan *TestStruct)
@@ -114,49 +119,45 @@ func (proxy *ProxyHTTPServer) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		proxy.handleTunnel(w, r)
 	} else {
 		ctx := &ProxyCtx{Req: r, Session: atomic.AddInt64(&proxy.sess, 1), Proxy: proxy}
-
 		var err error
 		ctx.Logf("Got request %v %v %v %v", r.URL.Path, r.Host, r.Method, r.URL.String())
-		if !r.URL.IsAbs() {
-			proxy.NonProxyHandler.ServeHTTP(w, r)
+		byteURL := []byte(r.URL.String())
+		wr := bridge.WireMessage{
+			SessionId:   util.UniqueId(byteURL),
+			Type:        bridge.MessageType_request,
+			BodyPayload: byteURL,
+			Size:        uint32(len(byteURL)),
+			Oridinal:    0,
+			Compressed:  false,
+		}
+		data, err := proto.Marshal(wr.ProtoReflect().Interface())
+		if err != nil {
+			log.Fatal("marshaling error: ", err)
+		}
+		_, err = proxy.DataChannelWriter.Write(data)
+		if err != nil {
+			log.Fatal("WebRTC DataChannel writer error: ", err)
+		}
+		counter++
+		ctx.Logf("Sent WireMessage request via WebRTC to %v: %v", r.Host, wr.SessionId)
+		for uint64(len(proxy.mapWebRTCMessages)) < 1 {
+			time.Sleep(11 * time.Millisecond)
+		}
+		ctx.Logf("After mapWebRTCMessages loop")
+		wm := proxy.mapWebRTCMessages[wr.SessionId]
+		if wm.GetSize() == 0 {
+			ctx.Logf("WireMessage empty")
 			return
 		}
-		r, resp := proxy.filterRequest(r, ctx)
-
-		if resp == nil {
-			if isWebSocketRequest(r) {
-				ctx.Logf("Request looks like websocket upgrade.")
-				proxy.serveWebsocket(ctx, w, r)
-			}
-
-			removeProxyHeaders(ctx, r)
-			resp, err = ctx.RoundTrip(r)
-			if err != nil {
-				ctx.Error = err
-				resp = proxy.filterResponse(nil, ctx)
-
-			}
-			if resp != nil {
-				ctx.Logf("Received response %v", resp.Status)
-			}
+		// Bug fix which goproxy fails to provide request
+		// information URL in the context when does HTTPS MITM
+		ctx.Req = r
+		resp := http.Response{
+			Header: w.Header(),
+			Body:   ioutil.NopCloser(bytes.NewBuffer(wm.GetBodyPayload())),
 		}
-		resp = proxy.filterResponse(resp, ctx)
-
-		if resp == nil {
-			var errorString string
-			if ctx.Error != nil {
-				errorString = "error read response " + r.URL.Host + " : " + ctx.Error.Error()
-				ctx.Logf(errorString)
-				http.Error(w, ctx.Error.Error(), 500)
-			} else {
-				errorString = "error read response " + r.URL.Host
-				ctx.Logf(errorString)
-				http.Error(w, errorString, 500)
-			}
-			return
-		}
-		origBody := resp.Body
-		defer origBody.Close()
+		resp.StatusCode = 200
+		//resp = proxy.filterResponse(&resp, ctx)
 		ctx.Logf("Copying response to client %v [%d]", resp.Status, resp.StatusCode)
 		// http.ResponseWriter will take care of filling the correct response length
 		// Setting it now, might impose wrong value, contradicting the actual new
@@ -164,10 +165,11 @@ func (proxy *ProxyHTTPServer) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		// We keep the original body to remove the header only if things changed.
 		// This will prevent problems with HEAD requests where there's no body, yet,
 		// the Content-Length header should be set.
-		if origBody != resp.Body {
-			resp.Header.Del("Content-Length")
-		}
-		copyHeaders(w.Header(), resp.Header, proxy.KeepDestinationHeaders)
+		resp.Header.Del("Content-Length")
+		resp.Header.Set("Transfer-Encoding", "chunked")
+		// Force connection close otherwise chrome will keep CONNECT tunnel open forever
+		resp.Header.Set("Connection", "close")
+
 		w.WriteHeader(resp.StatusCode)
 		nr, err := io.Copy(w, resp.Body)
 		if err := resp.Body.Close(); err != nil {

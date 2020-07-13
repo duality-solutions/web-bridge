@@ -240,7 +240,7 @@ func (proxy *ProxyHTTPServer) handleTunnel(w http.ResponseWriter, r *http.Reques
 				}
 				counter++
 				ctx.Logf("Sent WireMessage request via WebRTC to %v: %v", r.Host, wr.SessionId)
-				for uint64(len(proxy.mapWebRTCMessages)) < counter {
+				for uint64(len(proxy.mapWebRTCMessages)) < 1 {
 					time.Sleep(11 * time.Millisecond)
 				}
 				ctx.Logf("After mapWebRTCMessages loop")
