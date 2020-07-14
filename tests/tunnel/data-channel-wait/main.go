@@ -145,24 +145,74 @@ func sendResponse(data []byte) {
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 	bodyLen := uint32(len(body))
-	wrResp := bridge.WireMessage{
-		SessionId:   wrReq.SessionId,
-		Type:        bridge.MessageType_response,
-		BodyPayload: body,
-		Size:        bodyLen,
-		Oridinal:    0,
-		Compressed:  false,
-	}
-	protoData, err := proto.Marshal(wrResp.ProtoReflect().Interface())
-	if err != nil {
-		fmt.Println("sendResponse marshaling error: ", err)
-	}
-	protoLen := uint32(len(protoData))
-	if protoLen > bridge.MaxTransmissionBytes {
-		datawriter.Write(protoData[:bridge.MaxTransmissionBytes])
+	max := uint32(bridge.MaxTransmissionBytes - 300)
+	if bodyLen > max {
+		chunks := bodyLen/max + 1
+		pos := uint32(0)
+		for i := uint32(0); i < chunks; i++ {
+			if i != chunks {
+				fmt.Println("sendResponse begin pos", pos, "end pos", (pos + max))
+				wrResp := bridge.WireMessage{
+					SessionId:   wrReq.SessionId,
+					Type:        bridge.MessageType_response,
+					BodyPayload: body[pos : pos+max],
+					Size:        bodyLen,
+					Oridinal:    i,
+					Compressed:  false,
+				}
+				protoData, err := proto.Marshal(wrResp.ProtoReflect().Interface())
+				if err != nil {
+					fmt.Println("sendResponse marshaling error: ", err)
+				}
+				_, err = datawriter.Write(protoData)
+				if err != nil {
+					fmt.Println("sendResponse datawriter.Write error: ", err)
+				} else {
+					fmt.Println("sendResponse datawriter.Write protoData len ", len(protoData))
+				}
+			} else {
+				fmt.Println("sendResponse begin pos", pos, "end pos", (bodyLen - pos))
+				wrResp := bridge.WireMessage{
+					SessionId:   wrReq.SessionId,
+					Type:        bridge.MessageType_response,
+					BodyPayload: body[pos : bodyLen-pos],
+					Size:        bodyLen,
+					Oridinal:    0,
+					Compressed:  false,
+				}
+				protoData, err := proto.Marshal(wrResp.ProtoReflect().Interface())
+				if err != nil {
+					fmt.Println("sendResponse marshaling error: ", err)
+				}
+				datawriter.Write(protoData)
+				_, err = datawriter.Write(protoData)
+				if err != nil {
+					fmt.Println("sendResponse datawriter.Write error: ", err)
+				} else {
+					fmt.Println("sendResponse datawriter.Write protoData len ", len(protoData))
+				}
+			}
+			pos = pos + max
+		}
 	} else {
-		datawriter.Write(protoData)
+		wrResp := bridge.WireMessage{
+			SessionId:   wrReq.SessionId,
+			Type:        bridge.MessageType_response,
+			BodyPayload: body,
+			Size:        bodyLen,
+			Oridinal:    0,
+			Compressed:  false,
+		}
+		protoData, err := proto.Marshal(wrResp.ProtoReflect().Interface())
+		if err != nil {
+			fmt.Println("sendResponse marshaling error: ", err)
+		}
+		_, err = datawriter.Write(protoData)
+		if err != nil {
+			fmt.Println("sendResponse datawriter.Write error: ", err)
+		} else {
+			fmt.Println("sendResponse datawriter.Write protoData len ", len(protoData))
+		}
 	}
 
-	fmt.Println("sendResponse client.Get successful bodyLen", bodyLen, "Proto len", len(protoData))
 }

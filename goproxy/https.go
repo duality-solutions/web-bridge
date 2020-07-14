@@ -239,22 +239,30 @@ func (proxy *ProxyHTTPServer) handleTunnel(w http.ResponseWriter, r *http.Reques
 					log.Fatal("WebRTC DataChannel writer error: ", err)
 				}
 				counter++
+				max := uint32(bridge.MaxTransmissionBytes - 300)
 				ctx.Logf("Sent WireMessage request via WebRTC to %v: %v", r.Host, wr.SessionId)
 				for uint64(len(proxy.mapWebRTCMessages)) < 1 {
 					time.Sleep(11 * time.Millisecond)
 				}
 				ctx.Logf("After mapWebRTCMessages loop")
+				var repsonse []byte
 				wm := proxy.mapWebRTCMessages[wr.SessionId]
-				if wm.GetSize() == 0 {
-					ctx.Logf("WireMessage empty")
-					return
+				chunks := uint32((wm.GetSize() / max) + 1)
+				if chunks > 1 {
+					for i := uint32(0); i < chunks; i++ {
+						wm := proxy.mapWebRTCMessages[wr.SessionId]
+						repsonse = append(repsonse, wm.BodyPayload...)
+					}
+				} else {
+					repsonse = wm.GetBodyPayload()
 				}
+				ctx.Logf("repsonse size %d", len(repsonse))
 				// Bug fix which goproxy fails to provide request
 				// information URL in the context when does HTTPS MITM
 				ctx.Req = req
 				resp := http.Response{
 					Header: w.Header(),
-					Body:   ioutil.NopCloser(bytes.NewBuffer(wm.GetBodyPayload())),
+					Body:   ioutil.NopCloser(bytes.NewBuffer(repsonse)),
 				}
 				text := resp.Status
 
@@ -328,7 +336,7 @@ func (proxy *ProxyHTTPServer) readWebRTCLoop() {
 			log.Fatal("ReadLoop unmarshaling error:", err)
 			continue
 		} else {
-			fmt.Println("Proxy readWebRTCLoop data received:", wr.SessionId, wr.GetSize())
+			fmt.Println("Proxy readWebRTCLoop data received:", wr.SessionId, wr.GetSize(), wr.Oridinal)
 		}
 		proxy.mapWebRTCMessages[wr.GetSessionId()] = &wr
 		fmt.Println("Proxy readWebRTCLoop channel triggered:", wr.SessionId, wr.GetSize())
