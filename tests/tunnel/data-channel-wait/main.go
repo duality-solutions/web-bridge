@@ -137,7 +137,10 @@ func sendResponse(data []byte) {
 			},
 		},
 	}
-	resp, err := client.Get(targetURL)
+	req, err := http.NewRequest("GET", targetURL, nil)
+	req.Header.Add("Cache-Control", "no-cache")
+	req.Proto = "HTTP/1.1"
+	resp, err := client.Do(req)
 	if err != nil {
 		fmt.Println("sendResponse client.Get error: ", err)
 		return
