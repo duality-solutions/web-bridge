@@ -156,7 +156,9 @@ func sendResponse(data []byte) {
 	body, err := ioutil.ReadAll(resp.Body)
 	bodyLen := uint32(len(body))
 	fmt.Println("sendResponse bodyLen", bodyLen)
-	max := uint32(bridge.MaxTransmissionBytes - 300)
+	headers := goproxy.HeaderToWireArray(resp.Header)
+	extraSize := (100 * len(headers)) + 200
+	max := uint32(bridge.MaxTransmissionBytes - extraSize)
 	if bodyLen > max {
 		chunks := bodyLen/max + 1
 		pos := uint32(0)
