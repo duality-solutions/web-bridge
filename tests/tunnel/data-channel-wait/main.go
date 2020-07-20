@@ -128,8 +128,8 @@ func sendResponse(data []byte) {
 	if err != nil {
 		log.Fatal("sendResponse unmarshaling error: ", err)
 	}
-	targetURL := string(wrReq.BodyPayload)
-	fmt.Println("sendResponse before http.Client", targetURL, "ReqID:", wrReq.SessionId)
+	targetURL := string(wrReq.URL)
+	fmt.Println("sendResponse wrReq URL", targetURL, "ReqID:", wrReq.SessionId, "Method", wrReq.Method, "\nRequest Body", string(wrReq.GetBody()))
 	client := &http.Client{
 		Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{
@@ -137,9 +137,13 @@ func sendResponse(data []byte) {
 			},
 		},
 	}
-	req, err := http.NewRequest("GET", targetURL, nil)
+	reqBodyCloser := ioutil.NopCloser(bytes.NewBuffer(wrReq.GetBody()))
+	req, err := http.NewRequest(wrReq.Method, targetURL, reqBodyCloser)
 	req.Header.Add("Cache-Control", "no-cache")
 	req.Proto = "HTTP/1.1"
+	// TODO: Use some or all of the origin request header.
+	//req.Header.Add("Content-Type", "application/json")
+	//req.Header.Add("X-Custom-Header", "post-value")
 	resp, err := client.Do(req)
 	if err != nil {
 		fmt.Println("sendResponse client.Get error: ", err)
@@ -148,6 +152,7 @@ func sendResponse(data []byte) {
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 	bodyLen := uint32(len(body))
+	fmt.Println("sendResponse bodyLen", bodyLen)
 	max := uint32(bridge.MaxTransmissionBytes - 300)
 	if bodyLen > max {
 		chunks := bodyLen/max + 1
@@ -156,12 +161,14 @@ func sendResponse(data []byte) {
 			if i != chunks {
 				fmt.Println("sendResponse begin pos", pos, "end pos", (pos + max))
 				wrResp := bridge.WireMessage{
-					SessionId:   wrReq.SessionId,
-					Type:        bridge.MessageType_response,
-					BodyPayload: body[pos : pos+max],
-					Size:        bodyLen,
-					Oridinal:    i,
-					Compressed:  false,
+					SessionId:  wrReq.SessionId,
+					Type:       bridge.MessageType_response,
+					Method:     wrReq.Method,
+					URL:        wrReq.URL,
+					Body:       body[pos : pos+max],
+					Size:       bodyLen,
+					Oridinal:   i,
+					Compressed: false,
 				}
 				protoData, err := proto.Marshal(wrResp.ProtoReflect().Interface())
 				if err != nil {
@@ -176,12 +183,14 @@ func sendResponse(data []byte) {
 			} else {
 				fmt.Println("sendResponse begin pos", pos, "end pos", (bodyLen - pos))
 				wrResp := bridge.WireMessage{
-					SessionId:   wrReq.SessionId,
-					Type:        bridge.MessageType_response,
-					BodyPayload: body[pos : bodyLen-pos],
-					Size:        bodyLen,
-					Oridinal:    0,
-					Compressed:  false,
+					SessionId:  wrReq.SessionId,
+					Type:       bridge.MessageType_response,
+					Method:     wrReq.Method,
+					URL:        wrReq.URL,
+					Body:       body[pos : bodyLen-pos],
+					Size:       bodyLen,
+					Oridinal:   0,
+					Compressed: false,
 				}
 				protoData, err := proto.Marshal(wrResp.ProtoReflect().Interface())
 				if err != nil {
@@ -199,14 +208,18 @@ func sendResponse(data []byte) {
 		}
 	} else {
 		wrResp := bridge.WireMessage{
-			SessionId:   wrReq.SessionId,
-			Type:        bridge.MessageType_response,
-			BodyPayload: body,
-			Size:        bodyLen,
-			Oridinal:    0,
-			Compressed:  false,
+			SessionId:  wrReq.SessionId,
+			Type:       bridge.MessageType_response,
+			Method:     wrReq.Method,
+			URL:        wrReq.URL,
+			Body:       body,
+			Size:       bodyLen,
+			Oridinal:   0,
+			Compressed: false,
 		}
+		//fmt.Println("sendResponse body ", string(wrResp.GetBody()))
 		protoData, err := proto.Marshal(wrResp.ProtoReflect().Interface())
+
 		if err != nil {
 			fmt.Println("sendResponse marshaling error: ", err)
 		}

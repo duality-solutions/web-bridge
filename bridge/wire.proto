@@ -9,12 +9,14 @@ enum MessageType {
 	response = 1;
 }
 
-// WireMessage used to transmit HTTP body payload across WebRTC in chunks
+// WireMessage used to transmit HTTP header information and body across WebRTC in chunks
 message WireMessage {
     string SessionId = 1;
     MessageType Type = 2;
-    bytes BodyPayload = 3;
-    uint32 Size = 4;
-    uint32 Oridinal = 5;
-    bool Compressed = 6;
+    string Method = 3;
+    bytes URL = 4;
+    bytes Body = 5;
+    uint32 Size = 6;
+    uint32 Oridinal = 7;
+    bool Compressed = 8;
 }

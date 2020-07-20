@@ -114,23 +114,26 @@ func (proxy *ProxyHTTPServer) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	//r.Header["X-Forwarded-For"] = w.RemoteAddr()
 	go proxy.readWebRTCLoop()
 	proxy.mapWebRTCMessages = make(map[string]*bridge.WireMessage, 0)
-
 	if r.Method == "CONNECT" {
 		proxy.handleTunnel(w, r)
 	} else {
 		ctx := &ProxyCtx{Req: r, Session: atomic.AddInt64(&proxy.sess, 1), Proxy: proxy}
+		reqBody, _ := ioutil.ReadAll(r.Body)
+		r.Body = ioutil.NopCloser(bytes.NewBuffer(reqBody))
 		var err error
-		ctx.Logf("Got request %v %v %v %v", r.URL.Path, r.Host, r.Method, r.URL.String())
+		ctx.Logf("Got request %v %v %v %v %v", r.URL.Path, r.Host, r.Method, r.URL.String(), string(reqBody))
 		byteURL := []byte(r.URL.String())
-		wr := bridge.WireMessage{
-			SessionId:   util.UniqueId(byteURL),
-			Type:        bridge.MessageType_request,
-			BodyPayload: byteURL,
-			Size:        uint32(len(byteURL)),
-			Oridinal:    0,
-			Compressed:  false,
+		wireRequest := bridge.WireMessage{
+			SessionId:  util.UniqueId(byteURL),
+			Type:       bridge.MessageType_request,
+			Method:     r.Method,
+			URL:        byteURL,
+			Body:       reqBody,
+			Size:       uint32(len(byteURL)),
+			Oridinal:   0,
+			Compressed: false,
 		}
-		data, err := proto.Marshal(wr.ProtoReflect().Interface())
+		data, err := proto.Marshal(wireRequest.ProtoReflect().Interface())
 		if err != nil {
 			log.Fatal("marshaling error: ", err)
 		}
@@ -139,13 +142,13 @@ func (proxy *ProxyHTTPServer) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 			log.Fatal("WebRTC DataChannel writer error: ", err)
 		}
 		counter++
-		ctx.Logf("Sent WireMessage request via WebRTC to %v: %v", r.Host, wr.SessionId)
+		ctx.Logf("Sent WireMessage request via WebRTC to %v: %v", r.Host, wireRequest.GetSessionId())
 		for uint64(len(proxy.mapWebRTCMessages)) < 1 {
 			time.Sleep(11 * time.Millisecond)
 		}
 		ctx.Logf("After mapWebRTCMessages loop")
-		wm := proxy.mapWebRTCMessages[wr.SessionId]
-		if wm.GetSize() == 0 {
+		wireResponse := proxy.mapWebRTCMessages[wireRequest.GetSessionId()]
+		if wireResponse.GetSize() == 0 {
 			ctx.Logf("WireMessage empty")
 			return
 		}
@@ -154,7 +157,7 @@ func (proxy *ProxyHTTPServer) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		ctx.Req = r
 		resp := http.Response{
 			Header: w.Header(),
-			Body:   ioutil.NopCloser(bytes.NewBuffer(wm.GetBodyPayload())),
+			Body:   ioutil.NopCloser(bytes.NewBuffer(wireResponse.GetBody())),
 		}
 		resp.StatusCode = 200
 		//resp = proxy.filterResponse(&resp, ctx)
@@ -172,10 +175,14 @@ func (proxy *ProxyHTTPServer) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 
 		w.WriteHeader(resp.StatusCode)
 		nr, err := io.Copy(w, resp.Body)
+		if err != nil {
+			ctx.Warnf("Can't copy reponse body to writer %v", err)
+		} else {
+			ctx.Logf("Copied %v bytes to response writer", nr)
+		}
 		if err := resp.Body.Close(); err != nil {
 			ctx.Warnf("Can't close response body %v", err)
 		}
-		ctx.Logf("Copied %v bytes to client error=%v", nr, err)
 	}
 }
 

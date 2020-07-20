@@ -222,13 +222,17 @@ func (proxy *ProxyHTTPServer) handleTunnel(w http.ResponseWriter, r *http.Reques
 					req.URL, err = url.Parse("https://" + r.Host + req.URL.String())
 				}
 				byteURL := []byte(req.URL.String())
+				var byteBody []byte
+				r.Body.Read(byteBody)
 				wr := bridge.WireMessage{
-					SessionId:   util.UniqueId(byteURL),
-					Type:        bridge.MessageType_request,
-					BodyPayload: byteURL,
-					Size:        uint32(len(byteURL)),
-					Oridinal:    0,
-					Compressed:  false,
+					SessionId:  util.UniqueId(byteURL),
+					Type:       bridge.MessageType_request,
+					Method:     req.Method,
+					URL:        byteURL,
+					Body:       byteBody,
+					Size:       uint32(len(byteURL)),
+					Oridinal:   0,
+					Compressed: false,
 				}
 				data, err := proto.Marshal(wr.ProtoReflect().Interface())
 				if err != nil {
@@ -250,11 +254,11 @@ func (proxy *ProxyHTTPServer) handleTunnel(w http.ResponseWriter, r *http.Reques
 				chunks := uint32((wm.GetSize() / max) + 1)
 				if chunks > 1 {
 					for i := uint32(0); i < chunks; i++ {
-						wm := proxy.mapWebRTCMessages[wr.SessionId]
-						repsonse = append(repsonse, wm.BodyPayload...)
+						wm := proxy.mapWebRTCMessages[wr.GetSessionId()]
+						repsonse = append(repsonse, wm.GetBody()...)
 					}
 				} else {
-					repsonse = wm.GetBodyPayload()
+					repsonse = wm.GetBody()
 				}
 				ctx.Logf("repsonse size %d", len(repsonse))
 				// Bug fix which goproxy fails to provide request
