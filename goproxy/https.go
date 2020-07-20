@@ -344,10 +344,10 @@ func (proxy *ProxyHTTPServer) readWebRTCLoop() {
 			log.Fatal("ReadLoop unmarshaling error:", err)
 			continue
 		} else {
-			fmt.Println("Proxy readWebRTCLoop data received:", wr.SessionId, wr.GetSize(), wr.Oridinal)
+			fmt.Println("Proxy readWebRTCLoop data received:", wr.SessionId, len(buffer), wr.Oridinal)
 		}
 		proxy.mapWebRTCMessages[wr.GetSessionId()] = &wr
-		fmt.Println("Proxy readWebRTCLoop channel triggered:", wr.SessionId, wr.GetSize())
+		fmt.Println("Proxy readWebRTCLoop channel triggered:", wr.SessionId, len(buffer))
 	}
 }
 
