@@ -109,7 +109,8 @@ func removeProxyHeaders(ctx *ProxyCtx, r *http.Request) {
 	r.Header.Del("Connection")
 }
 
-func headerToWireArray(header http.Header) (res []*bridge.HttpHeader) {
+// HeaderToWireArray converts a http header to struct slice
+func HeaderToWireArray(header http.Header) (res []*bridge.HttpHeader) {
 	for name, values := range header {
 		for _, value := range values {
 			item := bridge.HttpHeader{
@@ -141,7 +142,7 @@ func (proxy *ProxyHTTPServer) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 			Type:       bridge.MessageType_request,
 			Method:     r.Method,
 			URL:        byteURL,
-			Header:     headerToWireArray(r.Header),
+			Header:     HeaderToWireArray(r.Header),
 			Body:       reqBody,
 			Size:       uint32(len(byteURL)),
 			Oridinal:   0,
@@ -173,9 +174,6 @@ func (proxy *ProxyHTTPServer) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 			Header: w.Header(),
 			Body:   ioutil.NopCloser(bytes.NewBuffer(wireResponse.GetBody())),
 		}
-		resp.StatusCode = 200
-		//resp = proxy.filterResponse(&resp, ctx)
-		ctx.Logf("Copying response to client %v [%d]", resp.Status, resp.StatusCode)
 		// http.ResponseWriter will take care of filling the correct response length
 		// Setting it now, might impose wrong value, contradicting the actual new
 		// body the user returned.
@@ -184,6 +182,12 @@ func (proxy *ProxyHTTPServer) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		// the Content-Length header should be set.
 		resp.Header.Del("Content-Length")
 		resp.Header.Set("Transfer-Encoding", "chunked")
+		for _, head := range wireResponse.GetHeader() {
+			resp.Header.Add(head.Key, head.Value)
+		}
+		resp.StatusCode = 200
+		//resp = proxy.filterResponse(&resp, ctx)
+		ctx.Logf("Copying response to client %v [%d]", resp.Status, resp.StatusCode)
 		// Force connection close otherwise chrome will keep CONNECT tunnel open forever
 		resp.Header.Set("Connection", "close")
 

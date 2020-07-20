@@ -10,6 +10,7 @@ import (
 	"net/http"
 
 	"github.com/duality-solutions/web-bridge/bridge"
+	"github.com/duality-solutions/web-bridge/goproxy"
 	util "github.com/duality-solutions/web-bridge/internal/utilities"
 	"github.com/pion/webrtc/v2"
 	"google.golang.org/protobuf/proto"
@@ -167,6 +168,7 @@ func sendResponse(data []byte) {
 					Type:       bridge.MessageType_response,
 					Method:     wrReq.Method,
 					URL:        wrReq.URL,
+					Header:     goproxy.HeaderToWireArray(resp.Header),
 					Body:       body[pos : pos+max],
 					Size:       bodyLen,
 					Oridinal:   i,
@@ -189,6 +191,7 @@ func sendResponse(data []byte) {
 					Type:       bridge.MessageType_response,
 					Method:     wrReq.Method,
 					URL:        wrReq.URL,
+					Header:     goproxy.HeaderToWireArray(resp.Header),
 					Body:       body[pos : bodyLen-pos],
 					Size:       bodyLen,
 					Oridinal:   0,
@@ -214,6 +217,7 @@ func sendResponse(data []byte) {
 			Type:       bridge.MessageType_response,
 			Method:     wrReq.Method,
 			URL:        wrReq.URL,
+			Header:     goproxy.HeaderToWireArray(resp.Header),
 			Body:       body,
 			Size:       bodyLen,
 			Oridinal:   0,

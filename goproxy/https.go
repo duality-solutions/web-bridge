@@ -229,7 +229,7 @@ func (proxy *ProxyHTTPServer) handleTunnel(w http.ResponseWriter, r *http.Reques
 					Type:       bridge.MessageType_request,
 					Method:     req.Method,
 					URL:        byteURL,
-					Header:     headerToWireArray(r.Header),
+					Header:     HeaderToWireArray(r.Header),
 					Body:       byteBody,
 					Size:       uint32(len(byteURL)),
 					Oridinal:   0,
@@ -284,6 +284,9 @@ func (proxy *ProxyHTTPServer) handleTunnel(w http.ResponseWriter, r *http.Reques
 				// Since we don't know the length of resp, return chunked encoded response
 				// TODO: use a more reasonable scheme
 				resp.Header.Del("Content-Length")
+				for _, head := range wm.GetHeader() {
+					resp.Header.Add(head.Key, head.Value)
+				}
 				resp.Header.Set("Transfer-Encoding", "chunked")
 				// Force connection close otherwise chrome will keep CONNECT tunnel open forever
 				resp.Header.Set("Connection", "close")
