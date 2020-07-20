@@ -137,13 +137,15 @@ func sendResponse(data []byte) {
 			},
 		},
 	}
+
 	reqBodyCloser := ioutil.NopCloser(bytes.NewBuffer(wrReq.GetBody()))
 	req, err := http.NewRequest(wrReq.Method, targetURL, reqBodyCloser)
-	req.Header.Add("Cache-Control", "no-cache")
 	req.Proto = "HTTP/1.1"
-	// TODO: Use some or all of the origin request header.
-	//req.Header.Add("Content-Type", "application/json")
-	//req.Header.Add("X-Custom-Header", "post-value")
+	req.Header.Add("Cache-Control", "no-cache")
+	for _, head := range wrReq.GetHeader() {
+		fmt.Println("sendResponse Header:", head.Key, head.Value)
+		req.Header.Add(head.Key, head.Value)
+	}
 	resp, err := client.Do(req)
 	if err != nil {
 		fmt.Println("sendResponse client.Get error: ", err)

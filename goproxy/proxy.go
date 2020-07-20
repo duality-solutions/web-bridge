@@ -109,6 +109,19 @@ func removeProxyHeaders(ctx *ProxyCtx, r *http.Request) {
 	r.Header.Del("Connection")
 }
 
+func headerToWireArray(header http.Header) (res []*bridge.HttpHeader) {
+	for name, values := range header {
+		for _, value := range values {
+			item := bridge.HttpHeader{
+				Key:   name,
+				Value: value,
+			}
+			res = append(res, &item)
+		}
+	}
+	return
+}
+
 // Standard net/http function. Shouldn't be used directly, http.Serve will use it.
 func (proxy *ProxyHTTPServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	//r.Header["X-Forwarded-For"] = w.RemoteAddr()
@@ -128,6 +141,7 @@ func (proxy *ProxyHTTPServer) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 			Type:       bridge.MessageType_request,
 			Method:     r.Method,
 			URL:        byteURL,
+			Header:     headerToWireArray(r.Header),
 			Body:       reqBody,
 			Size:       uint32(len(byteURL)),
 			Oridinal:   0,

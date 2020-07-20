@@ -229,6 +229,7 @@ func (proxy *ProxyHTTPServer) handleTunnel(w http.ResponseWriter, r *http.Reques
 					Type:       bridge.MessageType_request,
 					Method:     req.Method,
 					URL:        byteURL,
+					Header:     headerToWireArray(r.Header),
 					Body:       byteBody,
 					Size:       uint32(len(byteURL)),
 					Oridinal:   0,
