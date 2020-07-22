@@ -10,6 +10,8 @@ import (
 	"net/http"
 	"os"
 	"regexp"
+	"strconv"
+	"strings"
 	"sync/atomic"
 	"time"
 
@@ -157,22 +159,53 @@ func (proxy *ProxyHTTPServer) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 			log.Fatal("WebRTC DataChannel writer error: ", err)
 		}
 		counter++
-		ctx.Logf("Sent WireMessage request via WebRTC to %v: %v", r.Host, wireRequest.GetSessionId())
+		ctx.Logf("ServeHTTP Sent WireMessage request via WebRTC to %v: %v", r.Host, wireRequest.GetSessionId())
 		for uint64(len(proxy.mapWebRTCMessages)) < 1 {
 			time.Sleep(11 * time.Millisecond)
 		}
-		ctx.Logf("After mapWebRTCMessages loop")
+
 		wireResponse := proxy.mapWebRTCMessages[wireRequest.GetSessionId()]
 		if wireResponse.GetSize() == 0 {
 			ctx.Logf("WireMessage empty")
 			return
 		}
-		// Bug fix which goproxy fails to provide request
-		// information URL in the context when does HTTPS MITM
-		ctx.Req = r
+		ctx.Logf("ServeHTTP sent protocol buffer request message via WebRTC to %v: %v", r.Host, wireResponse.GetSessionId())
+		counter++
+		max := uint32(bridge.MaxTransmissionBytes - 300)
+		// TODO: Use a more effient method to wait for a reponse and add a timeout.
+		for uint64(len(proxy.mapWebRTCMessages)) < 1 {
+			time.Sleep(11 * time.Millisecond)
+		}
+		var response []byte
+		wm := proxy.mapWebRTCMessages[wireResponse.GetSessionId()]
+		chunks := uint32((wm.GetSize() / max) + 1)
+		if chunks > 1 {
+			for i := uint32(0); i < chunks; i++ {
+				wm := proxy.mapWebRTCMessages[wireResponse.GetSessionId()]
+				response = append(response, wm.GetBody()...)
+				ctx.Logf("ServeHTTP received response size %d", len(wm.GetBody()), "chunk", i, "response size", len(response))
+			}
+		} else {
+			response = wm.GetBody()
+			ctx.Logf("ServeHTTP received response size %d", len(wm.GetBody()), "response size", len(response))
+		}
+		ctx.Logf("ServeHTTP response size %d", len(response))
+
 		resp := http.Response{
 			Header: w.Header(),
-			Body:   ioutil.NopCloser(bytes.NewBuffer(wireResponse.GetBody())),
+			Body:   ioutil.NopCloser(bytes.NewBuffer(response)),
+		}
+		text := resp.Status
+
+		statusCode := strconv.Itoa(200) + " "
+		if strings.HasPrefix(text, statusCode) {
+			text = text[len(statusCode):]
+		}
+		for _, head := range wm.GetHeader() {
+			//ctx.Logf("ServeHTTP creating header: key %v, value %v", head.Key, head.Value)
+			if head.Key != "Content-Length" {
+				resp.Header.Add(head.Key, head.Value)
+			}
 		}
 		// http.ResponseWriter will take care of filling the correct response length
 		// Setting it now, might impose wrong value, contradicting the actual new
@@ -180,26 +213,20 @@ func (proxy *ProxyHTTPServer) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		// We keep the original body to remove the header only if things changed.
 		// This will prevent problems with HEAD requests where there's no body, yet,
 		// the Content-Length header should be set.
-		resp.Header.Del("Content-Length")
-		resp.Header.Set("Transfer-Encoding", "chunked")
-		for _, head := range wireResponse.GetHeader() {
-			resp.Header.Add(head.Key, head.Value)
-		}
 		resp.StatusCode = 200
 		//resp = proxy.filterResponse(&resp, ctx)
-		ctx.Logf("Copying response to client %v [%d]", resp.Status, resp.StatusCode)
+		ctx.Logf("ServeHTTP Copying response to client %v [%d]", resp.Status, resp.StatusCode)
 		// Force connection close otherwise chrome will keep CONNECT tunnel open forever
 		resp.Header.Set("Connection", "close")
-
 		w.WriteHeader(resp.StatusCode)
 		nr, err := io.Copy(w, resp.Body)
 		if err != nil {
-			ctx.Warnf("Can't copy reponse body to writer %v", err)
+			ctx.Warnf("ServeHTTP Can't copy reponse body to writer %v", err)
 		} else {
-			ctx.Logf("Copied %v bytes to response writer", nr)
+			ctx.Logf("ServeHTTP Copied %v bytes to response writer", nr)
 		}
 		if err := resp.Body.Close(); err != nil {
-			ctx.Warnf("Can't close response body %v", err)
+			ctx.Warnf("ServeHTTP Can't close response body %v", err)
 		}
 	}
 }
