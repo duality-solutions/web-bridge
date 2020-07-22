@@ -204,7 +204,7 @@ func (proxy *ProxyHTTPServer) handleTunnel(w http.ResponseWriter, r *http.Reques
 			}
 			defer rawClientTLS.Close()
 			clientTLSReader := bufio.NewReader(rawClientTLS)
-			for !isEof(clientTLSReader) {
+			for !isEOF(clientTLSReader) {
 				req, err := http.ReadRequest(clientTLSReader)
 				var ctx = &ProxyCtx{Req: req, Session: atomic.AddInt64(&proxy.sess, 1), Proxy: proxy, UserData: ctx.UserData}
 				if err != nil && err != io.EOF {
@@ -463,7 +463,7 @@ func (proxy *ProxyHTTPServer) handleHTTPS(w http.ResponseWriter, r *http.Request
 			}
 			defer rawClientTLS.Close()
 			clientTLSReader := bufio.NewReader(rawClientTLS)
-			for !isEof(clientTLSReader) {
+			for !isEOF(clientTLSReader) {
 				req, err := http.ReadRequest(clientTLSReader)
 				var ctx = &ProxyCtx{Req: req, Session: atomic.AddInt64(&proxy.sess, 1), Proxy: proxy, UserData: ctx.UserData}
 				if err != nil && err != io.EOF {

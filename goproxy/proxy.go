@@ -61,7 +61,7 @@ func copyHeaders(dst, src http.Header, keepDestHeaders bool) {
 	}
 }
 
-func isEof(r *bufio.Reader) bool {
+func isEOF(r *bufio.Reader) bool {
 	_, err := r.Peek(1)
 	if err == io.EOF {
 		return true
