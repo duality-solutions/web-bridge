@@ -224,7 +224,7 @@ func (proxy *ProxyHTTPServer) handleTunnel(w http.ResponseWriter, r *http.Reques
 				byteURL := []byte(req.URL.String())
 				var byteBody []byte
 				r.Body.Read(byteBody)
-				wr := bridge.WireMessage{
+				wireHTTPRequest := bridge.WireMessage{
 					SessionId:  util.UniqueId(byteURL),
 					Type:       bridge.MessageType_request,
 					Method:     req.Method,
@@ -235,39 +235,43 @@ func (proxy *ProxyHTTPServer) handleTunnel(w http.ResponseWriter, r *http.Reques
 					Oridinal:   0,
 					Compressed: false,
 				}
-				data, err := proto.Marshal(wr.ProtoReflect().Interface())
+				data, err := proto.Marshal(wireHTTPRequest.ProtoReflect().Interface())
 				if err != nil {
 					log.Fatal("marshaling error: ", err)
 				}
+				// Send a serialized  protocol buffer request message using a WebRTC channel
 				_, err = proxy.DataChannelWriter.Write(data)
 				if err != nil {
-					log.Fatal("WebRTC DataChannel writer error: ", err)
+					log.Fatal("handleTunnel WebRTC DataChannel writer error: ", err)
+					continue
 				}
+				ctx.Logf("handleTunnel sent protocol buffer request message via WebRTC to %v: %v", r.Host, wireHTTPRequest.GetSessionId())
 				counter++
 				max := uint32(bridge.MaxTransmissionBytes - 300)
-				ctx.Logf("Sent WireMessage request via WebRTC to %v: %v", r.Host, wr.SessionId)
+				// TODO: Use a more effient method to wait for a reponse and add a timeout.
 				for uint64(len(proxy.mapWebRTCMessages)) < 1 {
 					time.Sleep(11 * time.Millisecond)
 				}
-				ctx.Logf("After mapWebRTCMessages loop")
-				var repsonse []byte
-				wm := proxy.mapWebRTCMessages[wr.SessionId]
+				var response []byte
+				wm := proxy.mapWebRTCMessages[wireHTTPRequest.GetSessionId()]
 				chunks := uint32((wm.GetSize() / max) + 1)
 				if chunks > 1 {
 					for i := uint32(0); i < chunks; i++ {
-						wm := proxy.mapWebRTCMessages[wr.GetSessionId()]
-						repsonse = append(repsonse, wm.GetBody()...)
+						wm := proxy.mapWebRTCMessages[wireHTTPRequest.GetSessionId()]
+						response = append(response, wm.GetBody()...)
+						ctx.Logf("handleTunnel received response size %d", len(wm.GetBody()), "chunk", i, "response size", len(response))
 					}
 				} else {
-					repsonse = wm.GetBody()
+					response = wm.GetBody()
+					ctx.Logf("handleTunnel received response size %d", len(wm.GetBody()), "response size", len(response))
 				}
-				ctx.Logf("repsonse size %d", len(repsonse))
+				ctx.Logf("response size %d", len(response))
 				// Bug fix which goproxy fails to provide request
 				// information URL in the context when does HTTPS MITM
 				ctx.Req = req
 				resp := http.Response{
 					Header: w.Header(),
-					Body:   ioutil.NopCloser(bytes.NewBuffer(repsonse)),
+					Body:   ioutil.NopCloser(bytes.NewBuffer(response)),
 				}
 				text := resp.Status
 
