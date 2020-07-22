@@ -69,6 +69,26 @@ func isEof(r *bufio.Reader) bool {
 	return false
 }
 
+func (proxy *ProxyHTTPServer) waitForWebRTCMessage(sessionID string) ([]byte, []*bridge.HttpHeader, error) {
+	var response []byte
+	max := uint32(bridge.MaxTransmissionBytes - 300)
+	// TODO: Use a more effient method to wait for a reponse and add a timeout.
+	for uint64(len(proxy.mapWebRTCMessages)) < 1 {
+		time.Sleep(11 * time.Millisecond)
+	}
+	wm := proxy.mapWebRTCMessages[sessionID]
+	chunks := uint32((wm.GetSize() / max) + 1)
+	if chunks > 1 {
+		for i := uint32(0); i < chunks; i++ {
+			wm := proxy.mapWebRTCMessages[sessionID]
+			response = append(response, wm.GetBody()...)
+		}
+	} else {
+		response = wm.GetBody()
+	}
+	return response, wm.Header, nil
+}
+
 func (proxy *ProxyHTTPServer) filterRequest(r *http.Request, ctx *ProxyCtx) (req *http.Request, resp *http.Response) {
 	req = r
 	for _, h := range proxy.reqHandlers {
@@ -159,35 +179,12 @@ func (proxy *ProxyHTTPServer) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 			log.Fatal("WebRTC DataChannel writer error: ", err)
 		}
 		counter++
-		ctx.Logf("ServeHTTP Sent WireMessage request via WebRTC to %v: %v", r.Host, wireRequest.GetSessionId())
-		for uint64(len(proxy.mapWebRTCMessages)) < 1 {
-			time.Sleep(11 * time.Millisecond)
-		}
-
-		wireResponse := proxy.mapWebRTCMessages[wireRequest.GetSessionId()]
-		if wireResponse.GetSize() == 0 {
-			ctx.Logf("WireMessage empty")
-			return
-		}
-		ctx.Logf("ServeHTTP sent protocol buffer request message via WebRTC to %v: %v", r.Host, wireResponse.GetSessionId())
+		ctx.Logf("ServeHTTP sent protocol buffer request message via WebRTC to %v: %v", r.Host, wireRequest.GetSessionId())
 		counter++
-		max := uint32(bridge.MaxTransmissionBytes - 300)
-		// TODO: Use a more effient method to wait for a reponse and add a timeout.
-		for uint64(len(proxy.mapWebRTCMessages)) < 1 {
-			time.Sleep(11 * time.Millisecond)
-		}
-		var response []byte
-		wm := proxy.mapWebRTCMessages[wireResponse.GetSessionId()]
-		chunks := uint32((wm.GetSize() / max) + 1)
-		if chunks > 1 {
-			for i := uint32(0); i < chunks; i++ {
-				wm := proxy.mapWebRTCMessages[wireResponse.GetSessionId()]
-				response = append(response, wm.GetBody()...)
-				ctx.Logf("ServeHTTP received response size %d", len(wm.GetBody()), "chunk", i, "response size", len(response))
-			}
-		} else {
-			response = wm.GetBody()
-			ctx.Logf("ServeHTTP received response size %d", len(wm.GetBody()), "response size", len(response))
+		response, headers, err := proxy.waitForWebRTCMessage(wireRequest.GetSessionId())
+		if err != nil {
+			response = []byte(err.Error())
+			ctx.Logf("ServeHTTP %v error while waiting for WebRTC response for %v: %v", r.Host, wireRequest.GetSessionId(), err)
 		}
 		ctx.Logf("ServeHTTP response size %d", len(response))
 
@@ -202,10 +199,10 @@ func (proxy *ProxyHTTPServer) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 			text = text[len(statusCode):]
 		}
 		resp.Header.Del("Content-Length")
-		for _, head := range wm.GetHeader() {
+		for _, header := range headers {
 			//ctx.Logf("ServeHTTP creating header: key %v, value %v", head.Key, head.Value)
-			if head.Key != "Content-Length" {
-				resp.Header.Add(head.Key, head.Value)
+			if header.Key != "Content-Length" {
+				resp.Header.Add(header.Key, header.Value)
 			}
 		}
 		// http.ResponseWriter will take care of filling the correct response length

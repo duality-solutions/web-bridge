@@ -18,7 +18,6 @@ import (
 	"strings"
 	"sync"
 	"sync/atomic"
-	"time"
 
 	"github.com/duality-solutions/web-bridge/bridge"
 	util "github.com/duality-solutions/web-bridge/internal/utilities"
@@ -247,23 +246,10 @@ func (proxy *ProxyHTTPServer) handleTunnel(w http.ResponseWriter, r *http.Reques
 				}
 				ctx.Logf("handleTunnel sent protocol buffer request message via WebRTC to %v: %v", r.Host, wireHTTPRequest.GetSessionId())
 				counter++
-				max := uint32(bridge.MaxTransmissionBytes - 300)
-				// TODO: Use a more effient method to wait for a reponse and add a timeout.
-				for uint64(len(proxy.mapWebRTCMessages)) < 1 {
-					time.Sleep(11 * time.Millisecond)
-				}
-				var response []byte
-				wm := proxy.mapWebRTCMessages[wireHTTPRequest.GetSessionId()]
-				chunks := uint32((wm.GetSize() / max) + 1)
-				if chunks > 1 {
-					for i := uint32(0); i < chunks; i++ {
-						wm := proxy.mapWebRTCMessages[wireHTTPRequest.GetSessionId()]
-						response = append(response, wm.GetBody()...)
-						ctx.Logf("handleTunnel received response size %d", len(wm.GetBody()), "chunk", i, "response size", len(response))
-					}
-				} else {
-					response = wm.GetBody()
-					ctx.Logf("handleTunnel received response size %d", len(wm.GetBody()), "response size", len(response))
+				response, headers, err := proxy.waitForWebRTCMessage(wireHTTPRequest.GetSessionId())
+				if err != nil {
+					response = []byte(err.Error())
+					ctx.Logf("handleTunnel %v error while waiting for WebRTC response for %v: %v", r.Host, wireHTTPRequest.GetSessionId(), err)
 				}
 				ctx.Logf("response size %d", len(response))
 				// Bug fix which goproxy fails to provide request
@@ -288,9 +274,9 @@ func (proxy *ProxyHTTPServer) handleTunnel(w http.ResponseWriter, r *http.Reques
 				// Since we don't know the length of resp, return chunked encoded response
 				// TODO: use a more reasonable scheme
 				resp.Header.Del("Content-Length")
-				for _, head := range wm.GetHeader() {
-					if head.Key != "Content-Length" {
-						resp.Header.Add(head.Key, head.Value)
+				for _, header := range headers {
+					if header.Key != "Content-Length" {
+						resp.Header.Add(header.Key, header.Value)
 					}
 				}
 				resp.Header.Set("Transfer-Encoding", "chunked")
