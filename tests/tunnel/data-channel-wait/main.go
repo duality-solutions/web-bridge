@@ -150,7 +150,10 @@ func sendResponse(data []byte) {
 	resp, err := client.Do(req)
 	if err != nil {
 		fmt.Println("sendResponse client.Get error: ", err)
-		return
+		respError := http.Response{
+			Body: ioutil.NopCloser(bytes.NewBuffer([]byte(err.Error()))),
+		}
+		resp = &respError
 	}
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
