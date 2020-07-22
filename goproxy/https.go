@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"crypto/tls"
 	"errors"
-	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
@@ -18,6 +17,7 @@ import (
 	"strings"
 	"sync"
 	"sync/atomic"
+	"time"
 
 	"github.com/duality-solutions/web-bridge/bridge"
 	util "github.com/duality-solutions/web-bridge/internal/utilities"
@@ -246,12 +246,13 @@ func (proxy *ProxyHTTPServer) handleTunnel(w http.ResponseWriter, r *http.Reques
 				}
 				ctx.Logf("handleTunnel sent protocol buffer request message via WebRTC to %v: %v", r.Host, wireHTTPRequest.GetSessionId())
 				counter++
-				response, headers, err := proxy.waitForWebRTCMessage(wireHTTPRequest.GetSessionId())
+				timeout := time.Second * 30
+				response, headers, err := proxy.waitForWebRTCMessage(wireHTTPRequest.GetSessionId(), timeout)
 				if err != nil {
 					response = []byte(err.Error())
 					ctx.Logf("handleTunnel %v error while waiting for WebRTC response for %v: %v", r.Host, wireHTTPRequest.GetSessionId(), err)
 				}
-				ctx.Logf("response size %d", len(response))
+				ctx.Logf("handleTunnel response size %d", len(response))
 				// Bug fix which goproxy fails to provide request
 				// information URL in the context when does HTTPS MITM
 				ctx.Req = req
@@ -317,29 +318,6 @@ func (proxy *ProxyHTTPServer) handleTunnel(w http.ResponseWriter, r *http.Reques
 			}
 		}
 		proxyClient.Close()
-	}
-}
-
-// readWebRTCLoop creates a process to continues to read data from the WebRTC channel
-func (proxy *ProxyHTTPServer) readWebRTCLoop() {
-	for {
-		buffer := make([]byte, bridge.MaxTransmissionBytes)
-		_, err := proxy.DataChannelReader.Read(buffer)
-		if err != nil {
-			fmt.Println("Proxy readWebRTCLoop Read error:", err)
-			return
-		}
-		buffer = bytes.Trim(buffer, "\x00")
-		wr := bridge.WireMessage{}
-		err = proto.Unmarshal(buffer, &wr)
-		if err != nil {
-			log.Fatal("ReadLoop unmarshaling error:", err)
-			continue
-		} else {
-			fmt.Println("Proxy readWebRTCLoop data received:", wr.SessionId, len(buffer), wr.Oridinal)
-		}
-		proxy.mapWebRTCMessages[wr.GetSessionId()] = &wr
-		fmt.Println("Proxy readWebRTCLoop channel triggered:", wr.SessionId, len(buffer))
 	}
 }
 

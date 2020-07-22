@@ -3,6 +3,7 @@ package goproxy
 import (
 	"bufio"
 	"bytes"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
@@ -69,7 +70,32 @@ func isEOF(r *bufio.Reader) bool {
 	return false
 }
 
-func (proxy *ProxyHTTPServer) waitForWebRTCMessage(sessionID string) ([]byte, []*bridge.HttpHeader, error) {
+// readWebRTCMessageLoop creates a process that continues to read data from the WebRTC channel
+func (proxy *ProxyHTTPServer) readWebRTCMessageLoop() {
+	proxy.mapWebRTCMessages = make(map[string]*bridge.WireMessage, 0)
+	for {
+		buffer := make([]byte, bridge.MaxTransmissionBytes)
+		_, err := proxy.DataChannelReader.Read(buffer)
+		if err != nil {
+			fmt.Println("readWebRTCMessageLoop Read error:", err)
+			return
+		}
+		buffer = bytes.Trim(buffer, "\x00")
+		wr := bridge.WireMessage{}
+		err = proto.Unmarshal(buffer, &wr)
+		if err != nil {
+			log.Fatal("readWebRTCMessageLoop unmarshaling error:", err)
+			continue
+		} else {
+			fmt.Println("readWebRTCMessageLoop data received:", wr.SessionId, len(buffer), wr.Oridinal)
+		}
+		proxy.mapWebRTCMessages[wr.GetSessionId()] = &wr
+		fmt.Println("readWebRTCMessageLoop channel triggered:", wr.SessionId, len(buffer))
+	}
+}
+
+// waitForWebRTCMessage tries to get a response for the given sessionID before the timeout duration
+func (proxy *ProxyHTTPServer) waitForWebRTCMessage(sessionID string, timeout time.Duration) ([]byte, []*bridge.HttpHeader, error) {
 	var response []byte
 	max := uint32(bridge.MaxTransmissionBytes - 300)
 	// TODO: Use a more effient method to wait for a reponse and add a timeout.
@@ -77,6 +103,7 @@ func (proxy *ProxyHTTPServer) waitForWebRTCMessage(sessionID string) ([]byte, []
 		time.Sleep(11 * time.Millisecond)
 	}
 	wm := proxy.mapWebRTCMessages[sessionID]
+	headers := wm.Header
 	chunks := uint32((wm.GetSize() / max) + 1)
 	if chunks > 1 {
 		for i := uint32(0); i < chunks; i++ {
@@ -86,7 +113,7 @@ func (proxy *ProxyHTTPServer) waitForWebRTCMessage(sessionID string) ([]byte, []
 	} else {
 		response = wm.GetBody()
 	}
-	return response, wm.Header, nil
+	return response, headers, nil
 }
 
 func (proxy *ProxyHTTPServer) filterRequest(r *http.Request, ctx *ProxyCtx) (req *http.Request, resp *http.Response) {
@@ -148,8 +175,8 @@ func HeaderToWireArray(header http.Header) (res []*bridge.HttpHeader) {
 // Standard net/http function. Shouldn't be used directly, http.Serve will use it.
 func (proxy *ProxyHTTPServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	//r.Header["X-Forwarded-For"] = w.RemoteAddr()
-	go proxy.readWebRTCLoop()
-	proxy.mapWebRTCMessages = make(map[string]*bridge.WireMessage, 0)
+	go proxy.readWebRTCMessageLoop()
+
 	if r.Method == "CONNECT" {
 		proxy.handleTunnel(w, r)
 	} else {
@@ -178,10 +205,10 @@ func (proxy *ProxyHTTPServer) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		if err != nil {
 			log.Fatal("WebRTC DataChannel writer error: ", err)
 		}
-		counter++
 		ctx.Logf("ServeHTTP sent protocol buffer request message via WebRTC to %v: %v", r.Host, wireRequest.GetSessionId())
 		counter++
-		response, headers, err := proxy.waitForWebRTCMessage(wireRequest.GetSessionId())
+		timeout := time.Second * 30
+		response, headers, err := proxy.waitForWebRTCMessage(wireRequest.GetSessionId(), timeout)
 		if err != nil {
 			response = []byte(err.Error())
 			ctx.Logf("ServeHTTP %v error while waiting for WebRTC response for %v: %v", r.Host, wireRequest.GetSessionId(), err)
