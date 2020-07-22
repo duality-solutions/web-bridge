@@ -201,6 +201,7 @@ func (proxy *ProxyHTTPServer) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		if strings.HasPrefix(text, statusCode) {
 			text = text[len(statusCode):]
 		}
+		resp.Header.Del("Content-Length")
 		for _, head := range wm.GetHeader() {
 			//ctx.Logf("ServeHTTP creating header: key %v, value %v", head.Key, head.Value)
 			if head.Key != "Content-Length" {

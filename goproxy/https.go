@@ -289,7 +289,9 @@ func (proxy *ProxyHTTPServer) handleTunnel(w http.ResponseWriter, r *http.Reques
 				// TODO: use a more reasonable scheme
 				resp.Header.Del("Content-Length")
 				for _, head := range wm.GetHeader() {
-					resp.Header.Add(head.Key, head.Value)
+					if head.Key != "Content-Length" {
+						resp.Header.Add(head.Key, head.Value)
+					}
 				}
 				resp.Header.Set("Transfer-Encoding", "chunked")
 				// Force connection close otherwise chrome will keep CONNECT tunnel open forever
