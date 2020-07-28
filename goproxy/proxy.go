@@ -88,43 +88,56 @@ func (proxy *ProxyHTTPServer) readWebRTCMessageLoop() {
 			log.Fatal("readWebRTCMessageLoop unmarshaling error:", err)
 			continue
 		}
-
-		messageID := wr.GetSessionId() + ":" + fmt.Sprint(wr.GetOridinal())
-		fmt.Println("readWebRTCMessageLoop data received:", messageID, len(buffer), "channel len:", len(proxy.mapWebRTCMessages))
-		proxy.mapWebRTCMessages[messageID] <- &wr
-		defer close(proxy.mapWebRTCMessages[messageID])
-		fmt.Println("readWebRTCMessageLoop channel:", wr.GetSessionId(), len(buffer), "channel len:", len(proxy.mapWebRTCMessages))
+		sessionID := wr.GetSessionId()
+		fmt.Println("readWebRTCMessageLoop data received:", sessionID[:9], ", buffer len:", len(buffer), "channel len:", len(proxy.mapWebRTCMessages))
+		proxy.mapWebRTCMessages[sessionID] <- &wr
+		defer close(proxy.mapWebRTCMessages[sessionID])
+		fmt.Println("readWebRTCMessageLoop channel:", sessionID[:9], ", buffer len:", len(buffer), ", channel len:", len(proxy.mapWebRTCMessages))
 	}
 }
 
 // waitForWebRTCMessage tries to get a response for the given sessionID before the timeout duration
 func (proxy *ProxyHTTPServer) waitForWebRTCMessage(sessionID string, timeout time.Duration) ([]byte, []*bridge.HttpHeader, error) {
-	fmt.Println("waitForWebRTCMessage start:", sessionID)
+	fmt.Println("waitForWebRTCMessage start:", sessionID[:9])
+	messages := make(map[uint32]*bridge.WireMessage)
 	var response []byte
 	var headers []*bridge.HttpHeader
-	messageID := sessionID + ":0" // first chunk
-	proxy.mapWebRTCMessages[messageID] = make(chan *bridge.WireMessage, 1)
-	fmt.Println("waitForWebRTCMessage for", sessionID, "channel len:", len(proxy.mapWebRTCMessages))
+	var extraSize int = 0
+	var max, chunks uint32 = 0, 0
+	// Initialize map session id channel
+	proxy.mapWebRTCMessages[sessionID] = make(chan *bridge.WireMessage, 2)
+	fmt.Println("waitForWebRTCMessage start for", sessionID[:9], ", channel len:", len(proxy.mapWebRTCMessages))
 	for {
 		select {
-		case wireResponse := <-proxy.mapWebRTCMessages[messageID]:
-			fmt.Println("waitForWebRTCMessage channel triggered:", wireResponse.GetSessionId(), wireResponse.GetOridinal())
+		case wireResponse := <-proxy.mapWebRTCMessages[sessionID]:
 			if headers == nil {
 				headers = wireResponse.Header
-				fmt.Println("waitForWebRTCMessage header set:", wireResponse.GetSessionId(), len(headers))
+				extraSize = (100 * len(headers)) + 200
+				max = uint32(bridge.MaxTransmissionBytes - extraSize)
+				chunks = (wireResponse.GetSize() / max) + 1
+				fmt.Println("waitForWebRTCMessage header set:", sessionID[:9], len(headers))
 			}
-			response = append(response, wireResponse.GetBody()...)
-			fmt.Println("waitForWebRTCMessage channel 2:", wireResponse.GetSessionId(), "response len", len(response), "GetSize", wireResponse.GetSize())
-			if len(response) >= int(wireResponse.GetSize()) {
-				// TODO: check if last char is null before calling trim
-				response = bytes.Trim(response, "\x00") // remove trailing null characters from response
-				fmt.Println("waitForWebRTCMessage channel complete, response len", len(response))
+			messages[wireResponse.GetOridinal()] = wireResponse
+			fmt.Println("waitForWebRTCMessage channel received:", sessionID[:9], ", chunks received", len(messages), ", total data size", wireResponse.GetSize(), ", ordinal", wireResponse.GetOridinal())
+			if uint32(len(messages)) >= chunks {
+				// make sure response is created with the correct ordinal order
+				for i := uint32(0); i < chunks; i++ {
+					response = append(response, messages[i].GetBody()...)
+				}
+				// check if last char is null before calling trim
+				if len(response) > 0 {
+					lastByByte := response[len(response)-1]
+					if lastByByte == 0 {
+						fmt.Println("waitForWebRTCMessage remove trailing null characters for", sessionID[:9])
+						response = bytes.Trim(response, "\x00") // remove trailing null characters from response
+					}
+				}
+				fmt.Println("waitForWebRTCMessage finished:", sessionID[:9], ", messages chunks", len(messages), ", total data size", wireResponse.GetSize(), ", response size", len(response))
 				return response, headers, nil
 			}
-			messageID = sessionID + ":" + fmt.Sprint(wireResponse.GetOridinal()+1)
-			proxy.mapWebRTCMessages[messageID] = make(chan *bridge.WireMessage, 1)
+			proxy.mapWebRTCMessages[sessionID] = make(chan *bridge.WireMessage, 1)
 		case <-time.After(timeout):
-			return response, nil, fmt.Errorf("waitForWebRTCMessage response timeout for %v", sessionID)
+			return response, nil, fmt.Errorf("waitForWebRTCMessage response timeout for %v", sessionID[:9])
 		}
 	}
 }
@@ -218,7 +231,7 @@ func (proxy *ProxyHTTPServer) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		if err != nil {
 			log.Fatal("WebRTC DataChannel writer error: ", err)
 		}
-		ctx.Logf("ServeHTTP sent protocol buffer request message via WebRTC to %v: %v", r.Host, wireRequest.GetSessionId())
+		ctx.Logf("ServeHTTP sent protocol buffer request message via WebRTC to %v: %v", r.Host, wireRequest.GetSessionId()[:9])
 		counter++
 		timeout := time.Second * 10
 		response, headers, err := proxy.waitForWebRTCMessage(wireRequest.GetSessionId(), timeout)

@@ -244,7 +244,7 @@ func (proxy *ProxyHTTPServer) handleTunnel(w http.ResponseWriter, r *http.Reques
 					log.Fatal("handleTunnel WebRTC DataChannel writer error: ", err)
 					continue
 				}
-				ctx.Logf("handleTunnel sent protocol buffer request message via WebRTC to %v: %v", r.Host, wireHTTPRequest.GetSessionId())
+				ctx.Logf("handleTunnel sent protocol buffer request message via WebRTC to %v: %v", r.Host, wireHTTPRequest.GetSessionId()[:9])
 				counter++
 				timeout := time.Second * 10
 				response, headers, err := proxy.waitForWebRTCMessage(wireHTTPRequest.GetSessionId(), timeout)
