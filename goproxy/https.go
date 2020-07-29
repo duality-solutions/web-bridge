@@ -19,7 +19,6 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/duality-solutions/web-bridge/bridge"
 	util "github.com/duality-solutions/web-bridge/internal/utilities"
 	"google.golang.org/protobuf/proto"
 )
@@ -223,9 +222,9 @@ func (proxy *ProxyHTTPServer) handleTunnel(w http.ResponseWriter, r *http.Reques
 				byteURL := []byte(req.URL.String())
 				var byteBody []byte
 				r.Body.Read(byteBody)
-				wireHTTPRequest := bridge.WireMessage{
+				wireHTTPRequest := WireMessage{
 					SessionId:  util.UniqueId(byteURL),
-					Type:       bridge.MessageType_request,
+					Type:       MessageType_request,
 					Method:     req.Method,
 					URL:        byteURL,
 					Header:     HeaderToWireArray(r.Header),
@@ -250,7 +249,7 @@ func (proxy *ProxyHTTPServer) handleTunnel(w http.ResponseWriter, r *http.Reques
 				response, headers, err := proxy.waitForWebRTCMessage(wireHTTPRequest.GetSessionId(), timeout)
 				if err != nil {
 					response = []byte(err.Error())
-					ctx.Logf("handleTunnel %v error while waiting for WebRTC response for %v: %v", r.Host, wireHTTPRequest.GetSessionId(), err)
+					ctx.Logf("handleTunnel %v error while waiting for WebRTC response for %v: %v", r.Host, wireHTTPRequest.GetSessionId()[:9], err)
 				}
 				ctx.Logf("handleTunnel response size %d", len(response))
 				// Bug fix which goproxy fails to provide request

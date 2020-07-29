@@ -9,7 +9,6 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/duality-solutions/web-bridge/bridge"
 	"github.com/duality-solutions/web-bridge/goproxy"
 	util "github.com/duality-solutions/web-bridge/internal/utilities"
 	"github.com/pion/webrtc/v2"
@@ -105,7 +104,7 @@ func main() {
 // ReadLoop shows how to read from the datachannel directly
 func ReadLoop(d io.Reader) {
 	for {
-		buffer := make([]byte, bridge.MaxTransmissionBytes)
+		buffer := make([]byte, goproxy.MaxTransmissionBytes)
 		_, err := d.Read(buffer)
 		if err != nil {
 			fmt.Println("ReadLoop Read error:", err)
@@ -124,7 +123,7 @@ func ReadLoop(d io.Reader) {
 }
 
 func sendResponse(data []byte) {
-	wrReq := &bridge.WireMessage{}
+	wrReq := &goproxy.WireMessage{}
 	err := proto.Unmarshal(data, wrReq)
 	if err != nil {
 		log.Fatal("sendResponse unmarshaling error: ", err)
@@ -161,16 +160,16 @@ func sendResponse(data []byte) {
 	fmt.Println("sendResponse bodyLen", bodyLen)
 	headers := goproxy.HeaderToWireArray(resp.Header)
 	extraSize := (100 * len(headers)) + 200
-	max := uint32(bridge.MaxTransmissionBytes - extraSize)
+	max := uint32(goproxy.MaxTransmissionBytes - extraSize)
 	if bodyLen > max {
 		chunks := bodyLen/max + 1
 		pos := uint32(0)
 		for i := uint32(0); i < chunks; i++ {
 			if i != chunks {
 				fmt.Println("sendResponse begin pos", pos, "end pos", (pos + max))
-				wrResp := bridge.WireMessage{
+				wrResp := goproxy.WireMessage{
 					SessionId:  wrReq.SessionId,
-					Type:       bridge.MessageType_response,
+					Type:       goproxy.MessageType_response,
 					Method:     wrReq.Method,
 					URL:        wrReq.URL,
 					Header:     goproxy.HeaderToWireArray(resp.Header),
@@ -191,9 +190,9 @@ func sendResponse(data []byte) {
 				}
 			} else {
 				fmt.Println("sendResponse begin pos", pos, "end pos", (bodyLen - pos))
-				wrResp := bridge.WireMessage{
+				wrResp := goproxy.WireMessage{
 					SessionId:  wrReq.SessionId,
-					Type:       bridge.MessageType_response,
+					Type:       goproxy.MessageType_response,
 					Method:     wrReq.Method,
 					URL:        wrReq.URL,
 					Header:     goproxy.HeaderToWireArray(resp.Header),
@@ -217,9 +216,9 @@ func sendResponse(data []byte) {
 			pos = pos + max
 		}
 	} else {
-		wrResp := bridge.WireMessage{
+		wrResp := goproxy.WireMessage{
 			SessionId:  wrReq.SessionId,
-			Type:       bridge.MessageType_response,
+			Type:       goproxy.MessageType_response,
 			Method:     wrReq.Method,
 			URL:        wrReq.URL,
 			Header:     goproxy.HeaderToWireArray(resp.Header),

@@ -16,12 +16,12 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/duality-solutions/web-bridge/bridge"
 	util "github.com/duality-solutions/web-bridge/internal/utilities"
 	"google.golang.org/protobuf/proto"
 )
 
-//var channelsMap map[string](chan *TestStruct)
+// MaxTransmissionBytes is the maxium bytes allow per WebRTC send
+var MaxTransmissionBytes = 65535
 
 // ProxyHTTPServer is the basic proxy type. Implements http.Handler.
 type ProxyHTTPServer struct {
@@ -44,7 +44,7 @@ type ProxyHTTPServer struct {
 	CertStore         CertStorage
 	DataChannelWriter io.Writer
 	DataChannelReader io.Reader
-	mapWebRTCMessages map[string]chan *bridge.WireMessage
+	mapWebRTCMessages map[string]chan *WireMessage
 }
 
 var hasPort = regexp.MustCompile(`:\d+$`)
@@ -72,17 +72,17 @@ func isEOF(r *bufio.Reader) bool {
 
 // readWebRTCMessageLoop creates a process that continues to read data from the WebRTC channel
 func (proxy *ProxyHTTPServer) readWebRTCMessageLoop() {
-	proxy.mapWebRTCMessages = make(map[string]chan *bridge.WireMessage)
+	proxy.mapWebRTCMessages = make(map[string]chan *WireMessage)
 	// TODO: add a channel to stop this loop
 	for {
-		buffer := make([]byte, bridge.MaxTransmissionBytes)
+		buffer := make([]byte, MaxTransmissionBytes)
 		_, err := proxy.DataChannelReader.Read(buffer)
 		if err != nil {
 			fmt.Println("readWebRTCMessageLoop Read error:", err)
 			return
 		}
 		buffer = bytes.Trim(buffer, "\x00")
-		wr := bridge.WireMessage{}
+		wr := WireMessage{}
 		err = proto.Unmarshal(buffer, &wr)
 		if err != nil {
 			log.Fatal("readWebRTCMessageLoop unmarshaling error:", err)
@@ -97,15 +97,15 @@ func (proxy *ProxyHTTPServer) readWebRTCMessageLoop() {
 }
 
 // waitForWebRTCMessage tries to get a response for the given sessionID before the timeout duration
-func (proxy *ProxyHTTPServer) waitForWebRTCMessage(sessionID string, timeout time.Duration) ([]byte, []*bridge.HttpHeader, error) {
+func (proxy *ProxyHTTPServer) waitForWebRTCMessage(sessionID string, timeout time.Duration) ([]byte, []*HttpHeader, error) {
 	fmt.Println("waitForWebRTCMessage start:", sessionID[:9])
-	messages := make(map[uint32]*bridge.WireMessage)
+	messages := make(map[uint32]*WireMessage)
 	var response []byte
-	var headers []*bridge.HttpHeader
+	var headers []*HttpHeader
 	var extraSize int = 0
 	var max, chunks uint32 = 0, 0
 	// Initialize map session id channel
-	proxy.mapWebRTCMessages[sessionID] = make(chan *bridge.WireMessage, 2)
+	proxy.mapWebRTCMessages[sessionID] = make(chan *WireMessage, 1)
 	fmt.Println("waitForWebRTCMessage start for", sessionID[:9], ", channel len:", len(proxy.mapWebRTCMessages))
 	for {
 		select {
@@ -113,7 +113,7 @@ func (proxy *ProxyHTTPServer) waitForWebRTCMessage(sessionID string, timeout tim
 			if headers == nil {
 				headers = wireResponse.Header
 				extraSize = (100 * len(headers)) + 200
-				max = uint32(bridge.MaxTransmissionBytes - extraSize)
+				max = uint32(MaxTransmissionBytes - extraSize)
 				chunks = (wireResponse.GetSize() / max) + 1
 				fmt.Println("waitForWebRTCMessage header set:", sessionID[:9], len(headers))
 			}
@@ -135,7 +135,7 @@ func (proxy *ProxyHTTPServer) waitForWebRTCMessage(sessionID string, timeout tim
 				fmt.Println("waitForWebRTCMessage finished:", sessionID[:9], ", messages chunks", len(messages), ", total data size", wireResponse.GetSize(), ", response size", len(response))
 				return response, headers, nil
 			}
-			proxy.mapWebRTCMessages[sessionID] = make(chan *bridge.WireMessage, 1)
+			proxy.mapWebRTCMessages[sessionID] = make(chan *WireMessage, 1)
 		case <-time.After(timeout):
 			return response, nil, fmt.Errorf("waitForWebRTCMessage response timeout for %v", sessionID[:9])
 		}
@@ -185,10 +185,10 @@ func removeProxyHeaders(ctx *ProxyCtx, r *http.Request) {
 }
 
 // HeaderToWireArray converts a http header to struct slice
-func HeaderToWireArray(header http.Header) (res []*bridge.HttpHeader) {
+func HeaderToWireArray(header http.Header) (res []*HttpHeader) {
 	for name, values := range header {
 		for _, value := range values {
-			item := bridge.HttpHeader{
+			item := HttpHeader{
 				Key:   name,
 				Value: value,
 			}
@@ -212,9 +212,9 @@ func (proxy *ProxyHTTPServer) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		var err error
 		ctx.Logf("Got request %v %v %v %v %v", r.URL.Path, r.Host, r.Method, r.URL.String(), string(reqBody))
 		byteURL := []byte(r.URL.String())
-		wireRequest := bridge.WireMessage{
+		wireRequest := WireMessage{
 			SessionId:  util.UniqueId(byteURL),
-			Type:       bridge.MessageType_request,
+			Type:       MessageType_request,
 			Method:     r.Method,
 			URL:        byteURL,
 			Header:     HeaderToWireArray(r.Header),
