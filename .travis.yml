@@ -12,10 +12,10 @@ jobs:
       - stage: build
         name: 'Ubuntu 18 Build Test'
         script:
-          - go run -race . -debug -test # test run with race
           - go get -u -v github.com/golang/protobuf/proto
           - go get -u -v github.com/golang/protobuf/protoc-gen-go
-          - protoc --go_out=. bridge/*.proto
+          - protoc --go_out=. goproxy/*.proto
+          - go run -race . -debug -test # test run with race
           - ./tests/http-proxy/build.sh
           - ./tests/tunnel/data-channel-create/build.sh
           - ./tests/tunnel/data-channel-wait/build.sh

@@ -15,8 +15,6 @@ const (
 	MinimumOfferValueLength = 10
 	// MinimumAnswerValueLength is the minimum offer value size to be considered
 	MinimumAnswerValueLength = 10
-	// MaxTransmissionBytes is the maxium bytes allow per WebRTC send
-	MaxTransmissionBytes = 65535
 )
 
 var linkBridges Bridges
