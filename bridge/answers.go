@@ -50,7 +50,7 @@ func SendAnswers(stopchan chan struct{}) bool {
 
 // GetAnswers checks Dynamicd for bridge messages received
 func GetAnswers(stopchan chan struct{}) bool {
-	util.Info.Println("GetAnswers Started")
+	//util.Info.Println("GetAnswers Started")
 	for _, link := range linkBridges.connected {
 		select {
 		default:
@@ -76,20 +76,21 @@ func GetAnswers(stopchan chan struct{}) bool {
 					}
 					if len(answer.Message) < MinimumAnswerValueLength {
 						util.Info.Println("GetAnswers for", link.LinkAccount, "not found")
-						continue
+						break
 					}
 					var newAnswer webrtc.SessionDescription
+
 					err = util.DecodeObject(answer.Message, &newAnswer)
 					if err != nil {
 						util.Error.Println("GetAnswers DecodeObject error", link.LinkAccount, err)
-						continue
+						break
 					}
 					if newAnswer != link.Answer {
 						link.Answer = newAnswer
-						go EstablishRTC(link)
 						link.State = StateEstablishRTC
-						delete(linkBridges.unconnected, link.LinkID())
-						linkBridges.connected[link.LinkID()] = link
+						util.Info.Println("Answer found for", link.LinkAccount, link.LinkID(), "EstablishRTC...")
+						// send anwser and wait for connection or timeout.
+						go EstablishRTC(link)
 					}
 				}
 			}
@@ -98,6 +99,6 @@ func GetAnswers(stopchan chan struct{}) bool {
 			return false
 		}
 	}
-	util.Info.Println("GetAnswers complete")
+	//util.Info.Println("GetAnswers complete")
 	return true
 }

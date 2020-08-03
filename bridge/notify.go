@@ -33,11 +33,13 @@ func NotifyLinksOnline(stopchan chan struct{}, links dynamic.ActiveLinks, accoun
 			encoded, err := util.EncodeObject(notification)
 			if err != nil {
 				util.Error.Println("NotifyLinksOnline EncodeObject error", linkBridge.LinkAccount, err)
-				continue
+				break
 			}
+			util.Info.Println("NotifyLinksOnline sent", linkBridge.LinkAccount, encoded)
 			_, err = dynamicd.SendNotificationMessage(linkBridge.MyAccount, linkBridge.LinkAccount, encoded)
 			if err != nil {
 				util.Error.Println("NotifyLinksOnline dynamicd.SendNotificationMessage error", linkBridge.LinkAccount, err)
+				break
 			}
 		case <-stopchan:
 			util.Info.Println("NotifyLinksOnline stopped")
@@ -61,11 +63,12 @@ func NotifyLinksOffline(stopchan chan struct{}) bool {
 			encoded, err := util.EncodeObject(notification)
 			if err != nil {
 				util.Error.Println("NotifyLinksOffline EncodeObject error", link.LinkAccount, err)
-				continue
+				break
 			}
 			_, err = dynamicd.SendNotificationMessage(link.MyAccount, link.LinkAccount, encoded)
 			if err != nil {
 				util.Error.Println("NotifyLinksOffline dynamicd.SendNotificationMessage error", link.LinkAccount, err)
+				break
 			}
 		case <-stopchan:
 			util.Info.Println("NotifyLinksOffline stopped")
@@ -83,11 +86,12 @@ func NotifyLinksOffline(stopchan chan struct{}) bool {
 			encoded, err := util.EncodeObject(notification)
 			if err != nil {
 				util.Error.Println("NotifyLinksOffline EncodeObject error", link.LinkAccount, err)
-				continue
+				break
 			}
 			_, err = dynamicd.SendNotificationMessage(link.MyAccount, link.LinkAccount, encoded)
 			if err != nil {
 				util.Error.Println("NotifyLinksOffline dynamicd.SendNotificationMessage error", link.LinkAccount, err)
+				break
 			}
 		case <-stopchan:
 			util.Info.Println("NotifyLinksOffline stopped")
@@ -99,31 +103,35 @@ func NotifyLinksOffline(stopchan chan struct{}) bool {
 
 // GetLinkNotifications get
 func GetLinkNotifications(stopchan chan struct{}) bool {
-	util.Info.Println("GetLinktNotifications Started")
+	//util.Info.Println("GetLinktNotifications Started")
 	for _, link := range linkBridges.unconnected {
 		select {
 		default:
 			notifications, err := dynamicd.GetNotificationMessages(link.MyAccount, link.LinkAccount)
 			if err != nil {
-				util.Error.Println("GetLinktNotifications dynamicd.GetNotificationMessages error", link.LinkAccount, err)
+				util.Error.Println("GetLinkNotifications dynamicd.GetNotificationMessages error", link.LinkAccount, err)
 			}
 			for _, notification := range *notifications {
 				// send offer
+				util.Info.Println("GetLinktNotifications message", notification.Message)
 				var online OnlineNotification
-				err := util.DecodeObject(notification.Message, online)
+				err := util.DecodeObject(notification.Message, &online)
 				if err != nil {
-					util.Error.Println("NotifyLinksOffline EncodeObject error", link.LinkAccount, err)
-					continue
+					util.Error.Println("GetLinkNotifications EncodeObject error", link.LinkAccount, err)
+					break
 				}
 				if online.EndTime == 0 /* && (time.Now().Unix() - online.StartTime) < 36000 */ {
-					SendOffer(link)
-					link.State = StateWaitForAnswer
-					delete(linkBridges.unconnected, link.LinkID())
-					linkBridges.connected[link.LinkID()] = link
+					if SendOffer(link) {
+						link.State = StateWaitForAnswer
+						delete(linkBridges.unconnected, link.LinkID())
+						linkBridges.connected[link.LinkID()] = link
+					} else {
+						break
+					}
 				}
 			}
 		case <-stopchan:
-			util.Info.Println("NotifyLinksOffline stopped")
+			util.Info.Println("GetLinkNotifications stopped")
 			return false
 		}
 	}
