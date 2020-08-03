@@ -29,7 +29,7 @@ func SendAnswers(stopchan chan struct{}) bool {
 						if err != nil {
 							util.Error.Println("SendAnswers EncodeObject error", link.LinkAccount, err)
 						}
-						_, err = dynamicd.SendLinkMessage(link.MyAccount, link.LinkAccount, encoded)
+						_, err = dynamicd.SendLinkMessage(link.MyAccount, link.LinkAccount, encoded, "webrtc-answer")
 						if err != nil {
 							util.Error.Println("SendAnswers dynamicd.SendLinkMessage error", link.LinkAccount, err)
 						}
@@ -51,9 +51,12 @@ func SendAnswers(stopchan chan struct{}) bool {
 // GetAnswers checks Dynamicd for bridge messages received
 func GetAnswers(stopchan chan struct{}) bool {
 	util.Info.Println("GetAnswers Started")
-	for _, link := range linkBridges.unconnected {
+	for _, link := range linkBridges.connected {
 		select {
 		default:
+			if link.State != StateWaitForAnswer {
+				continue
+			}
 			if link.PeerConnection == nil {
 				pc, err := ConnectToIceServices(config)
 				if err == nil {
@@ -61,7 +64,7 @@ func GetAnswers(stopchan chan struct{}) bool {
 				}
 			}
 			if link.PeerConnection != nil && link.State == StateWaitForAnswer {
-				answers, err := dynamicd.GetLinkMessages(link.MyAccount, link.LinkAccount)
+				answers, err := dynamicd.GetLinkMessages(link.MyAccount, link.LinkAccount, "webrtc-answer")
 				if err != nil {
 					util.Error.Println("GetAnswers error", link.LinkAccount, err)
 				} else {

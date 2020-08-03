@@ -208,7 +208,6 @@ func Init(version, githash string) error {
 				util.Info.Println("Exit command. Stopping services.")
 				shutdown = true
 				close(stopWatcher)
-				close(stopBridges)
 				break
 			} else if strings.HasPrefix(cmdText, "dynamic-cli") {
 				req, errNewRequest := dynamic.NewRequest(cmdText)
@@ -234,7 +233,7 @@ func Init(version, githash string) error {
 				}
 			}
 		}
-		bridge.ShutdownBridges()
+		bridge.ShutdownBridges(stopBridges)
 		// Stop dynamicd
 		reqStop, _ := dynamic.NewRequest("dynamic-cli stop")
 		respStop, _ := util.BeautifyJSON(<-dynamicd.ExecCmdRequest(reqStop))

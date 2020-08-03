@@ -77,9 +77,9 @@ func (d *Dynamicd) GetNotificationMessages(receiver, sender string) (*[]GetMessa
 }
 
 // SendLinkMessage calls the VGP IM send message command to add an encrypted record for the given account link
-func (d *Dynamicd) SendLinkMessage(sender, receiver, message string) (*MessageReturnJSON, error) {
+func (d *Dynamicd) SendLinkMessage(sender, receiver, message, msgtype string) (*MessageReturnJSON, error) {
 	var ret MessageReturnJSON
-	cmd := "dynamic-cli link sendmessage " + sender + " " + receiver + " bridge " + `"` + message + `"`
+	cmd := "dynamic-cli link sendmessage " + sender + " " + receiver + " " + msgtype + " " + `"` + message + `"`
 	req, err := NewRequest(cmd)
 	if err != nil {
 		return nil, err
@@ -93,9 +93,9 @@ func (d *Dynamicd) SendLinkMessage(sender, receiver, message string) (*MessageRe
 }
 
 // GetLinkMessages calls the local VGP instant message queue
-func (d *Dynamicd) GetLinkMessages(receiver, sender string) (*[]GetMessageReturnJSON, error) {
+func (d *Dynamicd) GetLinkMessages(receiver, sender, msgtype string) (*[]GetMessageReturnJSON, error) {
 	var ret []GetMessageReturnJSON
-	cmd := "dynamic-cli link getaccountmessages " + receiver + " " + sender + " bridge"
+	cmd := "dynamic-cli link getaccountmessages " + receiver + " " + sender + " " + msgtype
 	req, err := NewRequest(cmd)
 	if err != nil {
 		return nil, err

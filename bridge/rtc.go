@@ -102,6 +102,7 @@ func EstablishRTC(link *Bridge) {
 }
 
 // WaitForRTC waits for a real time connection (RTC) bridge with the link
+// TODO: add timeout
 func WaitForRTC(link *Bridge, answer webrtc.SessionDescription) {
 	keepAlive := true
 	stopchan := make(chan struct{})
