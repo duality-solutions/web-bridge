@@ -78,6 +78,7 @@ func (d *Dynamicd) GetNotificationMessages(receiver, sender string) (*[]GetMessa
 
 // SendLinkMessage calls the VGP IM send message command to add an encrypted record for the given account link
 func (d *Dynamicd) SendLinkMessage(sender, receiver, message, msgtype string) (*MessageReturnJSON, error) {
+	util.Info.Println("SendLinkMessage", sender, receiver, len(message), msgtype)
 	var ret MessageReturnJSON
 	cmd := "dynamic-cli link sendmessage " + sender + " " + receiver + " " + msgtype + " " + `"` + message + `"`
 	req, err := NewRequest(cmd)

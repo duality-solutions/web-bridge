@@ -109,15 +109,15 @@ func GetLinkNotifications(stopchan chan struct{}) bool {
 				util.Error.Println("GetLinkNotifications dynamicd.GetNotificationMessages error", link.LinkAccount, err)
 			}
 			for _, notification := range *notifications {
-				// send offer
-				util.Info.Println("GetLinkNotifications message", notification.Message)
 				var online OnlineNotification
 				err := util.DecodeObject(notification.Message, &online)
 				if err != nil {
 					util.Error.Println("GetLinkNotifications EncodeObject error", link.LinkAccount, err)
 					break
 				}
+				util.Info.Println("GetLinkNotifications message from", link.LinkAccount, "secs:", (time.Now().Unix() - online.StartTime), online.EndTime)
 				if online.EndTime == 0 /* && (time.Now().Unix() - online.StartTime) < 36000 */ {
+					// send offer
 					if SendOffer(link) {
 						link.State = StateWaitForAnswer
 						delete(linkBridges.unconnected, link.LinkID())

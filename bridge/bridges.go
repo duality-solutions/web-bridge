@@ -77,7 +77,6 @@ func StartBridges(stopchan chan struct{}, c settings.Configuration, d dynamic.Dy
 	accounts = a
 	links = l
 	if dynamicd.WaitForSync(stopchan, 10, 10) {
-
 		if initializeBridges(stopchan) {
 			for {
 				select {
@@ -88,7 +87,10 @@ func StartBridges(stopchan chan struct{}, c settings.Configuration, d dynamic.Dy
 					if !GetAnswers(stopchan) {
 						return
 					}
-
+					if !GetOffers(stopchan) {
+						return
+					}
+					time.Sleep(10 * time.Second)
 					/*
 						if !DisconnectedLinks(stopchan) {
 							return

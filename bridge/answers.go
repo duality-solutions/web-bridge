@@ -71,7 +71,7 @@ getAnswers:
 				answers, err := dynamicd.GetLinkMessages(link.MyAccount, link.LinkAccount, "webrtc-answer")
 				if err != nil {
 					util.Error.Println("GetAnswers error", link.LinkAccount, err)
-				} else {
+				} else if len(*answers) > 0 {
 					var answer dynamic.GetMessageReturnJSON
 					for _, res := range *answers {
 						if res.TimestampEpoch > answer.TimestampEpoch {

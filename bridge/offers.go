@@ -10,7 +10,7 @@ import (
 
 // GetOffers checks the DHT for WebRTC offers from all links
 func GetOffers(stopchan chan struct{}) bool {
-	util.Info.Println("GetOffers started")
+	//util.Info.Println("GetOffers started")
 getOffers:
 	for _, link := range linkBridges.connected {
 		select {
@@ -19,7 +19,7 @@ getOffers:
 				offers, err := dynamicd.GetLinkMessages(link.MyAccount, link.LinkAccount, "webrtc-offer")
 				if err != nil {
 					util.Error.Println("GetOffers error", link.LinkAccount, err)
-				} else {
+				} else if len(*offers) > 0 {
 					var offer dynamic.GetMessageReturnJSON
 					for _, res := range *offers {
 						if res.TimestampEpoch > offer.TimestampEpoch {
@@ -112,7 +112,11 @@ func SendOffer(link *Bridge) bool {
 		util.Error.Println("SendOffer error EncodeObject", err)
 		return false
 	}
-	dynamicd.SendLinkMessage(link.MyAccount, link.LinkAccount, encoded, "webrtc-offer")
+	_, err = dynamicd.SendLinkMessage(link.MyAccount, link.LinkAccount, encoded, "webrtc-offer")
+	if err != nil {
+		util.Error.Println("GetOffers dynamicd.SendLinkMessage answer error", link.LinkAccount, err)
+		return false
+	}
 	link.State = StateWaitForAnswer
 	link.OnStateChangeEpoch = time.Now().Unix()
 	return true
