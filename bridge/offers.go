@@ -12,7 +12,7 @@ import (
 func GetOffers(stopchan chan struct{}) bool {
 	//util.Info.Println("GetOffers started")
 getOffers:
-	for _, link := range linkBridges.connected {
+	for _, link := range linkBridges.unconnected {
 		select {
 		default:
 			if link.State == StateNew || link.State == StateWaitForOffer {
@@ -40,7 +40,7 @@ getOffers:
 					util.Info.Println("GetOffers offer found. Size", offer.MessageSize)
 					if newOffer != link.Offer {
 						link.Offer = newOffer
-						pc, err := ConnectToIceServices(config)
+						pc, err := ConnectToIceServicesDetached(config)
 						if err != nil {
 							util.Error.Println("GetOffers ConnectToIceServices error", link.LinkAccount, err)
 							break getOffers
@@ -90,7 +90,7 @@ getOffers:
 
 // SendOffer sends a message with the WebRTC offer embedded to the link
 func SendOffer(link *Bridge) bool {
-	pc, err := ConnectToIceServices(config)
+	pc, err := ConnectToIceServicesDetached(config)
 	if err != nil {
 		util.Error.Println("SendOffer error connecting tot ICE services", err)
 		return false
@@ -132,7 +132,7 @@ func DisconnectedLinks(stopchan chan struct{}) bool {
 			var linkBridge = NewLinkBridge(link.LinkAccount, link.MyAccount, accounts)
 			linkBridge.SessionID = link.SessionID
 			linkBridge.Get = link.Get
-			pc, err := ConnectToIceServices(config)
+			pc, err := ConnectToIceServicesDetached(config)
 			if err != nil {
 				util.Error.Println("DisconnectedLinks error connecting tot ICE services", err)
 				continue

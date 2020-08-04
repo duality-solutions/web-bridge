@@ -62,7 +62,7 @@ getAnswers:
 				continue getAnswers
 			}
 			if link.PeerConnection == nil {
-				pc, err := ConnectToIceServices(config)
+				pc, err := ConnectToIceServicesDetached(config)
 				if err == nil {
 					link.PeerConnection = pc
 				}
