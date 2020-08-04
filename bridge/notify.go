@@ -4,7 +4,6 @@ import (
 	"time"
 
 	util "github.com/duality-solutions/web-bridge/internal/utilities"
-	"github.com/duality-solutions/web-bridge/rpc/dynamic"
 )
 
 var startEpoch int64
@@ -17,28 +16,26 @@ type OnlineNotification struct {
 }
 
 // NotifyLinksOnline sends a VGP message to all links with online status
-func NotifyLinksOnline(stopchan chan struct{}, links dynamic.ActiveLinks, accounts []dynamic.Account) bool {
+func NotifyLinksOnline(stopchan chan struct{}) bool {
 	util.Info.Println("NotifyLinksOnline Started")
 	endEpoch = 0
 	startEpoch = time.Now().Unix()
-	for _, link := range links.Links {
+	for _, link := range linkBridges.unconnected {
 		select {
 		default:
-			var linkBridge = NewBridge(link, accounts)
-			linkBridges.unconnected[linkBridge.LinkID()] = &linkBridge
 			notification := OnlineNotification{
 				StartTime: startEpoch,
 				EndTime:   endEpoch,
 			}
 			encoded, err := util.EncodeObject(notification)
 			if err != nil {
-				util.Error.Println("NotifyLinksOnline EncodeObject error", linkBridge.LinkAccount, err)
+				util.Error.Println("NotifyLinksOnline EncodeObject error", link.LinkAccount, err)
 				break
 			}
-			util.Info.Println("NotifyLinksOnline sent", linkBridge.LinkAccount, encoded)
-			_, err = dynamicd.SendNotificationMessage(linkBridge.MyAccount, linkBridge.LinkAccount, encoded)
+			util.Info.Println("NotifyLinksOnline sent", link.LinkAccount, encoded)
+			_, err = dynamicd.SendNotificationMessage(link.MyAccount, link.LinkAccount, encoded)
 			if err != nil {
-				util.Error.Println("NotifyLinksOnline dynamicd.SendNotificationMessage error", linkBridge.LinkAccount, err)
+				util.Error.Println("NotifyLinksOnline dynamicd.SendNotificationMessage error", link.LinkAccount, err)
 				break
 			}
 		case <-stopchan:
@@ -101,9 +98,9 @@ func NotifyLinksOffline(stopchan chan struct{}) bool {
 	return true
 }
 
-// GetLinkNotifications get
+// GetLinkNotifications gets online notification messages for all unconnected links
 func GetLinkNotifications(stopchan chan struct{}) bool {
-	//util.Info.Println("GetLinktNotifications Started")
+	//util.Info.Println("GetLinkNotifications Started")
 	for _, link := range linkBridges.unconnected {
 		select {
 		default:
@@ -113,7 +110,7 @@ func GetLinkNotifications(stopchan chan struct{}) bool {
 			}
 			for _, notification := range *notifications {
 				// send offer
-				util.Info.Println("GetLinktNotifications message", notification.Message)
+				util.Info.Println("GetLinkNotifications message", notification.Message)
 				var online OnlineNotification
 				err := util.DecodeObject(notification.Message, &online)
 				if err != nil {

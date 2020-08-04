@@ -29,13 +29,35 @@ type Bridges struct {
 	unconnected map[string]*Bridge
 }
 
+func setupBridges(stopchan chan struct{}, links dynamic.ActiveLinks, accounts []dynamic.Account) bool {
+	util.Info.Println("setupBridges Started")
+	for _, link := range links.Links {
+		select {
+		default:
+			var linkBridge = NewBridge(link, accounts)
+			linkBridges.unconnected[linkBridge.LinkID()] = &linkBridge
+		case <-stopchan:
+			util.Info.Println("setupBridges stopped")
+			return false
+		}
+	}
+	return true
+}
+
 func initializeBridges(stopchan chan struct{}) bool {
-	// Notify links that you are online
-	if NotifyLinksOnline(stopchan, links, accounts) {
-		util.Info.Println("Sent all online notification messages.", len(linkBridges.unconnected))
-		time.Sleep(time.Second * 180) // wait 3 minutes for links to respond.
-		if !GetOffers(stopchan) {
-			util.Error.Println("GetOffers error")
+	linkBridges.connected = make(map[string]*Bridge)
+	linkBridges.unconnected = make(map[string]*Bridge)
+	if setupBridges(stopchan, links, accounts) {
+		// Get notifications received while loading and unlocking wallet
+		if GetLinkNotifications(stopchan) {
+			// Notify links that you are online
+			if NotifyLinksOnline(stopchan) {
+				util.Info.Println("Sent all online notification messages.", len(linkBridges.unconnected))
+				time.Sleep(time.Second * 180) // wait 3 minutes for links to respond.
+				if !GetOffers(stopchan) {
+					util.Error.Println("GetOffers error")
+				}
+			}
 		}
 	}
 	return true
@@ -55,8 +77,7 @@ func StartBridges(stopchan chan struct{}, c settings.Configuration, d dynamic.Dy
 	accounts = a
 	links = l
 	if dynamicd.WaitForSync(stopchan, 10, 10) {
-		linkBridges.connected = make(map[string]*Bridge)
-		linkBridges.unconnected = make(map[string]*Bridge)
+
 		if initializeBridges(stopchan) {
 			for {
 				select {
