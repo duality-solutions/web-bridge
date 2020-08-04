@@ -105,7 +105,7 @@ func (proxy *ProxyHTTPServer) readWebRTCMessageLoop() {
 
 // waitForWebRTCMessage tries to get a response for the given sessionID before the timeout duration
 func (proxy *ProxyHTTPServer) waitForWebRTCMessage(sessionID string, timeout time.Duration) ([]byte, []*HttpHeader, error) {
-	fmt.Println("waitForWebRTCMessage start:", sessionID[:9])
+	util.Info.Println("waitForWebRTCMessage start:", sessionID[:9])
 	messages := make(map[uint32]*WireMessage)
 	var response []byte
 	var headers []*HttpHeader
@@ -113,7 +113,7 @@ func (proxy *ProxyHTTPServer) waitForWebRTCMessage(sessionID string, timeout tim
 	var max, chunks uint32 = 0, 0
 	// Initialize map session id channel
 	proxy.mapWebRTCMessages[sessionID] = make(chan *WireMessage, 1)
-	fmt.Println("waitForWebRTCMessage start for", sessionID[:9], ", channel len:", len(proxy.mapWebRTCMessages))
+	util.Info.Println("waitForWebRTCMessage start for", sessionID[:9], ", channel len:", len(proxy.mapWebRTCMessages))
 	for {
 		select {
 		case wireResponse := <-proxy.mapWebRTCMessages[sessionID]:
@@ -122,10 +122,10 @@ func (proxy *ProxyHTTPServer) waitForWebRTCMessage(sessionID string, timeout tim
 				extraSize = (100 * len(headers)) + 200
 				max = uint32(MaxTransmissionBytes - extraSize)
 				chunks = (wireResponse.GetSize() / max) + 1
-				fmt.Println("waitForWebRTCMessage header set:", sessionID[:9], len(headers))
+				util.Info.Println("waitForWebRTCMessage header set:", sessionID[:9], len(headers))
 			}
 			messages[wireResponse.GetOridinal()] = wireResponse
-			fmt.Println("waitForWebRTCMessage channel received:", sessionID[:9], ", chunks received", len(messages), ", total data size", wireResponse.GetSize(), ", ordinal", wireResponse.GetOridinal())
+			util.Info.Println("waitForWebRTCMessage channel received:", sessionID[:9], ", chunks received", len(messages), ", total data size", wireResponse.GetSize(), ", ordinal", wireResponse.GetOridinal())
 			if uint32(len(messages)) >= chunks {
 				// make sure response is created with the correct ordinal order
 				for i := uint32(0); i < chunks; i++ {
@@ -135,11 +135,11 @@ func (proxy *ProxyHTTPServer) waitForWebRTCMessage(sessionID string, timeout tim
 				if len(response) > 0 {
 					lastByByte := response[len(response)-1]
 					if lastByByte == 0 {
-						fmt.Println("waitForWebRTCMessage remove trailing null characters for", sessionID[:9])
+						util.Info.Println("waitForWebRTCMessage remove trailing null characters for", sessionID[:9])
 						response = bytes.Trim(response, "\x00") // remove trailing null characters from response
 					}
 				}
-				fmt.Println("waitForWebRTCMessage finished:", sessionID[:9], ", messages chunks", len(messages), ", total data size", wireResponse.GetSize(), ", response size", len(response))
+				util.Info.Println("waitForWebRTCMessage finished:", sessionID[:9], ", messages chunks", len(messages), ", total data size", wireResponse.GetSize(), ", response size", len(response))
 				return response, headers, nil
 			}
 			proxy.mapWebRTCMessages[sessionID] = make(chan *WireMessage, 1)
@@ -151,7 +151,7 @@ func (proxy *ProxyHTTPServer) waitForWebRTCMessage(sessionID string, timeout tim
 
 func (proxy *ProxyHTTPServer) sendResponse(wrReq *WireMessage) {
 	targetURL := string(wrReq.URL)
-	fmt.Println("sendResponse wrReq URL", targetURL, "ReqID:", wrReq.SessionId, "Method", wrReq.Method, "\nRequest Body", string(wrReq.GetBody()))
+	util.Info.Println("sendResponse wrReq URL", targetURL, "ReqID:", wrReq.SessionId, "Method", wrReq.Method, "\nRequest Body", string(wrReq.GetBody()))
 	client := &http.Client{
 		Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{
@@ -165,12 +165,12 @@ func (proxy *ProxyHTTPServer) sendResponse(wrReq *WireMessage) {
 	req.Proto = "HTTP/1.1"
 	req.Header.Add("Cache-Control", "no-cache")
 	for _, head := range wrReq.GetHeader() {
-		fmt.Println("sendResponse Header:", head.Key, head.Value)
+		util.Info.Println("sendResponse Header:", head.Key, head.Value)
 		req.Header.Add(head.Key, head.Value)
 	}
 	resp, err := client.Do(req)
 	if err != nil {
-		fmt.Println("sendResponse client.Get error: ", err)
+		util.Info.Println("sendResponse client.Get error: ", err)
 		respError := http.Response{
 			Body: ioutil.NopCloser(bytes.NewBuffer([]byte(err.Error()))),
 		}
@@ -179,7 +179,7 @@ func (proxy *ProxyHTTPServer) sendResponse(wrReq *WireMessage) {
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 	bodyLen := uint32(len(body))
-	fmt.Println("sendResponse bodyLen", bodyLen)
+	util.Info.Println("sendResponse bodyLen", bodyLen)
 	headers := HeaderToWireArray(resp.Header)
 	extraSize := (100 * len(headers)) + 200
 	max := uint32(MaxTransmissionBytes - extraSize)
@@ -188,7 +188,7 @@ func (proxy *ProxyHTTPServer) sendResponse(wrReq *WireMessage) {
 		pos := uint32(0)
 		for i := uint32(0); i < chunks; i++ {
 			if i != chunks {
-				fmt.Println("sendResponse begin pos", pos, "end pos", (pos + max))
+				util.Info.Println("sendResponse begin pos", pos, "end pos", (pos + max))
 				wrResp := WireMessage{
 					SessionId:  wrReq.SessionId,
 					Type:       MessageType_response,
@@ -202,16 +202,16 @@ func (proxy *ProxyHTTPServer) sendResponse(wrReq *WireMessage) {
 				}
 				protoData, err := proto.Marshal(wrResp.ProtoReflect().Interface())
 				if err != nil {
-					fmt.Println("sendResponse marshaling error: ", err)
+					util.Info.Println("sendResponse marshaling error: ", err)
 				}
 				_, err = proxy.DataChannelWriter.Write(protoData)
 				if err != nil {
-					fmt.Println("sendResponse DataChannelWriter.Write error: ", err)
+					util.Info.Println("sendResponse DataChannelWriter.Write error: ", err)
 				} else {
-					fmt.Println("sendResponse DataChannelWriter.Write protoData len ", len(protoData))
+					util.Info.Println("sendResponse DataChannelWriter.Write protoData len ", len(protoData))
 				}
 			} else {
-				fmt.Println("sendResponse begin pos", pos, "end pos", (bodyLen - pos))
+				util.Info.Println("sendResponse begin pos", pos, "end pos", (bodyLen - pos))
 				wrResp := WireMessage{
 					SessionId:  wrReq.SessionId,
 					Type:       MessageType_response,
@@ -225,14 +225,14 @@ func (proxy *ProxyHTTPServer) sendResponse(wrReq *WireMessage) {
 				}
 				protoData, err := proto.Marshal(wrResp.ProtoReflect().Interface())
 				if err != nil {
-					fmt.Println("sendResponse marshaling error: ", err)
+					util.Info.Println("sendResponse marshaling error: ", err)
 				}
 				proxy.DataChannelWriter.Write(protoData)
 				_, err = proxy.DataChannelWriter.Write(protoData)
 				if err != nil {
-					fmt.Println("sendResponse DataChannelWriter.Write error: ", err)
+					util.Info.Println("sendResponse DataChannelWriter.Write error: ", err)
 				} else {
-					fmt.Println("sendResponse DataChannelWriter.Write protoData len ", len(protoData))
+					util.Info.Println("sendResponse DataChannelWriter.Write protoData len ", len(protoData))
 				}
 			}
 			pos = pos + max
@@ -253,13 +253,13 @@ func (proxy *ProxyHTTPServer) sendResponse(wrReq *WireMessage) {
 		protoData, err := proto.Marshal(wrResp.ProtoReflect().Interface())
 
 		if err != nil {
-			fmt.Println("sendResponse marshaling error: ", err)
+			util.Info.Println("sendResponse marshaling error: ", err)
 		}
 		_, err = proxy.DataChannelWriter.Write(protoData)
 		if err != nil {
-			fmt.Println("sendResponse DataChannelWriter.Write error: ", err)
+			util.Info.Println("sendResponse DataChannelWriter.Write error: ", err)
 		} else {
-			fmt.Println("sendResponse DataChannelWriter.Write protoData len ", len(protoData))
+			util.Info.Println("sendResponse DataChannelWriter.Write protoData len ", len(protoData))
 		}
 	}
 
@@ -324,7 +324,7 @@ func HeaderToWireArray(header http.Header) (res []*HttpHeader) {
 func (proxy *ProxyHTTPServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	//r.Header["X-Forwarded-For"] = w.RemoteAddr()
 	go proxy.readWebRTCMessageLoop()
-
+	util.Info.Println("ServeHTTP start")
 	if r.Method == "CONNECT" {
 		proxy.handleTunnel(w, r)
 	} else {

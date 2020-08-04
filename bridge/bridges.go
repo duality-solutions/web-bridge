@@ -53,7 +53,7 @@ func initializeBridges(stopchan chan struct{}) bool {
 			// Notify links that you are online
 			if NotifyLinksOnline(stopchan) {
 				util.Info.Println("Sent all online notification messages.", len(linkBridges.unconnected))
-				time.Sleep(time.Second * 180) // wait 3 minutes for links to respond.
+				time.Sleep(time.Second * 60) // wait 1 minute for links to respond.
 				if !GetOffers(stopchan) {
 					util.Error.Println("GetOffers error")
 				}
@@ -65,7 +65,7 @@ func initializeBridges(stopchan chan struct{}) bool {
 
 // StartBridges runs a goroutine to manage network bridges
 // Send online notifications to links
-// Wait 3 minutes for offer reponses
+// Wait 1 minute for offer reponses
 // send bridge result to upstream channel
 // put offers in the DHT for unconnected links
 // check for answers loop
@@ -90,7 +90,7 @@ func StartBridges(stopchan chan struct{}, c settings.Configuration, d dynamic.Dy
 					if !GetOffers(stopchan) {
 						return
 					}
-					time.Sleep(10 * time.Second)
+					time.Sleep(3 * time.Second)
 					/*
 						if !DisconnectedLinks(stopchan) {
 							return

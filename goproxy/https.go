@@ -143,6 +143,7 @@ func (proxy *ProxyHTTPServer) handleTunnel(w http.ResponseWriter, r *http.Reques
 		todo.Hijack(r, proxyClient, ctx)
 	case ConnectHTTPMitm:
 		proxyClient.Write([]byte("HTTP/1.0 200 OK\r\n\r\n"))
+		util.Info.Println("Assuming CONNECT is plain HTTP tunneling, mitm proxying it")
 		ctx.Logf("Assuming CONNECT is plain HTTP tunneling, mitm proxying it")
 		targetSiteCon, err := proxy.connectDial("tcp", host)
 		if err != nil {
@@ -215,7 +216,7 @@ func (proxy *ProxyHTTPServer) handleTunnel(w http.ResponseWriter, r *http.Reques
 				}
 				req.RemoteAddr = r.RemoteAddr // since we're converting the request, need to carry over the original connecting IP as well
 				ctx.Logf("req %v", r.Host)
-
+				util.Info.Println("handleTunnel request received", r.Host)
 				if !httpsRegexp.MatchString(req.URL.String()) {
 					req.URL, err = url.Parse("https://" + r.Host + req.URL.String())
 				}
