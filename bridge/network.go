@@ -36,10 +36,15 @@ func (b *Bridge) StartBridgeNetwork(reader io.Reader, writer io.Writer) {
 	proxy.Verbose = *verbose
 	proxy.DataChannelReader = reader
 	proxy.DataChannelWriter = writer
+	testMessage := []byte("init web-bridge")
+	n, err := proxy.DataChannelWriter.Write(testMessage)
+	if err != nil {
+		util.Info.Println("StartBridgeNetwork write test message failed.", err)
+	}
 	if proxy.Verbose {
 		log.Printf("Server starting up! - configured to listen on http interface %s and https interface %s", *httpAddr, *httpsAddr)
 	}
-
+	util.Info.Println("StartBridgeNetwork test message size", n)
 	proxy.NonProxyHandler = http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		if req.Host == "" {
 			fmt.Fprintln(w, "Cannot handle requests without Host header, e.g., HTTP 1.0")
