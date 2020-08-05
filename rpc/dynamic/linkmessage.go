@@ -28,6 +28,15 @@ type GetMessageReturnJSON struct {
 	RecordNum      int    `json:"record_num"`
 }
 
+// GetVGPMessageReturn stores dynamic RPC get message response with the from and to
+type GetVGPMessageReturn struct {
+	LinkID   string
+	From     string
+	To       string
+	Type     string
+	Messages []GetMessageReturnJSON
+}
+
 // SendNotificationMessage sends an encrypted message to the the given account link using VGP IM
 func (d *Dynamicd) SendNotificationMessage(sender, receiver, message string) (*MessageReturnJSON, error) {
 	var ret MessageReturnJSON
@@ -123,4 +132,64 @@ func (d *Dynamicd) GetLinkMessages(receiver, sender, msgtype string) (*[]GetMess
 		}
 	}
 	return &ret, nil
+}
+
+// SendNotificationMessageAsync sends an encrypted message to the the given account link using VGP IM
+func (d *Dynamicd) SendNotificationMessageAsync(sender, receiver, message string, out chan<- MessageReturnJSON) {
+	go func() {
+		var ret MessageReturnJSON
+		cmd := "dynamic-cli link sendmessage " + sender + " " + receiver + " online " + `"` + message + `"`
+		req, err := NewRequest(cmd)
+		if err != nil {
+			util.Error.Println("SendNotificationMessageAsync NewRequest error", err)
+			return
+		}
+		res := <-d.ExecCmdRequest(req)
+		err = json.Unmarshal([]byte(res), &ret)
+		if err != nil {
+			util.Error.Println("SendNotificationMessageAsync Unmarshal error", err)
+			return
+		}
+		util.Info.Println("SendNotificationMessageAsync sent notification message from", sender, " to", receiver)
+		out <- ret
+	}()
+}
+
+// GetLinkMessagesAsync asynchronously executes the getaccountmessages RPC command and returns the results to a channel
+func (d *Dynamicd) GetLinkMessagesAsync(id, receiver, sender, msgtype string, out chan<- GetVGPMessageReturn) {
+	go func() {
+		var ret GetVGPMessageReturn
+		ret.LinkID = id
+		ret.To = receiver
+		ret.From = sender
+		ret.Type = msgtype
+		cmd := "dynamic-cli link getaccountmessages " + receiver + " " + sender + " " + msgtype
+		req, err := NewRequest(cmd)
+		if err != nil {
+			util.Error.Println("GetLinkMessagesAsync NewRequest error", err)
+			return
+		}
+		res := <-d.ExecCmdRequest(req)
+		var messagesGeneric map[string]interface{}
+		err = json.Unmarshal([]byte(res), &messagesGeneric)
+		if err != nil {
+			util.Error.Println("GetLinkMessagesAsync Unmarshal error", err)
+			return
+		}
+		for _, v := range messagesGeneric {
+			b, err := json.Marshal(v)
+			if err != nil {
+				util.Error.Println("GetLinkMessages json.Marshal error", err)
+			} else {
+				var message GetMessageReturnJSON
+				err := json.Unmarshal(b, &message)
+				if err != nil {
+					util.Error.Println("GetLinkMessages json.Unmarshal error", err)
+				} else {
+					ret.Messages = append(ret.Messages, message)
+				}
+			}
+		}
+		out <- ret
+	}()
 }

@@ -10,75 +10,80 @@ import (
 
 // GetOffers checks the DHT for WebRTC offers from all links
 func GetOffers(stopchan chan struct{}) bool {
-	//util.Info.Println("GetOffers started")
-getOffers:
+	l := len(linkBridges.unconnected)
+	getOffersChan := make(chan dynamic.GetVGPMessageReturn, l)
 	for _, link := range linkBridges.unconnected {
 		select {
 		default:
-			if link.State == StateNew || link.State == StateWaitForOffer {
-				offers, err := dynamicd.GetLinkMessages(link.MyAccount, link.LinkAccount, "webrtc-offer")
-				if err != nil {
-					util.Error.Println("GetOffers error", link.LinkAccount, err)
-				} else if len(*offers) > 0 {
-					var offer dynamic.GetMessageReturnJSON
-					for _, res := range *offers {
-						if res.TimestampEpoch > offer.TimestampEpoch {
-							offer = res
-						}
-					}
-					util.Info.Println("GetOffers offer found. Size", offer.MessageSize)
-					if len(offer.Message) < MinimumAnswerValueLength {
-						util.Info.Println("GetOffers for", link.LinkAccount, "not found. Value too short.", len(offer.Message))
-						break getOffers
-					}
-					var newOffer webrtc.SessionDescription
-					err = util.DecodeObject(offer.Message, &newOffer)
-					if err != nil {
-						util.Error.Println("GetOffers DecodeObject error", link.LinkAccount, err)
-						break getOffers
-					}
-					util.Info.Println("GetOffers offer found. Size", offer.MessageSize)
-					if newOffer != link.Offer {
-						link.Offer = newOffer
-						pc, err := ConnectToIceServicesDetached(config)
-						if err != nil {
-							util.Error.Println("GetOffers ConnectToIceServices error", link.LinkAccount, err)
-							break getOffers
-						}
-						link.PeerConnection = pc
-						err = link.PeerConnection.SetRemoteDescription(link.Offer)
-						if err != nil {
-							util.Error.Println("GetOffers SetRemoteDescription offer error", link.LinkAccount, err)
-							break getOffers
-						}
-						answer, err := link.PeerConnection.CreateAnswer(nil)
-						if err != nil {
-							util.Error.Println("GetOffers CreateAnswer error", link.LinkAccount, err)
-							link.Offer = webrtc.SessionDescription{}
-							break getOffers
-						}
-						link.Answer = answer
-						encoded, err := util.EncodeObject(answer)
-						if err != nil {
-							util.Error.Println("GetOffers EncodeObject answer error", link.LinkAccount, err)
-							break getOffers
-						}
-						_, err = dynamicd.SendLinkMessage(link.MyAccount, link.LinkAccount, encoded, "webrtc-answer")
-						if err != nil {
-							util.Error.Println("GetOffers dynamicd.SendLinkMessage answer error", link.LinkAccount, err)
-							break getOffers
-						}
-						link.State = StateWaitForRTC
-						link.OnStateChangeEpoch = time.Now().Unix()
-						delete(linkBridges.unconnected, link.LinkID())
-						linkBridges.connected[link.LinkID()] = link
-						util.Info.Println("Offer found for", link.LinkAccount, link.LinkID(), "WaitForRTC...")
-						// send anwser and wait for connection or timeout.
-						go WaitForRTC(link, answer)
-					}
+			dynamicd.GetLinkMessagesAsync(link.LinkID(), link.MyAccount, link.LinkAccount, "webrtc-offer", getOffersChan)
+		case <-stopchan:
+			util.Info.Println("GetOffers stopped")
+			return false
+		}
+	}
+getOffersLoop:
+	for i := 0; i < l; i++ {
+		select {
+		default:
+			offers := <-getOffersChan
+			link := linkBridges.unconnected[offers.LinkID]
+			var offer dynamic.GetMessageReturnJSON
+			for _, res := range offers.Messages {
+				if res.TimestampEpoch > offer.TimestampEpoch {
+					offer = res
 				}
-			} else {
-				//util.Info.Println("GetOffers skipped", link.LinkAccount)
+			}
+			if offer.MessageSize > 0 {
+				util.Info.Println("GetOffers offer found. Size", offer.MessageSize)
+				if len(offer.Message) < MinimumAnswerValueLength {
+					util.Info.Println("GetOffers for", link.LinkAccount, "not found. Value too short.", len(offer.Message))
+					break getOffersLoop
+				}
+				var newOffer webrtc.SessionDescription
+				err := util.DecodeObject(offer.Message, &newOffer)
+				if err != nil {
+					util.Error.Println("GetOffers DecodeObject error", link.LinkAccount, err)
+					break getOffersLoop
+				}
+				util.Info.Println("GetOffers offer found. Size", offer.MessageSize)
+				if newOffer != link.Offer {
+					link.Offer = newOffer
+					pc, err := ConnectToIceServicesDetached(config)
+					if err != nil {
+						util.Error.Println("GetOffers ConnectToIceServices error", link.LinkAccount, err)
+						break getOffersLoop
+					}
+					link.PeerConnection = pc
+					err = link.PeerConnection.SetRemoteDescription(link.Offer)
+					if err != nil {
+						util.Error.Println("GetOffers SetRemoteDescription offer error", link.LinkAccount, err)
+						break getOffersLoop
+					}
+					answer, err := link.PeerConnection.CreateAnswer(nil)
+					if err != nil {
+						util.Error.Println("GetOffers CreateAnswer error", link.LinkAccount, err)
+						link.Offer = webrtc.SessionDescription{}
+						break getOffersLoop
+					}
+					link.Answer = answer
+					encoded, err := util.EncodeObject(answer)
+					if err != nil {
+						util.Error.Println("GetOffers EncodeObject answer error", link.LinkAccount, err)
+						break getOffersLoop
+					}
+					_, err = dynamicd.SendLinkMessage(link.MyAccount, link.LinkAccount, encoded, "webrtc-answer")
+					if err != nil {
+						util.Error.Println("GetOffers dynamicd.SendLinkMessage answer error", link.LinkAccount, err)
+						break getOffersLoop
+					}
+					link.State = StateWaitForRTC
+					link.OnStateChangeEpoch = time.Now().Unix()
+					delete(linkBridges.unconnected, link.LinkID())
+					linkBridges.connected[link.LinkID()] = link
+					util.Info.Println("Offer found for", link.LinkAccount, link.LinkID(), "WaitForRTC...")
+					// send anwser and wait for connection or timeout.
+					go WaitForRTC(link, answer)
+				}
 			}
 		case <-stopchan:
 			util.Info.Println("GetOffers stopped")

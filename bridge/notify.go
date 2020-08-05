@@ -4,6 +4,7 @@ import (
 	"time"
 
 	util "github.com/duality-solutions/web-bridge/internal/utilities"
+	"github.com/duality-solutions/web-bridge/rpc/dynamic"
 )
 
 var startEpoch int64
@@ -32,12 +33,9 @@ func NotifyLinksOnline(stopchan chan struct{}) bool {
 				util.Error.Println("NotifyLinksOnline EncodeObject error", link.LinkAccount, err)
 				break
 			}
+			sendOnlineChan := make(chan dynamic.MessageReturnJSON, 1)
+			dynamicd.SendNotificationMessageAsync(link.MyAccount, link.LinkAccount, encoded, sendOnlineChan)
 			util.Info.Println("NotifyLinksOnline sent", link.LinkAccount, encoded)
-			_, err = dynamicd.SendNotificationMessage(link.MyAccount, link.LinkAccount, encoded)
-			if err != nil {
-				util.Error.Println("NotifyLinksOnline dynamicd.SendNotificationMessage error", link.LinkAccount, err)
-				break
-			}
 		case <-stopchan:
 			util.Info.Println("NotifyLinksOnline stopped")
 			return false
@@ -60,11 +58,8 @@ func NotifyLinksOffline() bool {
 			util.Error.Println("NotifyLinksOffline EncodeObject error", link.LinkAccount, err)
 			break
 		}
-		_, err = dynamicd.SendNotificationMessage(link.MyAccount, link.LinkAccount, encoded)
-		if err != nil {
-			util.Error.Println("NotifyLinksOffline dynamicd.SendNotificationMessage error", link.LinkAccount, err)
-			break
-		}
+		sendOfflineChan := make(chan dynamic.MessageReturnJSON, 1)
+		dynamicd.SendNotificationMessageAsync(link.MyAccount, link.LinkAccount, encoded, sendOfflineChan)
 	}
 	for _, link := range linkBridges.connected {
 		notification := OnlineNotification{
@@ -76,11 +71,8 @@ func NotifyLinksOffline() bool {
 			util.Error.Println("NotifyLinksOffline EncodeObject error", link.LinkAccount, err)
 			break
 		}
-		_, err = dynamicd.SendNotificationMessage(link.MyAccount, link.LinkAccount, encoded)
-		if err != nil {
-			util.Error.Println("NotifyLinksOffline dynamicd.SendNotificationMessage error", link.LinkAccount, err)
-			break
-		}
+		sendOfflineChan := make(chan dynamic.MessageReturnJSON, 1)
+		dynamicd.SendNotificationMessageAsync(link.MyAccount, link.LinkAccount, encoded, sendOfflineChan)
 	}
 	return true
 }

@@ -53,14 +53,25 @@ func SendAnswers(stopchan chan struct{}) bool {
 
 // GetAnswers checks Dynamicd for bridge messages received
 func GetAnswers(stopchan chan struct{}) bool {
-	//util.Info.Println("GetAnswers Started")
-getAnswers:
-	for _, link := range linkBridges.connected {
+	l := len(linkBridges.connected)
+	getAnswersChan := make(chan dynamic.GetVGPMessageReturn, l)
+	for _, link := range linkBridges.unconnected {
 		select {
 		default:
-			if link.State != StateWaitForAnswer {
-				continue getAnswers
+			if link.State == StateWaitForAnswer {
+				dynamicd.GetLinkMessagesAsync(link.LinkID(), link.MyAccount, link.LinkAccount, "webrtc-answer", getAnswersChan)
 			}
+		case <-stopchan:
+			util.Info.Println("GetAnswers stopped")
+			return false
+		}
+	}
+getAnswersLoop:
+	for i := 0; i < l; i++ {
+		select {
+		default:
+			answers := <-getAnswersChan
+			link := linkBridges.unconnected[answers.LinkID]
 			if link.PeerConnection == nil {
 				pc, err := ConnectToIceServicesDetached(config)
 				if err == nil {
@@ -68,27 +79,23 @@ getAnswers:
 				}
 			}
 			if link.PeerConnection != nil && link.State == StateWaitForAnswer {
-				answers, err := dynamicd.GetLinkMessages(link.MyAccount, link.LinkAccount, "webrtc-answer")
-				if err != nil {
-					util.Error.Println("GetAnswers error", link.LinkAccount, err)
-				} else if len(*answers) > 0 {
-					var answer dynamic.GetMessageReturnJSON
-					for _, res := range *answers {
-						if res.TimestampEpoch > answer.TimestampEpoch {
-							answer = res
-						}
+				var answer dynamic.GetMessageReturnJSON
+				for _, res := range answers.Messages {
+					if res.TimestampEpoch > answer.TimestampEpoch {
+						answer = res
 					}
+				}
+				if answer.MessageSize > 0 {
 					util.Info.Println("GetAnswers offer found. Size", answer.MessageSize)
 					if len(answer.Message) < MinimumAnswerValueLength {
 						util.Info.Println("GetAnswers for", link.LinkAccount, "not found. Value too short.", len(answer.Message))
-						break getAnswers
+						break getAnswersLoop
 					}
 					var newAnswer webrtc.SessionDescription
-
-					err = util.DecodeObject(answer.Message, &newAnswer)
+					err := util.DecodeObject(answer.Message, &newAnswer)
 					if err != nil {
 						util.Error.Println("GetAnswers DecodeObject error", link.LinkAccount, err)
-						break getAnswers
+						break getAnswersLoop
 					}
 					if newAnswer != link.Answer {
 						link.Answer = newAnswer
@@ -105,6 +112,5 @@ getAnswers:
 			return false
 		}
 	}
-	//util.Info.Println("GetAnswers complete")
 	return true
 }
