@@ -31,15 +31,18 @@ type Bridges struct {
 
 func setupBridges(stopchan chan struct{}, links dynamic.ActiveLinks, accounts []dynamic.Account) bool {
 	util.Info.Println("setupBridges Started")
+	sessionID := uint16(0)
 	for _, link := range links.Links {
 		select {
 		default:
 			var linkBridge = NewBridge(link, accounts)
 			linkBridges.unconnected[linkBridge.LinkID()] = &linkBridge
+			linkBridge.SessionID = sessionID
 		case <-stopchan:
 			util.Info.Println("setupBridges stopped")
 			return false
 		}
+		sessionID = sessionID + 2
 	}
 	return true
 }

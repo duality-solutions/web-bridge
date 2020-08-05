@@ -20,15 +20,16 @@ import (
 
 const (
 	// StartHTTPPortNumber is the HTTP listening port for the first bridge link
-	StartHTTPPortNumber = 8889
+	StartHTTPPortNumber uint16 = 8889
 )
+
+var verbose = flag.Bool("v", true, "should every proxy request be logged to stdout")
 
 // StartBridgeNetwork listens to a port for http traffic and routes it through a link's WebRTC channel
 func (b *Bridge) StartBridgeNetwork(reader io.Reader, writer io.Writer) {
 	util.Info.Println("StartBridgeNetwork", b.LinkParticipants(), "port", b.ListenPort())
-	verbose := flag.Bool("v", true, "should every proxy request be logged to stdout")
-	httpAddr := flag.String("httpaddr", ":"+strconv.Itoa(int(b.ListenPort())), "proxy http listen address")
-	httpsAddr := flag.String("httpsaddr", ":"+strconv.Itoa(int(b.ListenPort()+1)), "proxy https listen address")
+	httpAddr := flag.String(b.LinkParticipants()+"-httpaddr", ":"+strconv.Itoa(int(b.ListenPort())), "proxy http listen address")
+	httpsAddr := flag.String(b.LinkParticipants()+"-httpsaddr", ":"+strconv.Itoa(int(b.ListenPort()+1)), "proxy https listen address")
 	flag.Parse()
 
 	proxy := goproxy.NewProxyHTTPServer()

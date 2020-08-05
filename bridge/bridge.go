@@ -55,7 +55,7 @@ func (s State) String() string {
 
 // Bridge hold information about a link WebRTC bridge connection
 type Bridge struct {
-	SessionID          int
+	SessionID          uint16
 	MyAccount          string
 	LinkAccount        string
 	Offer              webrtc.SessionDescription
@@ -126,7 +126,7 @@ func (b Bridge) LinkID() string {
 
 // ListenPort returns the HTTP server listening port
 func (b Bridge) ListenPort() uint16 {
-	return uint16(b.SessionID + StartHTTPPortNumber)
+	return b.SessionID + StartHTTPPortNumber
 }
 
 // LinkParticipants returns link participants
