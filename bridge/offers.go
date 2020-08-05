@@ -78,7 +78,7 @@ getOffers:
 					}
 				}
 			} else {
-				util.Info.Println("GetOffers skipped", link.LinkAccount)
+				//util.Info.Println("GetOffers skipped", link.LinkAccount)
 			}
 		case <-stopchan:
 			util.Info.Println("GetOffers stopped")

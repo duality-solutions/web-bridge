@@ -79,26 +79,30 @@ func (proxy *ProxyHTTPServer) readWebRTCMessageLoop() {
 		buffer := make([]byte, MaxTransmissionBytes)
 		_, err := proxy.DataChannelReader.Read(buffer)
 		if err != nil {
-			fmt.Println("readWebRTCMessageLoop Read error:", err)
+			util.Error.Println("readWebRTCMessageLoop Read error:", err)
 			return
 		}
 		buffer = bytes.Trim(buffer, "\x00")
-		wr := WireMessage{}
-		err = proto.Unmarshal(buffer, &wr)
-		if err != nil {
-			log.Fatal("readWebRTCMessageLoop unmarshaling error:", err)
-			continue
-		}
-		if wr.GetType() == MessageType_response {
-			sessionID := wr.GetSessionId()
-			fmt.Println("readWebRTCMessageLoop data received:", sessionID[:9], ", buffer len:", len(buffer), "channel len:", len(proxy.mapWebRTCMessages))
-			proxy.mapWebRTCMessages[sessionID] <- &wr
-			defer close(proxy.mapWebRTCMessages[sessionID])
-			fmt.Println("readWebRTCMessageLoop channel:", sessionID[:9], ", buffer len:", len(buffer), ", channel len:", len(proxy.mapWebRTCMessages))
-		} else if wr.GetType() == MessageType_request {
-			go proxy.sendResponse(&wr)
+		if len(buffer) > 32 {
+			wr := WireMessage{}
+			err = proto.Unmarshal(buffer, &wr)
+			if err != nil {
+				util.Error.Println("readWebRTCMessageLoop data length (", len(buffer), ") unmarshaling error", err)
+				continue
+			}
+			if wr.GetType() == MessageType_response {
+				sessionID := wr.GetSessionId()
+				util.Info.Println("readWebRTCMessageLoop data received:", sessionID[:9], ", buffer len:", len(buffer), "channel len:", len(proxy.mapWebRTCMessages))
+				proxy.mapWebRTCMessages[sessionID] <- &wr
+				defer close(proxy.mapWebRTCMessages[sessionID])
+				util.Info.Println("readWebRTCMessageLoop channel:", sessionID[:9], ", buffer len:", len(buffer), ", channel len:", len(proxy.mapWebRTCMessages))
+			} else if wr.GetType() == MessageType_request {
+				go proxy.sendResponse(&wr)
+			} else {
+				util.Info.Println("readWebRTCMessageLoop unknown message type received")
+			}
 		} else {
-			fmt.Println("readWebRTCMessageLoop unknown message type received")
+			util.Info.Println("readWebRTCMessageLoop short message:", string(buffer))
 		}
 	}
 }
@@ -202,11 +206,11 @@ func (proxy *ProxyHTTPServer) sendResponse(wrReq *WireMessage) {
 				}
 				protoData, err := proto.Marshal(wrResp.ProtoReflect().Interface())
 				if err != nil {
-					util.Info.Println("sendResponse marshaling error: ", err)
+					util.Error.Println("sendResponse marshaling error: ", err)
 				}
 				_, err = proxy.DataChannelWriter.Write(protoData)
 				if err != nil {
-					util.Info.Println("sendResponse DataChannelWriter.Write error: ", err)
+					util.Error.Println("sendResponse DataChannelWriter.Write error: ", err)
 				} else {
 					util.Info.Println("sendResponse DataChannelWriter.Write protoData len ", len(protoData))
 				}
@@ -225,12 +229,12 @@ func (proxy *ProxyHTTPServer) sendResponse(wrReq *WireMessage) {
 				}
 				protoData, err := proto.Marshal(wrResp.ProtoReflect().Interface())
 				if err != nil {
-					util.Info.Println("sendResponse marshaling error: ", err)
+					util.Error.Println("sendResponse marshaling error: ", err)
 				}
 				proxy.DataChannelWriter.Write(protoData)
 				_, err = proxy.DataChannelWriter.Write(protoData)
 				if err != nil {
-					util.Info.Println("sendResponse DataChannelWriter.Write error: ", err)
+					util.Error.Println("sendResponse DataChannelWriter.Write error: ", err)
 				} else {
 					util.Info.Println("sendResponse DataChannelWriter.Write protoData len ", len(protoData))
 				}
@@ -253,17 +257,17 @@ func (proxy *ProxyHTTPServer) sendResponse(wrReq *WireMessage) {
 		protoData, err := proto.Marshal(wrResp.ProtoReflect().Interface())
 
 		if err != nil {
-			util.Info.Println("sendResponse marshaling error: ", err)
+			util.Error.Println("sendResponse marshaling error: ", err)
 		}
 		_, err = proxy.DataChannelWriter.Write(protoData)
 		if err != nil {
-			util.Info.Println("sendResponse DataChannelWriter.Write error: ", err)
+			util.Error.Println("sendResponse DataChannelWriter.Write error: ", err)
 		} else {
 			util.Info.Println("sendResponse DataChannelWriter.Write protoData len ", len(protoData))
 		}
 	}
-
 }
+
 func (proxy *ProxyHTTPServer) filterRequest(r *http.Request, ctx *ProxyCtx) (req *http.Request, resp *http.Response) {
 	req = r
 	for _, h := range proxy.reqHandlers {
@@ -326,8 +330,10 @@ func (proxy *ProxyHTTPServer) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	go proxy.readWebRTCMessageLoop()
 	util.Info.Println("ServeHTTP start")
 	if r.Method == "CONNECT" {
+		util.Info.Println("HTTPS request called. Using handleTunnel.")
 		proxy.handleTunnel(w, r)
 	} else {
+		util.Info.Println("HTTP request called")
 		ctx := &ProxyCtx{Req: r, Session: atomic.AddInt64(&proxy.sess, 1), Proxy: proxy}
 		reqBody, _ := ioutil.ReadAll(r.Body)
 		r.Body = ioutil.NopCloser(bytes.NewBuffer(reqBody))
@@ -347,11 +353,12 @@ func (proxy *ProxyHTTPServer) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		}
 		data, err := proto.Marshal(wireRequest.ProtoReflect().Interface())
 		if err != nil {
-			log.Fatal("marshaling error: ", err)
+			util.Info.Println("ServeHTTP marshaling error: ", err)
+			return
 		}
 		_, err = proxy.DataChannelWriter.Write(data)
 		if err != nil {
-			log.Fatal("WebRTC DataChannel writer error: ", err)
+			util.Info.Println("WebRTC DataChannel writer error: ", err)
 		}
 		ctx.Logf("ServeHTTP sent protocol buffer request message via WebRTC to %v: %v", r.Host, wireRequest.GetSessionId()[:9])
 		counter++
