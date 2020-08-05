@@ -27,7 +27,7 @@ var verbose = flag.Bool("v", true, "should every proxy request be logged to stdo
 
 // StartBridgeNetwork listens to a port for http traffic and routes it through a link's WebRTC channel
 func (b *Bridge) StartBridgeNetwork(reader io.Reader, writer io.Writer) {
-	util.Info.Println("StartBridgeNetwork", b.LinkParticipants(), "port", b.ListenPort())
+	util.Info.Println("StartBridgeNetwork", b.LinkParticipants(), "http port", b.ListenPort(), "https port", b.ListenPort()+1)
 	httpAddr := flag.String(b.LinkParticipants()+"-httpaddr", ":"+strconv.Itoa(int(b.ListenPort())), "proxy http listen address")
 	httpsAddr := flag.String(b.LinkParticipants()+"-httpsaddr", ":"+strconv.Itoa(int(b.ListenPort()+1)), "proxy https listen address")
 	flag.Parse()

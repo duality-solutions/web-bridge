@@ -54,7 +54,7 @@ func EstablishRTC(link *Bridge) {
 			close(stopchan)
 			return
 		}
-		link.StartBridgeNetwork(raw, raw)
+		go link.StartBridgeNetwork(raw, raw)
 	})
 
 	link.DataChannel.OnError(func(err error) {
@@ -140,7 +140,7 @@ func WaitForRTC(link *Bridge, answer webrtc.SessionDescription) {
 				close(stopchan)
 				return
 			}
-			link.StartBridgeNetwork(raw, raw)
+			go link.StartBridgeNetwork(raw, raw)
 		})
 
 		link.DataChannel.OnError(func(err error) {
