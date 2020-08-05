@@ -20,25 +20,33 @@ import (
 
 const (
 	// StartHTTPPortNumber is the HTTP listening port for the first bridge link
-	StartHTTPPortNumber = 8889
+	StartHTTPPortNumber uint16 = 8889
 )
+
+var verbose = flag.Bool("v", true, "should every proxy request be logged to stdout")
 
 // StartBridgeNetwork listens to a port for http traffic and routes it through a link's WebRTC channel
 func (b *Bridge) StartBridgeNetwork(reader io.Reader, writer io.Writer) {
-	util.Info.Println("StartBridgeNetwork", b.LinkParticipants(), "port", b.ListenPort())
-	verbose := flag.Bool("v", true, "should every proxy request be logged to stdout")
-	httpAddr := flag.String("httpaddr", ":"+strconv.Itoa(int(b.ListenPort())), "proxy http listen address")
-	httpsAddr := flag.String("httpsaddr", ":"+strconv.Itoa(int(b.ListenPort()+1)), "proxy https listen address")
+	util.Info.Println("StartBridgeNetwork", b.LinkParticipants(), "http port", b.ListenPort(), "https port", b.ListenPort()+1)
+	httpAddr := flag.String(b.LinkParticipants()+"-httpaddr", ":"+strconv.Itoa(int(b.ListenPort())), "proxy http listen address")
+	httpsAddr := flag.String(b.LinkParticipants()+"-httpsaddr", ":"+strconv.Itoa(int(b.ListenPort()+1)), "proxy https listen address")
 	flag.Parse()
 
 	proxy := goproxy.NewProxyHTTPServer()
 	proxy.Verbose = *verbose
 	proxy.DataChannelReader = reader
 	proxy.DataChannelWriter = writer
+	proxy.BridgeID = b.LinkID()
+	proxy.BridgeLinkNames = b.LinkParticipants()
+	testMessage := []byte("init web-bridge")
+	n, err := proxy.DataChannelWriter.Write(testMessage)
+	if err != nil {
+		util.Error.Println("StartBridgeNetwork", proxy.BridgeLinkNames, "write test message failed.", err)
+	}
 	if proxy.Verbose {
 		log.Printf("Server starting up! - configured to listen on http interface %s and https interface %s", *httpAddr, *httpsAddr)
 	}
-
+	util.Info.Println("StartBridgeNetwork", proxy.BridgeLinkNames, "sent test message with size", n)
 	proxy.NonProxyHandler = http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		if req.Host == "" {
 			fmt.Fprintln(w, "Cannot handle requests without Host header, e.g., HTTP 1.0")

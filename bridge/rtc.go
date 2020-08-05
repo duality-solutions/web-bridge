@@ -54,7 +54,7 @@ func EstablishRTC(link *Bridge) {
 			close(stopchan)
 			return
 		}
-		link.StartBridgeNetwork(raw, raw)
+		go link.StartBridgeNetwork(raw, raw)
 	})
 
 	link.DataChannel.OnError(func(err error) {
@@ -102,6 +102,7 @@ func EstablishRTC(link *Bridge) {
 }
 
 // WaitForRTC waits for a real time connection (RTC) bridge with the link
+// TODO: add timeout
 func WaitForRTC(link *Bridge, answer webrtc.SessionDescription) {
 	keepAlive := true
 	stopchan := make(chan struct{})
@@ -139,7 +140,7 @@ func WaitForRTC(link *Bridge, answer webrtc.SessionDescription) {
 				close(stopchan)
 				return
 			}
-			link.StartBridgeNetwork(raw, raw)
+			go link.StartBridgeNetwork(raw, raw)
 		})
 
 		link.DataChannel.OnError(func(err error) {

@@ -1,6 +1,8 @@
 package bridge
 
 import (
+	"time"
+
 	util "github.com/duality-solutions/web-bridge/internal/utilities"
 	"github.com/duality-solutions/web-bridge/rpc/dynamic"
 	"github.com/pion/webrtc/v2"
@@ -29,14 +31,15 @@ func SendAnswers(stopchan chan struct{}) bool {
 						if err != nil {
 							util.Error.Println("SendAnswers EncodeObject error", link.LinkAccount, err)
 						}
-						_, err = dynamicd.SendLinkMessage(link.MyAccount, link.LinkAccount, encoded)
+						_, err = dynamicd.SendLinkMessage(link.MyAccount, link.LinkAccount, encoded, "webrtc-answer")
 						if err != nil {
 							util.Error.Println("SendAnswers dynamicd.SendLinkMessage error", link.LinkAccount, err)
 						}
-						go WaitForRTC(link, answer)
 						link.State = StateWaitForRTC
+						link.OnStateChangeEpoch = time.Now().Unix()
 						delete(linkBridges.unconnected, link.LinkID())
 						linkBridges.connected[link.LinkID()] = link
+						go WaitForRTC(link, answer)
 					}
 				}
 			}
@@ -50,43 +53,50 @@ func SendAnswers(stopchan chan struct{}) bool {
 
 // GetAnswers checks Dynamicd for bridge messages received
 func GetAnswers(stopchan chan struct{}) bool {
-	util.Info.Println("GetAnswers Started")
-	for _, link := range linkBridges.unconnected {
+	//util.Info.Println("GetAnswers Started")
+getAnswers:
+	for _, link := range linkBridges.connected {
 		select {
 		default:
+			if link.State != StateWaitForAnswer {
+				continue getAnswers
+			}
 			if link.PeerConnection == nil {
-				pc, err := ConnectToIceServices(config)
+				pc, err := ConnectToIceServicesDetached(config)
 				if err == nil {
 					link.PeerConnection = pc
 				}
 			}
 			if link.PeerConnection != nil && link.State == StateWaitForAnswer {
-				answers, err := dynamicd.GetLinkMessages(link.MyAccount, link.LinkAccount)
+				answers, err := dynamicd.GetLinkMessages(link.MyAccount, link.LinkAccount, "webrtc-answer")
 				if err != nil {
 					util.Error.Println("GetAnswers error", link.LinkAccount, err)
-				} else {
+				} else if len(*answers) > 0 {
 					var answer dynamic.GetMessageReturnJSON
 					for _, res := range *answers {
 						if res.TimestampEpoch > answer.TimestampEpoch {
 							answer = res
 						}
 					}
+					util.Info.Println("GetAnswers offer found. Size", answer.MessageSize)
 					if len(answer.Message) < MinimumAnswerValueLength {
-						util.Info.Println("GetAnswers for", link.LinkAccount, "not found")
-						continue
+						util.Info.Println("GetAnswers for", link.LinkAccount, "not found. Value too short.", len(answer.Message))
+						break getAnswers
 					}
 					var newAnswer webrtc.SessionDescription
+
 					err = util.DecodeObject(answer.Message, &newAnswer)
 					if err != nil {
 						util.Error.Println("GetAnswers DecodeObject error", link.LinkAccount, err)
-						continue
+						break getAnswers
 					}
 					if newAnswer != link.Answer {
 						link.Answer = newAnswer
-						go EstablishRTC(link)
 						link.State = StateEstablishRTC
-						delete(linkBridges.unconnected, link.LinkID())
-						linkBridges.connected[link.LinkID()] = link
+						link.OnStateChangeEpoch = time.Now().Unix()
+						util.Info.Println("Answer found for", link.LinkAccount, link.LinkID(), "EstablishRTC...")
+						// send anwser and wait for connection or timeout.
+						go EstablishRTC(link)
 					}
 				}
 			}
@@ -95,6 +105,6 @@ func GetAnswers(stopchan chan struct{}) bool {
 			return false
 		}
 	}
-	util.Info.Println("GetAnswers complete")
+	//util.Info.Println("GetAnswers complete")
 	return true
 }

@@ -18,15 +18,17 @@ const (
 	StateInit State = 0 + iota
 	// StateNew is the state after calling new bridge = 1
 	StateNew
-	// StateWaitForAnswer is waiting for offer = 2
+	// StateWaitForOffer is when waiting for an offer
+	StateWaitForOffer
+	// StateWaitForAnswer is waiting for an answer = 3
 	StateWaitForAnswer
-	// StateSendAnswer offer received, send answer = 3
+	// StateSendAnswer offer received, send answer = 4
 	StateSendAnswer
-	// StateWaitForRTC offer received and answer sent  = 4
+	// StateWaitForRTC offer received and answer sent  = 5
 	StateWaitForRTC
-	// StateEstablishRTC offer sent and answer received  = 5
+	// StateEstablishRTC offer sent and answer received  = 6
 	StateEstablishRTC
-	// StateOpenConnection when WebRTC is connected and open = 6
+	// StateOpenConnection when WebRTC is connected and open = 7
 	StateOpenConnection
 )
 
@@ -53,7 +55,7 @@ func (s State) String() string {
 
 // Bridge hold information about a link WebRTC bridge connection
 type Bridge struct {
-	SessionID          int
+	SessionID          uint16
 	MyAccount          string
 	LinkAccount        string
 	Offer              webrtc.SessionDescription
@@ -124,7 +126,7 @@ func (b Bridge) LinkID() string {
 
 // ListenPort returns the HTTP server listening port
 func (b Bridge) ListenPort() uint16 {
-	return uint16(b.SessionID + StartHTTPPortNumber)
+	return b.SessionID + StartHTTPPortNumber
 }
 
 // LinkParticipants returns link participants
