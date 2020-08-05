@@ -47,52 +47,39 @@ func NotifyLinksOnline(stopchan chan struct{}) bool {
 }
 
 // NotifyLinksOffline sends a VGP message to all links with offline status
-func NotifyLinksOffline(stopchan chan struct{}) bool {
+func NotifyLinksOffline() bool {
 	util.Info.Println("NotifyLinksOffline Started")
 	endEpoch = time.Now().Unix()
 	for _, link := range linkBridges.unconnected {
-		select {
-		default:
-			notification := OnlineNotification{
-				StartTime: startEpoch,
-				EndTime:   endEpoch,
-			}
-			encoded, err := util.EncodeObject(notification)
-			if err != nil {
-				util.Error.Println("NotifyLinksOffline EncodeObject error", link.LinkAccount, err)
-				break
-			}
-			_, err = dynamicd.SendNotificationMessage(link.MyAccount, link.LinkAccount, encoded)
-			if err != nil {
-				util.Error.Println("NotifyLinksOffline dynamicd.SendNotificationMessage error", link.LinkAccount, err)
-				break
-			}
-		case <-stopchan:
-			util.Info.Println("NotifyLinksOffline stopped")
-			return false
+		notification := OnlineNotification{
+			StartTime: startEpoch,
+			EndTime:   endEpoch,
+		}
+		encoded, err := util.EncodeObject(notification)
+		if err != nil {
+			util.Error.Println("NotifyLinksOffline EncodeObject error", link.LinkAccount, err)
+			break
+		}
+		_, err = dynamicd.SendNotificationMessage(link.MyAccount, link.LinkAccount, encoded)
+		if err != nil {
+			util.Error.Println("NotifyLinksOffline dynamicd.SendNotificationMessage error", link.LinkAccount, err)
+			break
 		}
 	}
 	for _, link := range linkBridges.connected {
-		select {
-		default:
-			var link = linkBridges.unconnected[link.LinkID()]
-			notification := OnlineNotification{
-				StartTime: startEpoch,
-				EndTime:   endEpoch,
-			}
-			encoded, err := util.EncodeObject(notification)
-			if err != nil {
-				util.Error.Println("NotifyLinksOffline EncodeObject error", link.LinkAccount, err)
-				break
-			}
-			_, err = dynamicd.SendNotificationMessage(link.MyAccount, link.LinkAccount, encoded)
-			if err != nil {
-				util.Error.Println("NotifyLinksOffline dynamicd.SendNotificationMessage error", link.LinkAccount, err)
-				break
-			}
-		case <-stopchan:
-			util.Info.Println("NotifyLinksOffline stopped")
-			return false
+		notification := OnlineNotification{
+			StartTime: startEpoch,
+			EndTime:   endEpoch,
+		}
+		encoded, err := util.EncodeObject(notification)
+		if err != nil {
+			util.Error.Println("NotifyLinksOffline EncodeObject error", link.LinkAccount, err)
+			break
+		}
+		_, err = dynamicd.SendNotificationMessage(link.MyAccount, link.LinkAccount, encoded)
+		if err != nil {
+			util.Error.Println("NotifyLinksOffline dynamicd.SendNotificationMessage error", link.LinkAccount, err)
+			break
 		}
 	}
 	return true

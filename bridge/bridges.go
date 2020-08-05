@@ -120,7 +120,7 @@ func StartBridges(stopchan chan struct{}, c settings.Configuration, d dynamic.Dy
 func ShutdownBridges(stopchan chan struct{}) {
 	//TODO: disconnect all active/connected WebRTC bridges
 	close(stopchan)
-	if !NotifyLinksOffline(stopchan) {
+	if !NotifyLinksOffline() {
 		util.Error.Println("ShutdownBridges NotifyLinksOffline error")
 	}
 }
