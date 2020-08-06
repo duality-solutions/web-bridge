@@ -47,6 +47,8 @@ func NotifyLinksOnline(stopchan chan struct{}) bool {
 // NotifyLinksOffline sends a VGP message to all links with offline status
 func NotifyLinksOffline() bool {
 	util.Info.Println("NotifyLinksOffline Started")
+	l := len(linkBridges.unconnected) + len(linkBridges.connected)
+	sendOfflineChan := make(chan dynamic.MessageReturnJSON, l)
 	endEpoch = time.Now().Unix()
 	for _, link := range linkBridges.unconnected {
 		notification := OnlineNotification{
@@ -58,7 +60,6 @@ func NotifyLinksOffline() bool {
 			util.Error.Println("NotifyLinksOffline EncodeObject error", link.LinkAccount, err)
 			break
 		}
-		sendOfflineChan := make(chan dynamic.MessageReturnJSON, 1)
 		dynamicd.SendNotificationMessageAsync(link.MyAccount, link.LinkAccount, encoded, sendOfflineChan)
 	}
 	for _, link := range linkBridges.connected {
@@ -71,8 +72,17 @@ func NotifyLinksOffline() bool {
 			util.Error.Println("NotifyLinksOffline EncodeObject error", link.LinkAccount, err)
 			break
 		}
-		sendOfflineChan := make(chan dynamic.MessageReturnJSON, 1)
 		dynamicd.SendNotificationMessageAsync(link.MyAccount, link.LinkAccount, encoded, sendOfflineChan)
+	}
+	for i := 0; i < l; i++ {
+		select {
+		default:
+			notification := <-sendOfflineChan
+			util.Info.Println("NotifyLinksOffline", notification.SubjectID)
+		case <-time.After(time.Second * 30):
+			util.Error.Println("NotifyLinksOffline timeout after 30 seconds")
+			return false
+		}
 	}
 	return true
 }
