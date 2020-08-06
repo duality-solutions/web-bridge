@@ -60,6 +60,8 @@ func GetAnswers(stopchan chan struct{}) bool {
 		default:
 			if link.State == StateWaitForAnswer {
 				dynamicd.GetLinkMessagesAsync(link.LinkID(), link.MyAccount, link.LinkAccount, "webrtc-answer", getAnswersChan)
+			} else {
+				l--
 			}
 		case <-stopchan:
 			util.Info.Println("GetAnswers stopped")
