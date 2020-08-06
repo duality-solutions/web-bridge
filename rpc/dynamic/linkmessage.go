@@ -150,7 +150,7 @@ func (d *Dynamicd) SendNotificationMessageAsync(sender, receiver, message string
 			util.Error.Println("SendNotificationMessageAsync Unmarshal error", err)
 			return
 		}
-		util.Info.Println("SendNotificationMessageAsync sent notification message from", sender, " to", receiver)
+		util.Info.Println("SendNotificationMessageAsync sent notification message from", sender, "to", receiver)
 		out <- ret
 	}()
 }

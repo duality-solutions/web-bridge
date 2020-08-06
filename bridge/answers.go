@@ -55,7 +55,7 @@ func SendAnswers(stopchan chan struct{}) bool {
 func GetAnswers(stopchan chan struct{}) bool {
 	l := len(linkBridges.connected)
 	getAnswersChan := make(chan dynamic.GetVGPMessageReturn, l)
-	for _, link := range linkBridges.unconnected {
+	for _, link := range linkBridges.connected {
 		select {
 		default:
 			if link.State == StateWaitForAnswer {
@@ -71,14 +71,14 @@ getAnswersLoop:
 		select {
 		default:
 			answers := <-getAnswersChan
-			link := linkBridges.unconnected[answers.LinkID]
-			if link.PeerConnection == nil {
-				pc, err := ConnectToIceServicesDetached(config)
-				if err == nil {
-					link.PeerConnection = pc
+			link := linkBridges.connected[answers.LinkID]
+			if len(answers.Messages) > 0 && link.State == StateWaitForAnswer {
+				if link.PeerConnection == nil {
+					pc, err := ConnectToIceServicesDetached(config)
+					if err == nil {
+						link.PeerConnection = pc
+					}
 				}
-			}
-			if link.PeerConnection != nil && link.State == StateWaitForAnswer {
 				var answer dynamic.GetMessageReturnJSON
 				for _, res := range answers.Messages {
 					if res.TimestampEpoch > answer.TimestampEpoch {
@@ -86,7 +86,7 @@ getAnswersLoop:
 					}
 				}
 				if answer.MessageSize > 0 {
-					util.Info.Println("GetAnswers offer found. Size", answer.MessageSize)
+					util.Info.Println("GetAnswers answers found. Size", answer.MessageSize)
 					if len(answer.Message) < MinimumAnswerValueLength {
 						util.Info.Println("GetAnswers for", link.LinkAccount, "not found. Value too short.", len(answer.Message))
 						break getAnswersLoop
