@@ -40,7 +40,8 @@ type GetVGPMessageReturn struct {
 // SendNotificationMessage sends an encrypted message to the the given account link using VGP IM
 func (d *Dynamicd) SendNotificationMessage(sender, receiver, message string) (*MessageReturnJSON, error) {
 	var ret MessageReturnJSON
-	cmd := "dynamic-cli link sendmessage " + sender + " " + receiver + " online " + `"` + message + `"`
+	var keepLast = "1"
+	cmd := "dynamic-cli link sendmessage " + sender + " " + receiver + " online " + `"` + message + `"` + " " + `"` + keepLast + `"`
 	req, err := NewRequest(cmd)
 	if err != nil {
 		return nil, err
@@ -89,7 +90,8 @@ func (d *Dynamicd) GetNotificationMessages(receiver, sender string) (*[]GetMessa
 func (d *Dynamicd) SendLinkMessage(sender, receiver, message, msgtype string) (*MessageReturnJSON, error) {
 	util.Info.Println("SendLinkMessage", sender, receiver, len(message), msgtype)
 	var ret MessageReturnJSON
-	cmd := "dynamic-cli link sendmessage " + sender + " " + receiver + " " + msgtype + " " + `"` + message + `"`
+	var keepLast = "1"
+	cmd := "dynamic-cli link sendmessage " + sender + " " + receiver + " " + msgtype + " " + `"` + message + `"` + " " + `"` + keepLast + `"`
 	req, err := NewRequest(cmd)
 	if err != nil {
 		return nil, err
@@ -100,6 +102,26 @@ func (d *Dynamicd) SendLinkMessage(sender, receiver, message, msgtype string) (*
 		return nil, err
 	}
 	return &ret, nil
+}
+
+// SendLinkMessageAsync calls the VGP IM send message command to add an encrypted record for the given account link
+func (d *Dynamicd) SendLinkMessageAsync(sender, receiver, message, msgtype string, out chan<- MessageReturnJSON) {
+	go func() {
+		var ret MessageReturnJSON
+		var keepLast = "1"
+		cmd := "dynamic-cli link sendmessage " + sender + " " + receiver + " " + msgtype + " " + `"` + message + `"` + " " + `"` + keepLast + `"`
+		req, err := NewRequest(cmd)
+		if err != nil {
+			return
+		}
+		res := <-d.ExecCmdRequest(req)
+		err = json.Unmarshal([]byte(res), &ret)
+		if err != nil {
+			return
+		}
+		util.Info.Println("SendLinkMessageAsync", sender, receiver, len(message), msgtype)
+		out <- ret
+	}()
 }
 
 // GetLinkMessages calls the local VGP instant message queue
@@ -138,7 +160,8 @@ func (d *Dynamicd) GetLinkMessages(receiver, sender, msgtype string) (*[]GetMess
 func (d *Dynamicd) SendNotificationMessageAsync(sender, receiver, message string, out chan<- MessageReturnJSON) {
 	go func() {
 		var ret MessageReturnJSON
-		cmd := "dynamic-cli link sendmessage " + sender + " " + receiver + " online " + `"` + message + `"`
+		var keepLast = "1"
+		cmd := "dynamic-cli link sendmessage " + sender + " " + receiver + " online " + `"` + message + `"` + " " + `"` + keepLast + `"`
 		req, err := NewRequest(cmd)
 		if err != nil {
 			util.Error.Println("SendNotificationMessageAsync NewRequest error", err)
