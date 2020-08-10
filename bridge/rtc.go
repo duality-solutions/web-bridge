@@ -61,6 +61,8 @@ func EstablishRTC(link *Bridge) {
 		link.OnErrorEpoch = time.Now().Unix()
 		util.Error.Printf("EstablishRTC DataChannel OnError '%s': '%s'\n", link.DataChannel.Label(), err.Error())
 		keepAlive = false
+		link.ShutdownHTTPProxyServers()
+		link.State = StateDisconnected
 		close(stopchan)
 	})
 

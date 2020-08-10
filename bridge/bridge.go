@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"fmt"
+	"net"
 	"net/http"
 	"sort"
 
@@ -71,7 +72,7 @@ type Bridge struct {
 	PeerConnection     *webrtc.PeerConnection
 	DataChannel        *webrtc.DataChannel
 	proxyHTTP          *http.Server
-	proxyHTTPS         *http.Server
+	proxyHTTPS         *net.Listener
 	Get                dynamic.DHTGetJSON
 	Put                dynamic.DHTPutJSON
 	State
@@ -144,7 +145,12 @@ func (b *Bridge) ShutdownHTTPProxyServers() {
 		b.proxyHTTP.Shutdown(context.TODO())
 	}
 	if b.proxyHTTPS != nil {
-		b.proxyHTTPS.Shutdown(context.TODO())
+		listen := *b.proxyHTTPS
+		err := listen.Close()
+		if err != nil {
+			// TODO: handle error better
+			fmt.Println("proxyHTTPS close error", err)
+		}
 	}
 }
 
