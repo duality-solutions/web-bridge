@@ -9,6 +9,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"regexp"
 
 	goproxy "github.com/duality-solutions/web-bridge/goproxy"
 	util "github.com/duality-solutions/web-bridge/internal/utilities"
@@ -112,14 +113,58 @@ func StartBridgeNetwork(reader io.Reader, writer io.Writer) {
 	proxy.BridgeLinkNames = "create_test-wait_test"
 	proxy.DataChannelReader = reader
 	proxy.DataChannelWriter = writer
+
 	if proxy.Verbose {
 		log.Printf("Server starting up! - configured to listen on http interface %s and https interface %s", httpAddr, httpsAddr)
 	}
 
-	go func() {
-		log.Fatalln(http.ListenAndServe(httpAddr, proxy))
-	}()
+	proxy.NonProxyHandler = http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		if req.Host == "" {
+			fmt.Fprintln(w, "Cannot handle requests without Host header, e.g., HTTP 1.0")
+			return
+		}
+		req.URL.Scheme = "http"
+		req.URL.Host = req.Host
+		proxy.ServeHTTP(w, req)
+	})
 
+	proxy.OnRequest(goproxy.ReqHostMatches(regexp.MustCompile("^.*$"))).HandleConnect(goproxy.AlwaysMitm)
+
+	proxy.OnRequest(goproxy.ReqHostMatches(regexp.MustCompile("^.*:80$"))).HijackConnect(func(req *http.Request, client net.Conn, ctx *goproxy.ProxyCtx) {
+		defer func() {
+			if e := recover(); e != nil {
+				ctx.Logf("error connecting to remote: %v", e)
+				client.Write([]byte("HTTP/1.1 500 Cannot reach destination\r\n\r\n"))
+			}
+			client.Close()
+		}()
+		clientBuf := bufio.NewReadWriter(bufio.NewReader(client), bufio.NewWriter(client))
+		remote, err := connectDial(proxy, "tcp", req.URL.Host)
+		orPanic(err)
+		remoteBuf := bufio.NewReadWriter(bufio.NewReader(remote), bufio.NewWriter(remote))
+		for {
+			req, err := http.ReadRequest(clientBuf.Reader)
+			orPanic(err)
+			orPanic(req.Write(remoteBuf))
+			orPanic(remoteBuf.Flush())
+			resp, err := http.ReadResponse(remoteBuf.Reader, req)
+			orPanic(err)
+			orPanic(resp.Write(clientBuf.Writer))
+			orPanic(clientBuf.Flush())
+		}
+	})
+
+	var httpServer *http.Server
+	go func() {
+		httpServer = &http.Server{
+			Addr:    httpAddr,
+			Handler: proxy,
+		}
+		err := httpServer.ListenAndServe()
+		if err == nil {
+			log.Fatalf("Error ListenAndServe %v", err)
+		}
+	}()
 	// listen to the TLS ClientHello but make it a CONNECT request instead
 	ln, err := net.Listen("tcp", httpsAddr)
 	if err != nil {

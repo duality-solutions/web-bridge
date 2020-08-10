@@ -1,12 +1,12 @@
 package bridge
 
 import (
+	"context"
 	"crypto/sha256"
 	"fmt"
 	"net/http"
 	"sort"
 
-	goproxy "github.com/duality-solutions/web-bridge/goproxy"
 	"github.com/duality-solutions/web-bridge/rpc/dynamic"
 	"github.com/pion/webrtc/v2"
 )
@@ -31,6 +31,8 @@ const (
 	StateEstablishRTC
 	// StateOpenConnection when WebRTC is connected and open = 7
 	StateOpenConnection
+	// StateDisconnected when WebRTC goes from connected to diconnected and open = 8
+	StateDisconnected
 )
 
 func (s State) String() string {
@@ -68,10 +70,10 @@ type Bridge struct {
 	LastDataEpoch      int64
 	PeerConnection     *webrtc.PeerConnection
 	DataChannel        *webrtc.DataChannel
-	HTTPServer         *http.Server
+	proxyHTTP          *http.Server
+	proxyHTTPS         *http.Server
 	Get                dynamic.DHTGetJSON
 	Put                dynamic.DHTPutJSON
-	proxy              *goproxy.ProxyHTTPServer
 	State
 }
 
@@ -134,6 +136,16 @@ func (b Bridge) ListenPort() uint16 {
 // LinkParticipants returns link participants
 func (b Bridge) LinkParticipants() string {
 	return (b.MyAccount + "-" + b.LinkAccount)
+}
+
+// ShutdownHTTPProxyServers returns the HTTP server listening port
+func (b *Bridge) ShutdownHTTPProxyServers() {
+	if b.proxyHTTP != nil {
+		b.proxyHTTP.Shutdown(context.TODO())
+	}
+	if b.proxyHTTPS != nil {
+		b.proxyHTTPS.Shutdown(context.TODO())
+	}
 }
 
 func (b Bridge) String() string {

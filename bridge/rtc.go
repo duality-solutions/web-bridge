@@ -146,6 +146,9 @@ func WaitForRTC(link *Bridge, answer webrtc.SessionDescription) {
 		link.DataChannel.OnError(func(err error) {
 			link.OnErrorEpoch = time.Now().Unix()
 			util.Error.Printf("WaitForRTC DataChannel OnError '%s': '%s'\n", link.DataChannel.Label(), err.Error())
+			// TODO: shutdown http and https proxy servers
+			link.ShutdownHTTPProxyServers()
+			link.State = StateDisconnected
 			keepAlive = false
 			close(stopchan)
 		})

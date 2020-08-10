@@ -8,6 +8,8 @@ import (
 	"github.com/pion/webrtc/v2"
 )
 
+var mapOffers map[string]int = make(map[string]int)
+
 // GetOffers checks the DHT for WebRTC offers from all links
 func GetOffers(stopchan chan struct{}) bool {
 	l := len(linkBridges.unconnected)
@@ -33,8 +35,9 @@ getOffersLoop:
 					offer = res
 				}
 			}
-			if offer.MessageSize > 0 {
-				util.Info.Println("GetOffers offer found. Size", offer.MessageSize)
+			if offer.MessageSize > 0 && !(mapOffers[offer.MessageID] > 0) {
+				util.Info.Println("GetOffers new offer found. Size", offer.MessageSize)
+				mapOffers[offer.MessageID] = offer.TimestampEpoch
 				if len(offer.Message) < MinimumAnswerValueLength {
 					util.Info.Println("GetOffers for", link.LinkAccount, "not found. Value too short.", len(offer.Message))
 					break getOffersLoop

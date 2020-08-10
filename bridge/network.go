@@ -3,11 +3,13 @@ package bridge
 import (
 	"bufio"
 	"bytes"
+	"fmt"
 	"io"
 	"log"
 	"net"
 	"net/http"
 	"net/url"
+	"regexp"
 	"strconv"
 
 	goproxy "github.com/duality-solutions/web-bridge/goproxy"
@@ -41,10 +43,52 @@ func (b *Bridge) StartBridgeNetwork(reader io.Reader, writer io.Writer) {
 	}
 	util.Info.Println("StartBridgeNetwork", proxy.BridgeLinkNames, "sent test message with size", n)
 
-	go func() {
-		log.Fatalln(http.ListenAndServe(httpAddr, proxy))
-	}()
+	proxy.NonProxyHandler = http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		if req.Host == "" {
+			fmt.Fprintln(w, "Cannot handle requests without Host header, e.g., HTTP 1.0")
+			return
+		}
+		req.URL.Scheme = "http"
+		req.URL.Host = req.Host
+		proxy.ServeHTTP(w, req)
+	})
 
+	proxy.OnRequest(goproxy.ReqHostMatches(regexp.MustCompile("^.*$"))).HandleConnect(goproxy.AlwaysMitm)
+
+	proxy.OnRequest(goproxy.ReqHostMatches(regexp.MustCompile("^.*:80$"))).HijackConnect(func(req *http.Request, client net.Conn, ctx *goproxy.ProxyCtx) {
+		defer func() {
+			if e := recover(); e != nil {
+				ctx.Logf("error connecting to remote: %v", e)
+				client.Write([]byte("HTTP/1.1 500 Cannot reach destination\r\n\r\n"))
+			}
+			client.Close()
+		}()
+		clientBuf := bufio.NewReadWriter(bufio.NewReader(client), bufio.NewWriter(client))
+		remote, err := connectDial(proxy, "tcp", req.URL.Host)
+		orPanic(err)
+		remoteBuf := bufio.NewReadWriter(bufio.NewReader(remote), bufio.NewWriter(remote))
+		for {
+			req, err := http.ReadRequest(clientBuf.Reader)
+			orPanic(err)
+			orPanic(req.Write(remoteBuf))
+			orPanic(remoteBuf.Flush())
+			resp, err := http.ReadResponse(remoteBuf.Reader, req)
+			orPanic(err)
+			orPanic(resp.Write(clientBuf.Writer))
+			orPanic(clientBuf.Flush())
+		}
+	})
+
+	go func() {
+		b.proxyHTTP = &http.Server{
+			Addr:    httpAddr,
+			Handler: proxy,
+		}
+		err := b.proxyHTTP.ListenAndServe()
+		if err == nil {
+			log.Fatalf("Error ListenAndServe %v", err)
+		}
+	}()
 	// listen to the TLS ClientHello but make it a CONNECT request instead
 	ln, err := net.Listen("tcp", httpsAddr)
 	if err != nil {
