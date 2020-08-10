@@ -3,14 +3,11 @@ package bridge
 import (
 	"bufio"
 	"bytes"
-	"flag"
-	"fmt"
 	"io"
 	"log"
 	"net"
 	"net/http"
 	"net/url"
-	"regexp"
 	"strconv"
 
 	goproxy "github.com/duality-solutions/web-bridge/goproxy"
@@ -23,72 +20,33 @@ const (
 	StartHTTPPortNumber uint16 = 8889
 )
 
-var verbose = flag.Bool("v", true, "should every proxy request be logged to stdout")
-
 // StartBridgeNetwork listens to a port for http traffic and routes it through a link's WebRTC channel
 func (b *Bridge) StartBridgeNetwork(reader io.Reader, writer io.Writer) {
 	util.Info.Println("StartBridgeNetwork", b.LinkParticipants(), "http port", b.ListenPort(), "https port", b.ListenPort()+1)
-	httpAddr := flag.String(b.LinkParticipants()+"-httpaddr", ":"+strconv.Itoa(int(b.ListenPort())), "proxy http listen address")
-	httpsAddr := flag.String(b.LinkParticipants()+"-httpsaddr", ":"+strconv.Itoa(int(b.ListenPort()+1)), "proxy https listen address")
-	flag.Parse()
-
-	b.proxy = goproxy.NewProxyHTTPServer()
-	b.proxy.Verbose = *verbose
-	b.proxy.DataChannelReader = reader
-	b.proxy.DataChannelWriter = writer
-	b.proxy.BridgeID = b.LinkID()
-	b.proxy.BridgeLinkNames = b.LinkParticipants()
+	httpAddr := ":" + strconv.Itoa(int(b.ListenPort()))
+	httpsAddr := ":" + strconv.Itoa(int(b.ListenPort()+1))
+	proxy := goproxy.NewProxyHTTPServer()
+	proxy.Verbose = true
+	proxy.DataChannelReader = reader
+	proxy.DataChannelWriter = writer
+	proxy.BridgeID = b.LinkID()
+	proxy.BridgeLinkNames = b.LinkParticipants()
 	testMessage := []byte("init web-bridge")
-	n, err := b.proxy.DataChannelWriter.Write(testMessage)
+	n, err := proxy.DataChannelWriter.Write(testMessage)
 	if err != nil {
-		util.Error.Println("StartBridgeNetwork", b.proxy.BridgeLinkNames, "write test message failed.", err)
+		util.Error.Println("StartBridgeNetwork", proxy.BridgeLinkNames, "write test message failed.", err)
 	}
-	if b.proxy.Verbose {
-		log.Printf("Server starting up! - configured to listen on http interface %s and https interface %s", *httpAddr, *httpsAddr)
+	if proxy.Verbose {
+		log.Printf("Server starting up! - configured to listen on http interface %s and https interface %s", httpAddr, httpsAddr)
 	}
-	util.Info.Println("StartBridgeNetwork", b.proxy.BridgeLinkNames, "sent test message with size", n)
-	b.proxy.NonProxyHandler = http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		if req.Host == "" {
-			fmt.Fprintln(w, "Cannot handle requests without Host header, e.g., HTTP 1.0")
-			return
-		}
-		req.URL.Scheme = "http"
-		req.URL.Host = req.Host
-		b.proxy.ServeHTTP(w, req)
-	})
-	b.proxy.OnRequest(goproxy.ReqHostMatches(regexp.MustCompile("^.*$"))).
-		HandleConnect(goproxy.AlwaysMitm)
-	b.proxy.OnRequest(goproxy.ReqHostMatches(regexp.MustCompile("^.*:80$"))).
-		HijackConnect(func(req *http.Request, client net.Conn, ctx *goproxy.ProxyCtx) {
-			defer func() {
-				if e := recover(); e != nil {
-					ctx.Logf("error connecting to remote: %v", e)
-					client.Write([]byte("HTTP/1.1 500 Cannot reach destination\r\n\r\n"))
-				}
-				client.Close()
-			}()
-			clientBuf := bufio.NewReadWriter(bufio.NewReader(client), bufio.NewWriter(client))
-			remote, err := connectDial(b.proxy, "tcp", req.URL.Host)
-			orPanic(err)
-			remoteBuf := bufio.NewReadWriter(bufio.NewReader(remote), bufio.NewWriter(remote))
-			for {
-				req, err := http.ReadRequest(clientBuf.Reader)
-				orPanic(err)
-				orPanic(req.Write(remoteBuf))
-				orPanic(remoteBuf.Flush())
-				resp, err := http.ReadResponse(remoteBuf.Reader, req)
-				orPanic(err)
-				orPanic(resp.Write(clientBuf.Writer))
-				orPanic(clientBuf.Flush())
-			}
-		})
+	util.Info.Println("StartBridgeNetwork", proxy.BridgeLinkNames, "sent test message with size", n)
 
 	go func() {
-		log.Fatalln(http.ListenAndServe(*httpAddr, b.proxy))
+		log.Fatalln(http.ListenAndServe(httpAddr, proxy))
 	}()
 
 	// listen to the TLS ClientHello but make it a CONNECT request instead
-	ln, err := net.Listen("tcp", *httpsAddr)
+	ln, err := net.Listen("tcp", httpsAddr)
 	if err != nil {
 		log.Fatalf("Error listening for https connections - %v", err)
 	}
@@ -118,7 +76,7 @@ func (b *Bridge) StartBridgeNetwork(reader io.Reader, writer io.Writer) {
 				RemoteAddr: c.RemoteAddr().String(),
 			}
 			resp := dumbResponseWriter{tlsConn}
-			b.proxy.ServeHTTP(resp, connectReq)
+			proxy.ServeHTTP(resp, connectReq)
 		}(c)
 	}
 }
@@ -141,7 +99,7 @@ func (dumb dumbResponseWriter) Write(buf []byte) (int, error) {
 	if bytes.Equal(buf, []byte("HTTP/1.0 200 OK\r\n\r\n")) {
 		return len(buf), nil // throw away the HTTP OK response from the faux CONNECT request
 	}
-	return dumb.Conn.Write(buf)
+	return dumb.Write(buf)
 }
 
 func (dumb dumbResponseWriter) WriteHeader(code int) {
