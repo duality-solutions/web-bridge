@@ -32,33 +32,33 @@ func (b *Bridge) StartBridgeNetwork(reader io.Reader, writer io.Writer) {
 	httpsAddr := flag.String(b.LinkParticipants()+"-httpsaddr", ":"+strconv.Itoa(int(b.ListenPort()+1)), "proxy https listen address")
 	flag.Parse()
 
-	proxy := goproxy.NewProxyHTTPServer()
-	proxy.Verbose = *verbose
-	proxy.DataChannelReader = reader
-	proxy.DataChannelWriter = writer
-	proxy.BridgeID = b.LinkID()
-	proxy.BridgeLinkNames = b.LinkParticipants()
+	b.proxy = goproxy.NewProxyHTTPServer()
+	b.proxy.Verbose = *verbose
+	b.proxy.DataChannelReader = reader
+	b.proxy.DataChannelWriter = writer
+	b.proxy.BridgeID = b.LinkID()
+	b.proxy.BridgeLinkNames = b.LinkParticipants()
 	testMessage := []byte("init web-bridge")
-	n, err := proxy.DataChannelWriter.Write(testMessage)
+	n, err := b.proxy.DataChannelWriter.Write(testMessage)
 	if err != nil {
-		util.Error.Println("StartBridgeNetwork", proxy.BridgeLinkNames, "write test message failed.", err)
+		util.Error.Println("StartBridgeNetwork", b.proxy.BridgeLinkNames, "write test message failed.", err)
 	}
-	if proxy.Verbose {
+	if b.proxy.Verbose {
 		log.Printf("Server starting up! - configured to listen on http interface %s and https interface %s", *httpAddr, *httpsAddr)
 	}
-	util.Info.Println("StartBridgeNetwork", proxy.BridgeLinkNames, "sent test message with size", n)
-	proxy.NonProxyHandler = http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+	util.Info.Println("StartBridgeNetwork", b.proxy.BridgeLinkNames, "sent test message with size", n)
+	b.proxy.NonProxyHandler = http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		if req.Host == "" {
 			fmt.Fprintln(w, "Cannot handle requests without Host header, e.g., HTTP 1.0")
 			return
 		}
 		req.URL.Scheme = "http"
 		req.URL.Host = req.Host
-		proxy.ServeHTTP(w, req)
+		b.proxy.ServeHTTP(w, req)
 	})
-	proxy.OnRequest(goproxy.ReqHostMatches(regexp.MustCompile("^.*$"))).
+	b.proxy.OnRequest(goproxy.ReqHostMatches(regexp.MustCompile("^.*$"))).
 		HandleConnect(goproxy.AlwaysMitm)
-	proxy.OnRequest(goproxy.ReqHostMatches(regexp.MustCompile("^.*:80$"))).
+	b.proxy.OnRequest(goproxy.ReqHostMatches(regexp.MustCompile("^.*:80$"))).
 		HijackConnect(func(req *http.Request, client net.Conn, ctx *goproxy.ProxyCtx) {
 			defer func() {
 				if e := recover(); e != nil {
@@ -68,7 +68,7 @@ func (b *Bridge) StartBridgeNetwork(reader io.Reader, writer io.Writer) {
 				client.Close()
 			}()
 			clientBuf := bufio.NewReadWriter(bufio.NewReader(client), bufio.NewWriter(client))
-			remote, err := connectDial(proxy, "tcp", req.URL.Host)
+			remote, err := connectDial(b.proxy, "tcp", req.URL.Host)
 			orPanic(err)
 			remoteBuf := bufio.NewReadWriter(bufio.NewReader(remote), bufio.NewWriter(remote))
 			for {
@@ -84,7 +84,7 @@ func (b *Bridge) StartBridgeNetwork(reader io.Reader, writer io.Writer) {
 		})
 
 	go func() {
-		log.Fatalln(http.ListenAndServe(*httpAddr, proxy))
+		log.Fatalln(http.ListenAndServe(*httpAddr, b.proxy))
 	}()
 
 	// listen to the TLS ClientHello but make it a CONNECT request instead
@@ -118,7 +118,7 @@ func (b *Bridge) StartBridgeNetwork(reader io.Reader, writer io.Writer) {
 				RemoteAddr: c.RemoteAddr().String(),
 			}
 			resp := dumbResponseWriter{tlsConn}
-			proxy.ServeHTTP(resp, connectReq)
+			b.proxy.ServeHTTP(resp, connectReq)
 		}(c)
 	}
 }

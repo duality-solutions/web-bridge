@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"sort"
 
+	goproxy "github.com/duality-solutions/web-bridge/goproxy"
 	"github.com/duality-solutions/web-bridge/rpc/dynamic"
 	"github.com/pion/webrtc/v2"
 )
@@ -70,6 +71,7 @@ type Bridge struct {
 	HTTPServer         *http.Server
 	Get                dynamic.DHTGetJSON
 	Put                dynamic.DHTPutJSON
+	proxy              *goproxy.ProxyHTTPServer
 	State
 }
 
