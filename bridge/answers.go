@@ -8,6 +8,8 @@ import (
 	"github.com/pion/webrtc/v2"
 )
 
+var mapGetAnswers map[string]dynamic.GetMessageReturnJSON = make(map[string]dynamic.GetMessageReturnJSON)
+
 // SendAnswers uses VPG instant messages to send an answer to a WebRTC offer
 func SendAnswers(stopchan chan struct{}) bool {
 	util.Info.Println("SendAnswers Started")
@@ -75,6 +77,7 @@ getAnswersLoop:
 			answers := <-getAnswersChan
 			link := linkBridges.connected[answers.LinkID]
 			if len(answers.Messages) > 0 && link.State == StateWaitForAnswer {
+				currentAnswer := mapGetAnswers[link.LinkID()]
 				if link.PeerConnection == nil {
 					pc, err := ConnectToIceServicesDetached(config)
 					if err == nil {
@@ -87,7 +90,7 @@ getAnswersLoop:
 						answer = res
 					}
 				}
-				if answer.MessageSize > 0 {
+				if currentAnswer != answer && answer.MessageSize > 0 {
 					util.Info.Println("GetAnswers answers found. Size", answer.MessageSize)
 					if len(answer.Message) < MinimumAnswerValueLength {
 						util.Info.Println("GetAnswers for", link.LinkAccount, "not found. Value too short.", len(answer.Message))
@@ -100,6 +103,7 @@ getAnswersLoop:
 						break getAnswersLoop
 					}
 					if newAnswer != link.Answer {
+						mapGetAnswers[link.LinkID()] = answer
 						link.Answer = newAnswer
 						link.State = StateEstablishRTC
 						link.OnStateChangeEpoch = time.Now().Unix()
