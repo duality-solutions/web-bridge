@@ -34,12 +34,18 @@ func EstablishRTC(link *Bridge) {
 	// This will notify you when the peer has connected/disconnected
 	link.PeerConnection.OnICEConnectionStateChange(func(connectionState webrtc.ICEConnectionState) {
 		link.OnStateChangeEpoch = time.Now().Unix()
-		link.RTCState = connectionState.String()
 		util.Info.Printf("EstablishRTC ICE Connection State has changed for %s: %s\n", link.LinkParticipants(), connectionState.String())
+		if link.RTCState == "checking" && connectionState.String() == "failed" {
+			keepAlive = false
+			close(stopchan)
+			return
+		}
+		link.RTCState = connectionState.String()
 		if connectionState.String() == "disconnected" {
 			link.ShutdownHTTPProxyServers()
 			keepAlive = false
 			close(stopchan)
+			return
 		}
 	})
 
@@ -52,6 +58,7 @@ func EstablishRTC(link *Bridge) {
 		raw, err := link.DataChannel.Detach()
 		if err != nil {
 			util.Error.Println("EstablishRTC link DataChannel OnOpen error", err)
+			keepAlive = false
 			close(stopchan)
 			return
 		}
@@ -63,6 +70,7 @@ func EstablishRTC(link *Bridge) {
 		util.Error.Printf("EstablishRTC DataChannel OnError '%s': '%s'\n", link.DataChannel.Label(), err.Error())
 		keepAlive = false
 		close(stopchan)
+		return
 	})
 
 	// Set the local SessionDescription
@@ -91,6 +99,9 @@ func EstablishRTC(link *Bridge) {
 	if link.DataChannel != nil {
 		link.DataChannel = nil
 	}
+	for link.PeerConnection.ICEConnectionState().String() != "failed" {
+		time.Sleep(10 * time.Second)
+	}
 	failedICEConnection := (link.PeerConnection.ICEConnectionState().String() == "failed")
 	if failedICEConnection {
 		util.Info.Println("EstablishRTC close peer connection", link.LinkParticipants(), link.LinkID())
@@ -100,6 +111,7 @@ func EstablishRTC(link *Bridge) {
 	linkBridges.unconnected[link.LinkID()] = link
 	util.Info.Println("EstablishRTC stopped!", link.LinkParticipants())
 	link.State = StateInit
+	return
 }
 
 // WaitForRTC waits for a real time connection (RTC) bridge with the link
@@ -117,12 +129,18 @@ func WaitForRTC(link *Bridge, answer webrtc.SessionDescription) {
 	// This will notify you when the peer has connected/disconnected
 	link.PeerConnection.OnICEConnectionStateChange(func(connectionState webrtc.ICEConnectionState) {
 		link.OnStateChangeEpoch = time.Now().Unix()
-		link.RTCState = connectionState.String()
 		util.Info.Printf("WaitForRTC ICE Connection State has changed for %s: %s\n", link.LinkParticipants(), connectionState.String())
+		if link.RTCState == "checking" && connectionState.String() == "failed" {
+			keepAlive = false
+			close(stopchan)
+			return
+		}
+		link.RTCState = connectionState.String()
 		if connectionState.String() == "disconnected" {
 			link.ShutdownHTTPProxyServers()
 			keepAlive = false
 			close(stopchan)
+			return
 		}
 	})
 
@@ -139,6 +157,7 @@ func WaitForRTC(link *Bridge, answer webrtc.SessionDescription) {
 			raw, err := link.DataChannel.Detach()
 			if err != nil {
 				util.Error.Println("WaitForRTC link DataChannel OnOpen error", err)
+				keepAlive = false
 				close(stopchan)
 				return
 			}
@@ -150,6 +169,7 @@ func WaitForRTC(link *Bridge, answer webrtc.SessionDescription) {
 			util.Error.Printf("WaitForRTC DataChannel OnError '%s': '%s'\n", link.DataChannel.Label(), err.Error())
 			keepAlive = false
 			close(stopchan)
+			return
 		})
 	})
 
@@ -173,6 +193,9 @@ func WaitForRTC(link *Bridge, answer webrtc.SessionDescription) {
 	if link.DataChannel != nil {
 		link.DataChannel = nil
 	}
+	for link.PeerConnection.ICEConnectionState().String() != "failed" {
+		time.Sleep(10 * time.Second)
+	}
 	failedICEConnection := (link.PeerConnection.ICEConnectionState().String() == "failed")
 	if failedICEConnection {
 		util.Info.Println("WaitForRTC close peer connection", link.LinkParticipants(), link.LinkID())
@@ -184,4 +207,5 @@ func WaitForRTC(link *Bridge, answer webrtc.SessionDescription) {
 	linkBridges.unconnected[link.LinkID()] = link
 	util.Info.Println("WaitForRTC stopped!", link.LinkParticipants())
 	link.State = StateInit
+	return
 }
