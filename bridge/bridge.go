@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"sort"
 
+	util "github.com/duality-solutions/web-bridge/internal/utilities"
 	"github.com/duality-solutions/web-bridge/rpc/dynamic"
 	"github.com/pion/webrtc/v2"
 )
@@ -141,15 +142,17 @@ func (b Bridge) LinkParticipants() string {
 
 // ShutdownHTTPProxyServers returns the HTTP server listening port
 func (b *Bridge) ShutdownHTTPProxyServers() {
+	b.State = StateDisconnected
 	if b.proxyHTTP != nil {
-		b.proxyHTTP.Shutdown(context.TODO())
+		util.Info.Println("ShutdownHTTPProxyServers http proxyHTTP")
+		b.proxyHTTP.Shutdown(context.Background())
 	}
 	if b.proxyHTTPS != nil {
 		listen := *b.proxyHTTPS
 		err := listen.Close()
+		util.Info.Println("ShutdownHTTPProxyServers listener proxyHTTPS")
 		if err != nil {
-			// TODO: handle error better
-			fmt.Println("proxyHTTPS close error", err)
+			util.Error.Println("proxyHTTPS close error", err)
 		}
 	}
 }

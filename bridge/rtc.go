@@ -37,6 +37,7 @@ func EstablishRTC(link *Bridge) {
 		link.RTCState = connectionState.String()
 		util.Info.Printf("EstablishRTC ICE Connection State has changed for %s: %s\n", link.LinkParticipants(), connectionState.String())
 		if connectionState.String() == "disconnected" {
+			link.ShutdownHTTPProxyServers()
 			keepAlive = false
 			close(stopchan)
 		}
@@ -61,8 +62,6 @@ func EstablishRTC(link *Bridge) {
 		link.OnErrorEpoch = time.Now().Unix()
 		util.Error.Printf("EstablishRTC DataChannel OnError '%s': '%s'\n", link.DataChannel.Label(), err.Error())
 		keepAlive = false
-		link.ShutdownHTTPProxyServers()
-		link.State = StateDisconnected
 		close(stopchan)
 	})
 
@@ -121,6 +120,7 @@ func WaitForRTC(link *Bridge, answer webrtc.SessionDescription) {
 		link.RTCState = connectionState.String()
 		util.Info.Printf("WaitForRTC ICE Connection State has changed for %s: %s\n", link.LinkParticipants(), connectionState.String())
 		if connectionState.String() == "disconnected" {
+			link.ShutdownHTTPProxyServers()
 			keepAlive = false
 			close(stopchan)
 		}
@@ -148,9 +148,6 @@ func WaitForRTC(link *Bridge, answer webrtc.SessionDescription) {
 		link.DataChannel.OnError(func(err error) {
 			link.OnErrorEpoch = time.Now().Unix()
 			util.Error.Printf("WaitForRTC DataChannel OnError '%s': '%s'\n", link.DataChannel.Label(), err.Error())
-			// TODO: shutdown http and https proxy servers
-			link.ShutdownHTTPProxyServers()
-			link.State = StateDisconnected
 			keepAlive = false
 			close(stopchan)
 		})
