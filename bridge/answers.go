@@ -41,7 +41,7 @@ func SendAnswers(stopchan chan struct{}) bool {
 						link.OnStateChangeEpoch = time.Now().Unix()
 						delete(linkBridges.unconnected, link.LinkID())
 						linkBridges.connected[link.LinkID()] = link
-						go WaitForRTC(link, answer)
+						go WaitForRTC(link)
 					}
 				}
 			}

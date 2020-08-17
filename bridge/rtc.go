@@ -116,7 +116,7 @@ func EstablishRTC(link *Bridge) {
 
 // WaitForRTC waits for a real time connection (RTC) bridge with the link
 // TODO: add timeout
-func WaitForRTC(link *Bridge, answer webrtc.SessionDescription) {
+func WaitForRTC(link *Bridge) {
 	keepAlive := true
 	stopchan := make(chan struct{})
 	if link.PeerConnection == nil {
@@ -174,9 +174,10 @@ func WaitForRTC(link *Bridge, answer webrtc.SessionDescription) {
 	})
 
 	// Set the local SessionDescription
-	err := link.PeerConnection.SetLocalDescription(answer)
+	err := link.PeerConnection.SetLocalDescription(link.Answer)
 	if err != nil {
 		util.Error.Println("WaitForRTC SetLocalDescription error ", link.LinkParticipants(), err)
+		keepAlive = false
 	}
 	util.Info.Println("WaitForRTC SetLocalDescription", link.LinkAccount)
 

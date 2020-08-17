@@ -85,7 +85,7 @@ getOffersLoop:
 					linkBridges.connected[link.LinkID()] = link
 					util.Info.Println("Offer found for", link.LinkAccount, link.LinkID(), "WaitForRTC...")
 					// send anwser and wait for connection or timeout.
-					go WaitForRTC(link, answer)
+					go WaitForRTC(link)
 				}
 			}
 		case <-stopchan:
