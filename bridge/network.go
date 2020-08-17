@@ -11,6 +11,7 @@ import (
 	"net/url"
 	"regexp"
 	"strconv"
+	"time"
 
 	goproxy "github.com/duality-solutions/web-bridge/goproxy"
 	util "github.com/duality-solutions/web-bridge/internal/utilities"
@@ -23,7 +24,7 @@ const (
 )
 
 // StartBridgeNetwork listens to a port for http traffic and routes it through a link's WebRTC channel
-func (b *Bridge) StartBridgeNetwork(reader io.Reader, writer io.Writer) {
+func (b *Bridge) StartBridgeNetwork(connectMethod string, reader io.Reader, writer io.Writer) {
 	util.Info.Println("StartBridgeNetwork", b.LinkParticipants(), "http port", b.ListenPort(), "https port", b.ListenPort()+1)
 	httpAddr := ":" + strconv.Itoa(int(b.ListenPort()))
 	httpsAddr := ":" + strconv.Itoa(int(b.ListenPort()+1))
@@ -89,6 +90,13 @@ func (b *Bridge) StartBridgeNetwork(reader io.Reader, writer io.Writer) {
 	if err != nil {
 		log.Fatalf("Error listening for https connections - %v", err)
 	}
+	var pauseTime time.Duration
+	if connectMethod == "wait" {
+		pauseTime = time.Second * 5
+	} else {
+		pauseTime = time.Second * 10
+	}
+	go proxy.SendWebRTCWakeUpMessages(pauseTime)
 	b.proxyHTTPS = &ln
 	for b.State != StateDisconnected {
 		c, err := ln.Accept()

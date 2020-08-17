@@ -73,6 +73,20 @@ func isEOF(r *bufio.Reader) bool {
 	return false
 }
 
+// SendWebRTCWakeUpMessages sends a ping wake up messages to bridge link
+func (proxy *ProxyHTTPServer) SendWebRTCWakeUpMessages(pauseTime time.Duration) {
+	select {
+	case <-time.After(pauseTime):
+		testMessage := []byte("ping")
+		n, err := proxy.DataChannelWriter.Write(testMessage)
+		if err != nil {
+			util.Error.Println("StartBridgeNetwork send wake up ping failed.", proxy.BridgeLinkNames, err)
+		} else {
+			util.Info.Println("StartBridgeNetwork sent wake up ping to", proxy.BridgeLinkNames, "size", n)
+		}
+	}
+}
+
 // readWebRTCMessageLoop creates a process that continues to read data from the WebRTC channel
 func (proxy *ProxyHTTPServer) readWebRTCMessageLoop(ctx *ProxyCtx) {
 	proxy.mapWebRTCMessages = make(map[string]chan *WireMessage)
@@ -103,6 +117,15 @@ func (proxy *ProxyHTTPServer) readWebRTCMessageLoop(ctx *ProxyCtx) {
 			}
 		} else {
 			ctx.Logf("readWebRTCMessageLoop short message from %v %v :%v", proxy.BridgeLinkNames, proxy.BridgeID, string(buffer))
+			if string(buffer) == "ping" {
+				wakeUpResponse := []byte("pong")
+				n, err := proxy.DataChannelWriter.Write(wakeUpResponse)
+				if err != nil {
+					util.Error.Println("readWebRTCMessageLoop send wake up response message failed.", proxy.BridgeLinkNames, err)
+				} else {
+					util.Info.Println("readWebRTCMessageLoop sent wake up response message size", proxy.BridgeLinkNames, n)
+				}
+			}
 		}
 	}
 }
