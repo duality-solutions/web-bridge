@@ -13,6 +13,7 @@ import (
 	bridge "github.com/duality-solutions/web-bridge/bridge"
 	settings "github.com/duality-solutions/web-bridge/init/settings"
 	util "github.com/duality-solutions/web-bridge/internal/utilities"
+	"github.com/duality-solutions/web-bridge/rest"
 	dynamic "github.com/duality-solutions/web-bridge/rpc/dynamic"
 )
 
@@ -135,6 +136,7 @@ func Init(version, githash string) error {
 	if err != nil {
 		return fmt.Errorf("LoadRPCDynamicd %v", err)
 	}
+
 	proc, err = dynamic.FindDynamicdProcess()
 	if proc != nil {
 		util.Info.Println("Running dynamicd process found Pid", proc.Pid)
@@ -165,6 +167,13 @@ func Init(version, githash string) error {
 				util.Info.Println("Account", i+1, account.CommonName, account.ObjectFullPath, account.WalletAddress, account.LinkAddress)
 			}
 		}
+		var mode string = "release"
+		if debug {
+			mode = "debug"
+		}
+		// Start Gin web services
+		go rest.StartWebServiceRouter(dynamicd, mode)
+
 		errUnlock := dynamicd.UnlockWallet("")
 		if errUnlock != nil {
 			util.Info.Println("Wallet locked. Please unlock the wallet to continue.")
@@ -190,7 +199,6 @@ func Init(version, githash string) error {
 		}
 		stopWatcher := make(chan struct{})
 		dynamic.WatchProcess(stopWatcher, 10, walletpassphrase)
-		// TODO: REST API running
 		// TODO: Admin console running
 		var sync = false
 		stopBridges := make(chan struct{})
