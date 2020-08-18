@@ -31,7 +31,11 @@ func GetDynamicConfig(confPath string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("GetDynamicConfig failed reading file %v. %v", confPath, err)
 	}
-	return RemoveConfigComments(string(dat[:len(dat)])), nil
+	dataLen := len(dat)
+	if dataLen == 0 {
+		return "", nil
+	}
+	return RemoveConfigComments(string(dat[:dataLen])), nil
 }
 
 // ParseDynamicConfigValue returns paramter value for the given configuration path file and paramter name

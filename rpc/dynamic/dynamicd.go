@@ -125,6 +125,7 @@ func loadDynamicd(_os string, archiveExt string) (*Dynamicd, error) {
 	if !util.DirectoryExists(dataDirPath) {
 		err = util.AddDirectory(dataDirPath)
 		if err != nil {
+			defer cancel()
 			return nil, fmt.Errorf("loadDynamicd failed at AddDirectory. %v", err)
 		}
 		cmd = exec.CommandContext(ctx, dynDir+dynamicdName,
