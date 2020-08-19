@@ -28,7 +28,7 @@ type getInfoData struct {
 	Walletversion      int     `json:"walletversion"`
 }
 
-func (w *WebBridgeRunner) getInfo(c *gin.Context) {
+func (w *WebBridgeRunner) getinfo(c *gin.Context) {
 	var info getInfoData
 	req, _ := dynamic.NewRequest("dynamic-cli getinfo")
 	err := json.Unmarshal([]byte(<-w.dynamicd.ExecCmdRequest(req)), &info)

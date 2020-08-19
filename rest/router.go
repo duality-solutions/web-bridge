@@ -16,6 +16,7 @@ var runner WebBridgeRunner
 // TODO: Add rate limitor
 // TODO: Add custom logging
 // TODO: Add bridge controller
+// TODO: Add authentication
 // TODO: Add RESTful API documentation with Swagger: https://github.com/swaggo/swag#getting-started
 
 func StartWebServiceRouter(dynamicd *dynamic.Dynamicd, mode string) {
@@ -30,5 +31,6 @@ func setupBlockchainRoutes() {
 	api := runner.router.Group("/api")
 	v1 := api.Group("/v1")
 	blockchain := v1.Group("/blockchain")
-	blockchain.GET("/getinfo", runner.getInfo)
+	blockchain.POST("/jsonrpc", runner.handleJSONRPC)
+	blockchain.GET("/info", runner.getinfo)
 }
