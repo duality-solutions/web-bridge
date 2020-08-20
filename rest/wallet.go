@@ -54,3 +54,16 @@ func (w *WebBridgeRunner) unlockwallet(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"result": response})
 	}
 }
+
+func (w *WebBridgeRunner) lockwallet(c *gin.Context) {
+	strCommand, _ := dynamic.NewRequest(`dynamic-cli walletlock`)
+	response, _ := <-w.dynamicd.ExecCmdRequest(strCommand)
+	if strings.HasPrefix(response, "null") {
+		c.JSON(http.StatusOK, gin.H{"result": "successful"})
+	} else {
+		c.JSON(http.StatusOK, gin.H{"result": response})
+	}
+}
+
+// encryptwallet
+// walletlock
