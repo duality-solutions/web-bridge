@@ -33,4 +33,5 @@ func setupBlockchainRoutes() {
 	blockchain := v1.Group("/blockchain")
 	blockchain.POST("/jsonrpc", runner.handleJSONRPC)
 	blockchain.GET("/info", runner.getinfo)
+	blockchain.PATCH("/wallet/unlock", runner.unlockwallet)
 }
