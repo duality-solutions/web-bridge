@@ -27,6 +27,7 @@ func StartWebServiceRouter(dynamicd *dynamic.Dynamicd, mode string) {
 	runner.router.Run()
 }
 
+// TODO: follow https://rest.bitcoin.com for rest endpoints
 func setupBlockchainRoutes() {
 	api := runner.router.Group("/api")
 	v1 := api.Group("/v1")
@@ -35,4 +36,5 @@ func setupBlockchainRoutes() {
 	blockchain.GET("/info", runner.getinfo)
 	blockchain.PATCH("/wallet/unlock", runner.unlockwallet)
 	blockchain.PATCH("/wallet/lock", runner.lockwallet)
+	blockchain.PATCH("/wallet/encrypt", runner.encryptwallet)
 }
