@@ -47,5 +47,12 @@ func (w *WebBridgeRunner) handleJSONRPC(c *gin.Context) {
 	}
 	reqOutput, _ := dynamic.NewRequest(strRequest)
 	response, _ := <-w.dynamicd.ExecCmdRequest(reqOutput)
-	c.JSON(http.StatusOK, gin.H{"result": response})
+	var result interface{}
+	err = json.Unmarshal([]byte(response), &result)
+	if err != nil {
+		strErrMsg := fmt.Sprintf("Result unmarshal error %v", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": strErrMsg})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"result": result})
 }
