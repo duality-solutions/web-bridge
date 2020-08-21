@@ -201,3 +201,41 @@ func (w *WebBridgeRunner) changepassphrase(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"result": result})
 	}
 }
+
+func (w *WebBridgeRunner) walletinfo(c *gin.Context) {
+	strCommand, _ := dynamic.NewRequest(`dynamic-cli getwalletinfo`)
+	response, _ := <-w.dynamicd.ExecCmdRequest(strCommand)
+	var result interface{}
+	err := json.Unmarshal([]byte(response), &result)
+	if err != nil {
+		strErrMsg := fmt.Sprintf("Results JSON unmarshal error %v", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": strErrMsg})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"result": result})
+}
+
+type hdAccounts struct {
+	HdAccountIndex     int `json:"hdaccountindex"`
+	HdExternalKeyIndex int `json:"hdexternalkeyindex"`
+	HdInternalKeyIndex int `json:"hdinternalkeyindex"`
+}
+type walletInfoResponse struct {
+	WalletVersion         int        `json:"walletversion"`
+	Balance               float64    `json:"balance"`
+	PrivatesendBalance    float64    `json:"privatesend_balance"`
+	UnconfirmedBalance    float64    `json:"unconfirmed_balance"`
+	ImmatureBalance       float64    `json:"immature_balance"`
+	TxCount               int        `json:"txcount"`
+	KeypoolOldest         int        `json:"keypoololdest"`
+	KeypoolSize           int        `json:"keypoolsize"`
+	KeypoolSizeHdInternal int        `json:"keypoolsize_hd_internal"`
+	KeysLeft              int        `json:"keys_left"`
+	UnlockedUntil         int        `json:"unlocked_until"`
+	PayTxFee              float64    `json:"paytxfee"`
+	HdChainID             string     `json:"hdchainid"`
+	HdAccountCount        int        `json:"hdaccountcount"`
+	HdAccounts            hdAccounts `json:"hdaccounts"`
+}
+
+// getwalletinfo also add if locked or not.
