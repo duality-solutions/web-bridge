@@ -21,6 +21,11 @@ type lockWalletRequest struct {
 	Passphrase string `json:"passphrase"`
 }
 
+type changePassphraseRequest struct {
+	OldPassphrase string `json:"oldpassphrase"`
+	NewPassphrase string `json:"newpassphrase"`
+}
+
 func (w *WebBridgeRunner) unlockwallet(c *gin.Context) {
 	body, err := ioutil.ReadAll(c.Request.Body)
 	if err != nil {
@@ -138,11 +143,61 @@ func (w *WebBridgeRunner) encryptwallet(c *gin.Context) {
 		}
 		strResult := fmt.Sprintf("%v", result)
 		if strings.Contains(strResult, "running with an encrypted wallet") {
-			c.JSON(http.StatusOK, gin.H{"result": "Can not call encryptwallet for a wallet that is already encrypted"})
+			c.JSON(http.StatusOK, gin.H{"result": "Can not encrypt a wallet that is already encrypted"})
 			return
 		}
 		c.JSON(http.StatusOK, gin.H{"result": result})
 	}
 }
 
-// walletpassphrasechange
+func (w *WebBridgeRunner) changepassphrase(c *gin.Context) {
+	body, err := ioutil.ReadAll(c.Request.Body)
+	if err != nil {
+		strErrMsg := fmt.Sprintf("Request body read all error %v", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": strErrMsg})
+		return
+	}
+	if len(body) == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Request body is empty"})
+		return
+	}
+	req := changePassphraseRequest{}
+	err = json.Unmarshal(body, &req)
+	if err != nil {
+		strErrMsg := fmt.Sprintf("Request body JSON unmarshal error %v", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": strErrMsg})
+		return
+	}
+	if len(req.OldPassphrase) == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Old passphrase can not be empty"})
+		return
+	}
+	if len(req.NewPassphrase) == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "New passphrase can not be empty"})
+		return
+	}
+	strRequest := `dynamic-cli walletpassphrasechange "` + req.OldPassphrase + `"` + ` "` + req.NewPassphrase + `"`
+	strCommand, _ := dynamic.NewRequest(strRequest)
+	response, _ := <-w.dynamicd.ExecCmdRequest(strCommand)
+	if strings.HasPrefix(response, "null") {
+		c.JSON(http.StatusOK, gin.H{"result": "successful"})
+	} else {
+		var result interface{}
+		err = json.Unmarshal([]byte(response), &result)
+		if err != nil {
+			strErrMsg := fmt.Sprintf("Results JSON unmarshal error %v", err)
+			c.JSON(http.StatusBadRequest, gin.H{"error": strErrMsg})
+			return
+		}
+		strResult := fmt.Sprintf("%v", result)
+		if strings.Contains(strResult, "running with an unencrypted wallet") {
+			c.JSON(http.StatusOK, gin.H{"error": "Can not change passphase when the wallet is not encrypted"})
+			return
+		}
+		if strings.Contains(strResult, "wallet passphrase entered was incorrect") {
+			c.JSON(http.StatusOK, gin.H{"error": "Incorrect wallet passphrase"})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{"result": result})
+	}
+}
