@@ -82,6 +82,26 @@ func newDynamicd(
 	return &d
 }
 
+func getCmd(ctx context.Context, dataDirPath, rpcUser, rpcPassword string) *exec.Cmd {
+	return exec.CommandContext(ctx, dynDir+dynamicdName,
+		"-datadir="+dataDirPath,
+		"-port="+strconv.Itoa(int(defaultPort)),
+		"-rpcuser="+rpcUser,
+		"-rpcpassword="+rpcPassword,
+		"-rpcport="+strconv.Itoa(int(defaultRPCPort)),
+		"-rpcbind="+defaultBind,
+		"-rpcallowip="+defaultBind,
+		"-server=1",
+		"-stealthtx=1",
+		"-txindex=1",
+		"-addressindex=1",
+		"-timestampindex=1",
+		"-spentindex=1",
+		"-addnode=206.189.68.224",
+		"-addnode=138.197.193.115",
+		"-addnode=dynexplorer.duality.solutions")
+}
+
 func loadDynamicd(_os string, archiveExt string) (*Dynamicd, error) {
 	var dataDirPath string
 	var dirDelimit string
@@ -128,20 +148,7 @@ func loadDynamicd(_os string, archiveExt string) (*Dynamicd, error) {
 			defer cancel()
 			return nil, fmt.Errorf("loadDynamicd failed at AddDirectory. %v", err)
 		}
-		cmd = exec.CommandContext(ctx, dynDir+dynamicdName,
-			"-datadir="+dataDirPath,
-			"-port="+strconv.Itoa(int(defaultPort)),
-			"-rpcuser="+rpcUser,
-			"-rpcpassword="+rpcPassword,
-			"-rpcport="+strconv.Itoa(int(defaultRPCPort)),
-			"-rpcbind="+defaultBind,
-			"-rpcallowip="+defaultBind,
-			"-server=1",
-			"-stealthtx=1",
-			"-addnode=206.189.68.224",
-			"-addnode=138.197.193.115",
-			"-addnode=dynexplorer.duality.solutions",
-		)
+		cmd = getCmd(ctx, dataDirPath, rpcUser, rpcPassword)
 	} else {
 		// read username and password from config file
 		var userFound, passFound bool = false, false
@@ -166,33 +173,9 @@ func loadDynamicd(_os string, archiveExt string) (*Dynamicd, error) {
 			util.Error.Println("loadDynamicd error after GetDynamicConf", err)
 		}
 		if userFound && passFound {
-			cmd = exec.CommandContext(ctx, dynDir+dynamicdName,
-				"-datadir="+dataDirPath,
-				"-port="+strconv.Itoa(int(defaultPort)),
-				"-rpcport="+strconv.Itoa(int(defaultRPCPort)),
-				"-rpcbind="+defaultBind,
-				"-rpcallowip="+defaultBind,
-				"-server=1",
-				"-stealthtx=1",
-				"-addnode=206.189.68.224",
-				"-addnode=138.197.193.115",
-				"-addnode=dynexplorer.duality.solutions",
-			)
+			cmd = getCmd(ctx, dataDirPath, rpcUser, rpcPassword)
 		} else {
-			cmd = exec.CommandContext(ctx, dynDir+dynamicdName,
-				"-datadir="+dataDirPath,
-				"-port="+strconv.Itoa(int(defaultPort)),
-				"-rpcuser="+rpcUser,
-				"-rpcpassword="+rpcPassword,
-				"-rpcport="+strconv.Itoa(int(defaultRPCPort)),
-				"-rpcbind="+defaultBind,
-				"-rpcallowip="+defaultBind,
-				"-server=1",
-				"-stealthtx=1",
-				"-addnode=206.189.68.224",
-				"-addnode=138.197.193.115",
-				"-addnode=dynexplorer.duality.solutions",
-			)
+			cmd = getCmd(ctx, dataDirPath, rpcUser, rpcPassword)
 		}
 	}
 
