@@ -9,8 +9,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func (w *WebBridgeRunner) users(c *gin.Context) {
-	strCommand, _ := dynamic.NewRequest(`dynamic-cli getusers`)
+func (w *WebBridgeRunner) groups(c *gin.Context) {
+	strCommand, _ := dynamic.NewRequest(`dynamic-cli getgroups`)
 	response, _ := <-w.dynamicd.ExecCmdRequest(strCommand)
 	var result interface{}
 	err := json.Unmarshal([]byte(response), &result)
@@ -22,9 +22,9 @@ func (w *WebBridgeRunner) users(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"result": result})
 }
 
-func (w *WebBridgeRunner) user(c *gin.Context) {
-	userID := c.Param("UserID")
-	cmd := `dynamic-cli getuserinfo "` + userID + `"`
+func (w *WebBridgeRunner) group(c *gin.Context) {
+	groupID := c.Param("GroupID")
+	cmd := `dynamic-cli getgroupinfo "` + groupID + `"`
 	strCommand, err := dynamic.NewRequest(cmd)
 	if err != nil {
 		strErrMsg := fmt.Sprintf("NewRequest cmd(%v), error: %v", cmd, err)
@@ -43,7 +43,7 @@ func (w *WebBridgeRunner) user(c *gin.Context) {
 	return
 }
 
-func (w *WebBridgeRunner) walletusers(c *gin.Context) {
+func (w *WebBridgeRunner) walletgroups(c *gin.Context) {
 	strCommand, _ := dynamic.NewRequest(`dynamic-cli mybdapaccounts`)
 	response, _ := <-w.dynamicd.ExecCmdRequest(strCommand)
 	myAccounts := make(map[string]Account)
@@ -54,12 +54,12 @@ func (w *WebBridgeRunner) walletusers(c *gin.Context) {
 		return
 	}
 
-	myUsers := make(map[string]Account)
+	myGroups := make(map[string]Account)
 	for i, account := range myAccounts {
-		if account.ObjectType == "User Entry" {
-			myUsers[i] = account
+		if account.ObjectType == "Group Entry" {
+			myGroups[i] = account
 		}
 	}
 
-	c.JSON(http.StatusOK, gin.H{"result": myUsers})
+	c.JSON(http.StatusOK, gin.H{"result": myGroups})
 }

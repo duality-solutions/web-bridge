@@ -39,6 +39,10 @@ func setupBlockchainRoutes() {
 	blockchain.PATCH("/wallet/lock", runner.lockwallet)
 	blockchain.PATCH("/wallet/encrypt", runner.encryptwallet)
 	blockchain.PATCH("/wallet/changepassphrase", runner.changepassphrase)
+	blockchain.GET("/wallet/users", runner.walletusers)
+	blockchain.GET("/wallet/groups", runner.walletgroups)
 	blockchain.GET("/users", runner.users)
 	blockchain.GET("/users/:UserID", runner.user)
+	blockchain.GET("/groups", runner.groups)
+	blockchain.GET("/groups/:GroupID", runner.group)
 }
