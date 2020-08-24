@@ -39,4 +39,6 @@ func setupBlockchainRoutes() {
 	blockchain.PATCH("/wallet/lock", runner.lockwallet)
 	blockchain.PATCH("/wallet/encrypt", runner.encryptwallet)
 	blockchain.PATCH("/wallet/changepassphrase", runner.changepassphrase)
+	blockchain.GET("/wallet/address/details", runner.listaddresses)
+	blockchain.GET("/wallet/address/details/:Address", runner.addressdetails)
 }
