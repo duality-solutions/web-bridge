@@ -9,31 +9,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-/*
-getusers "search string" "records per page" "page returned"
-
-Arguments:
-1. search string        (string, optional)  Search for userid
-2. records per page     (int, optional)  If paging, the number of records per page
-3. page returned        (int, optional)  If paging, the page number to return
-
-Lists all BDAP user accounts in the "public" OU for the "bdap.io" domain.
-
-Result:
-{(json objects)
-  "common_name"             (string)  Account common name
-  "object_full_path"        (string)  Account fully qualified domain name (FQDN)
-  "wallet_address"          (string)  Account wallet address
-  "dht_publickey"           (string)  Account DHT public key
-  }
-
-Examples
-> dynamic-cli getusers
-
-As a JSON-RPC call
-> curl --user myusername --data-binary '{"jsonrpc": "1.0", "id":"curltest", "method": "getusers", "params": [] }' -H 'content-type: text/plain;' http://127.0.0.1:33350/
- (code -1)
-*/
 func (w *WebBridgeRunner) users(c *gin.Context) {
 	strCommand, _ := dynamic.NewRequest(`dynamic-cli getusers`)
 	response, _ := <-w.dynamicd.ExecCmdRequest(strCommand)
@@ -66,4 +41,45 @@ func (w *WebBridgeRunner) user(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, gin.H{"result": result})
 	return
+}
+
+type account struct {
+	OID                string `json:"oid"`
+	Version            int    `json:"version"`
+	DomainComponent    string `json:"domain_component"`
+	CommonName         string `json:"common_name"`
+	OrganizationalUnit string `json:"organizational_unit"`
+	OrganizationName   string `json:"organization_name"`
+	ObjectID           string `json:"object_id"`
+	ObjectFullPath     string `json:"object_full_path"`
+	ObjectType         string `json:"object_type"`
+	WalletAddress      string `json:"wallet_address"`
+	Public             int    `json:"public"`
+	DhtPublickey       string `json:"dht_publickey"`
+	LinkAddress        string `json:"link_address"`
+	TxID               string `json:"txid"`
+	Time               int    `json:"time"`
+	ExpiresOn          int    `json:"expires_on"`
+	Expired            bool   `json:"expired"`
+}
+
+func (w *WebBridgeRunner) walletusers(c *gin.Context) {
+	strCommand, _ := dynamic.NewRequest(`dynamic-cli mybdapaccounts`)
+	response, _ := <-w.dynamicd.ExecCmdRequest(strCommand)
+	myAccounts := make(map[string]account)
+	err := json.Unmarshal([]byte(response), &myAccounts)
+	if err != nil {
+		strErrMsg := fmt.Sprintf("Results JSON unmarshal error %v", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": strErrMsg})
+		return
+	}
+
+	myUsers := make(map[string]account)
+	for i, account := range myAccounts {
+		if account.ObjectType == "User Entry" {
+			myUsers[i] = account
+		}
+	}
+
+	c.JSON(http.StatusOK, gin.H{"result": myUsers})
 }
