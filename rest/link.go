@@ -7,6 +7,7 @@ import (
 	"reflect"
 	"strconv"
 
+	util "github.com/duality-solutions/web-bridge/internal/utilities"
 	"github.com/duality-solutions/web-bridge/rpc/dynamic"
 	"github.com/gin-gonic/gin"
 )
@@ -51,10 +52,10 @@ func (l *Link) SetValue(fieldname, value string) {
 	case "txid":
 		l.TxID = value
 	case "time":
-		i, _ := strconv.ParseInt(value, 10, 64)
+		i, _ := util.ScientificNotationToInt64(value)
 		l.Time = i
 	case "expires_on":
-		i, _ := strconv.ParseInt(value, 10, 64)
+		i, _ := util.ScientificNotationToInt64(value)
 		l.ExpiresOn = i
 	case "Expired":
 		b, _ := strconv.ParseBool(value)
@@ -64,10 +65,10 @@ func (l *Link) SetValue(fieldname, value string) {
 	case "accept_txid":
 		l.AcceptTxID = value
 	case "accept_time":
-		i, _ := strconv.ParseInt(value, 10, 64)
+		i, _ := util.ScientificNotationToInt64(value)
 		l.AcceptTime = i
 	case "accept_expires_on":
-		i, _ := strconv.ParseInt(value, 10, 64)
+		i, _ := util.ScientificNotationToInt64(value)
 		l.AcceptExpiresOn = i
 	case "accept_expired":
 		b, _ := strconv.ParseBool(value)
