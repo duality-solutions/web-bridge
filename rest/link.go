@@ -3,6 +3,7 @@ package rest
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"reflect"
 	"strconv"
@@ -124,4 +125,93 @@ func (w *WebBridgeRunner) links(c *gin.Context) {
 		}
 	}
 	c.JSON(http.StatusOK, gin.H{"result": myLinks})
+}
+
+type linkRequest struct {
+	RequestorFQDN string `json:"requestor_fqdn"`
+	RecipientFQDN string `json:"recipient_fqdn"`
+	LinkMessage   string `json:"link_message"`
+}
+
+type linkAccept struct {
+	RecipientFQDN string `json:"recipient_fqdn"`
+	RequestorFQDN string `json:"requestor_fqdn"`
+}
+
+type linkRequestResponse struct {
+	Expired                bool   `json:"expired"`
+	ExpiresOn              int    `json:"expires_on"`
+	LinkMessage            string `json:"link_message"`
+	RecipientFQDN          string `json:"recipient_fqdn"`
+	RecipientWalletAddress string `json:"recipient_wallet_address"`
+	RequestorFQDN          string `json:"requestor_fqdn"`
+	RequestorLinkPubkey    string `json:"requestor_link_pubkey"`
+	RequestorWalletAddress string `json:"requestor_wallet_address"`
+	SignatureProof         string `json:"signature_proof"`
+	Time                   int    `json:"time"`
+	TxID                   string `json:"txid"`
+}
+
+func (w *WebBridgeRunner) linkrequest(c *gin.Context) {
+	body, err := ioutil.ReadAll(c.Request.Body)
+	if err != nil {
+		strErrMsg := fmt.Sprintf("Request body read all error %v", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": strErrMsg})
+		return
+	}
+	if len(body) == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Request body is empty"})
+		return
+	}
+	req := linkRequest{}
+	err = json.Unmarshal(body, &req)
+	if err != nil {
+		strErrMsg := fmt.Sprintf("Request body JSON unmarshal error %v", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": strErrMsg})
+		return
+	}
+
+	cmd, _ := dynamic.NewRequest(`dynamic-cli link request "` + req.RequestorFQDN + `" "` + req.RecipientFQDN + `" "` + req.LinkMessage + `"`)
+	response, _ := <-w.dynamicd.ExecCmdRequest(cmd)
+	var result interface{}
+	err = json.Unmarshal([]byte(response), &result)
+	if err != nil {
+		strErrMsg := fmt.Sprintf("Results JSON unmarshal error %v", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": strErrMsg})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"result": result})
+}
+
+func (w *WebBridgeRunner) linkaccept(c *gin.Context) {
+	body, err := ioutil.ReadAll(c.Request.Body)
+	if err != nil {
+		strErrMsg := fmt.Sprintf("Request body read all error %v", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": strErrMsg})
+		return
+	}
+	if len(body) == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Request body is empty"})
+		return
+	}
+	req := linkAccept{}
+	err = json.Unmarshal(body, &req)
+	if err != nil {
+		strErrMsg := fmt.Sprintf("Request body JSON unmarshal error %v", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": strErrMsg})
+		return
+	}
+
+	cmd, _ := dynamic.NewRequest(`dynamic-cli link accept "` + req.RecipientFQDN + `" "` + req.RequestorFQDN + `"`)
+	response, _ := <-w.dynamicd.ExecCmdRequest(cmd)
+	var result interface{}
+	err = json.Unmarshal([]byte(response), &result)
+	if err != nil {
+		strErrMsg := fmt.Sprintf("Results JSON unmarshal error %v", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": strErrMsg})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"result": result})
 }
