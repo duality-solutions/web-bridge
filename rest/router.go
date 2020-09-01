@@ -45,6 +45,7 @@ func setupBlockchainRoutes() {
 	blockchain.POST("/wallet/link/request", runner.linkrequest)
 	blockchain.POST("/wallet/link/accept", runner.linkaccept)
 	blockchain.POST("/wallet/link/message", runner.sendlinkmessage)
+	blockchain.GET("/wallet/link/message", runner.getlinkmessages)
 	blockchain.GET("/users", runner.users)
 	blockchain.GET("/users/:UserID", runner.user)
 	blockchain.GET("/groups", runner.groups)

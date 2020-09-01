@@ -267,3 +267,44 @@ func (w *WebBridgeRunner) sendlinkmessage(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, gin.H{"result": ret})
 }
+
+type getMessageRequest struct {
+	RecipientFQDN string `json:"recipient_fqdn"`
+	SenderFQDN    string `json:"sender_fqdn"`
+	MessageType   string `json:"message_type"`
+}
+
+func (w *WebBridgeRunner) getlinkmessages(c *gin.Context) {
+	body, err := ioutil.ReadAll(c.Request.Body)
+	if err != nil {
+		strErrMsg := fmt.Sprintf("Request body read all error %v", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": strErrMsg})
+		return
+	}
+	if len(body) == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Request body is empty"})
+		return
+	}
+	reqBody := getMessageRequest{}
+	err = json.Unmarshal(body, &reqBody)
+	if err != nil {
+		strErrMsg := fmt.Sprintf("Request body JSON unmarshal error %v", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": strErrMsg})
+		return
+	}
+	// Set dynamic CLI command
+	cmd := `dynamic-cli link getaccountmessages "` + reqBody.RecipientFQDN + `" "` + reqBody.SenderFQDN + `"`
+	if len(reqBody.MessageType) > 0 {
+		cmd += ` "` + reqBody.MessageType + `"`
+	}
+	// Create new dynamic CLI request from command
+	req, err := dynamic.NewRequest(cmd)
+	if err != nil {
+		strErrMsg := fmt.Sprintf("Dynamic CLI new request error %v", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": strErrMsg})
+		return
+	}
+	// Execute dynamic CLI request
+	res := <-w.dynamicd.ExecCmdRequest(req)
+	c.JSON(http.StatusOK, gin.H{"result": res})
+}
