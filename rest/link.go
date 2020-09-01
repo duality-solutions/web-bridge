@@ -306,5 +306,12 @@ func (w *WebBridgeRunner) getlinkmessages(c *gin.Context) {
 	}
 	// Execute dynamic CLI request
 	res := <-w.dynamicd.ExecCmdRequest(req)
-	c.JSON(http.StatusOK, gin.H{"result": res})
+	var ret interface{}
+	err = json.Unmarshal([]byte(res), &ret)
+	if err != nil {
+		strErrMsg := fmt.Sprintf("Dynamic CLI response JSON unmarshal error %v", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": strErrMsg})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"result": ret})
 }
