@@ -221,7 +221,7 @@ type sendMessageRequest struct {
 	RecipientFQDN string `json:"recipient_fqdn"`
 	MessageType   string `json:"message_type"`
 	Message       string `json:"message"`
-	keepLast      bool   `json:"keep_last"`
+	KeepLast      bool   `json:"keep_last"`
 }
 
 func (w *WebBridgeRunner) sendlinkmessage(c *gin.Context) {
@@ -243,7 +243,7 @@ func (w *WebBridgeRunner) sendlinkmessage(c *gin.Context) {
 		return
 	}
 	var keepLast = "1"
-	if reqBody.keepLast == false {
+	if reqBody.KeepLast == false {
 		keepLast = "0"
 	}
 	// Set dynamic CLI command
