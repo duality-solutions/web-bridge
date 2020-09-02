@@ -4,12 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"os"
 	"os/exec"
 	"runtime"
 	"strconv"
 	"time"
 
+	"github.com/duality-solutions/web-bridge/init/settings"
 	util "github.com/duality-solutions/web-bridge/internal/utilities"
 	rpcclient "github.com/duality-solutions/web-bridge/rpc"
 )
@@ -82,8 +82,8 @@ func newDynamicd(
 	return &d
 }
 
-func getCmd(ctx context.Context, dataDirPath, rpcUser, rpcPassword string) *exec.Cmd {
-	return exec.CommandContext(ctx, dynDir+dynamicdName,
+func getCmd(ctx context.Context, dataDirPath, binpath, rpcUser, rpcPassword string) *exec.Cmd {
+	return exec.CommandContext(ctx, binpath+dynamicdName,
 		"-datadir="+dataDirPath,
 		"-port="+strconv.Itoa(int(defaultPort)),
 		"-rpcuser="+rpcUser,
@@ -102,11 +102,16 @@ func getCmd(ctx context.Context, dataDirPath, rpcUser, rpcPassword string) *exec
 		"-addnode=dynexplorer.duality.solutions")
 }
 
-func loadDynamicd(_os string, archiveExt string) (*Dynamicd, error) {
-	var dataDirPath string
-	var dirDelimit string
+func loadDynamicd(_os, archiveExt string) (*Dynamicd, error) {
+	var dataDirPath string = settings.HomeDir
+	if !util.DirectoryExists(dataDirPath) {
+		err := util.AddDirectory(dataDirPath)
+		if err != nil {
+			return nil, fmt.Errorf("loadDynamicd failed after AddDirectory root %v. %v", dataDirPath, err)
+		}
+	}
+	var dirDelimit string = settings.PathSeperator
 	if _os == "Windows" {
-		dirDelimit = "\\"
 		if !initVars {
 			dynDir += dirDelimit
 			dynamicdName += ".exe"
@@ -115,40 +120,36 @@ func loadDynamicd(_os string, archiveExt string) (*Dynamicd, error) {
 		}
 
 	} else {
-		dirDelimit = "/"
 		if !initVars {
 			dynDir += dirDelimit
 			initVars = true
 		}
 	}
-	err := downloadBinaries(_os, dynDir, dynamicdName, cliName, archiveExt)
+	err := downloadBinaries(_os, dataDirPath, dynamicdName, cliName, archiveExt)
 	if err != nil {
 		return nil, fmt.Errorf("loadDynamicd failed at downloadBinaries. %v", err)
 	}
 	// check file hashes to make sure they are valid.
-	hashDynamicd, _ := util.GetFileHash(dynDir + dynamicdName)
-	hashCli, _ := util.GetFileHash(dynDir + cliName)
+	hashDynamicd, _ := util.GetFileHash(dataDirPath + dynamicdName)
+	hashCli, _ := util.GetFileHash(dataDirPath + cliName)
 	err = checkBinaryHash(_os, hashDynamicd, hashCli)
 	if err != nil {
 		return nil, fmt.Errorf("loadDynamicd failed at checkBinaryHash. %v", err)
 	}
 	// check to make sure .dynamic directory exists and create if doesn't
-	dir, errPath := os.Getwd()
-	if errPath != nil {
-		return nil, fmt.Errorf("loadDynamicd failed at Getwd. %v", errPath)
-	}
+	dir := dataDirPath
 	rpcUser, _ := util.RandomString(12)
 	rpcPassword, _ := util.RandomString(18)
-	dataDirPath = dir + dirDelimit + dynDir + ".dynamic"
+	dataDirPath = dir + "." + dynDir
 	ctx, cancel := context.WithCancel(context.Background())
 	var cmd *exec.Cmd
 	if !util.DirectoryExists(dataDirPath) {
 		err = util.AddDirectory(dataDirPath)
 		if err != nil {
 			defer cancel()
-			return nil, fmt.Errorf("loadDynamicd failed at AddDirectory. %v", err)
+			return nil, fmt.Errorf("loadDynamicd failed after AddDirectory %v. %v", dataDirPath, err)
 		}
-		cmd = getCmd(ctx, dataDirPath, rpcUser, rpcPassword)
+		cmd = getCmd(ctx, dataDirPath, dir, rpcUser, rpcPassword)
 	} else {
 		// read username and password from config file
 		var userFound, passFound bool = false, false
@@ -173,9 +174,9 @@ func loadDynamicd(_os string, archiveExt string) (*Dynamicd, error) {
 			util.Error.Println("loadDynamicd error after GetDynamicConf", err)
 		}
 		if userFound && passFound {
-			cmd = getCmd(ctx, dataDirPath, rpcUser, rpcPassword)
+			cmd = getCmd(ctx, dataDirPath, dir, rpcUser, rpcPassword)
 		} else {
-			cmd = getCmd(ctx, dataDirPath, rpcUser, rpcPassword)
+			cmd = getCmd(ctx, dataDirPath, dir, rpcUser, rpcPassword)
 		}
 	}
 

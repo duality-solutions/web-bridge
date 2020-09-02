@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"os/user"
 	"runtime"
 	"strings"
 	"time"
@@ -91,8 +92,18 @@ func Init(version, githash string) error {
 			}
 		}
 	}
+	usr, _ := user.Current()
+	homeDir := usr.HomeDir
+	pathSeperator := ""
+	if runtime.GOOS == "windows" {
+		pathSeperator = `\\`
+		homeDir += pathSeperator + `.web-bridge` + pathSeperator
+	} else {
+		pathSeperator = `/`
+		homeDir += pathSeperator + `.web-bridge` + pathSeperator
+	}
 	// initilize debug.log file
-	util.InitDebugLogFile(debug)
+	util.InitDebugLogFile(debug, homeDir)
 	util.Info.Println("Version:", version, "Hash", githash)
 	util.Info.Println("OS: ", runtime.GOOS)
 	if debug {
@@ -102,7 +113,7 @@ func Init(version, githash string) error {
 	if test {
 		util.Info.Println("Running WebBridge in test mode.")
 	}
-	config.Load()
+	config.Load(homeDir, pathSeperator)
 	util.Info.Println("Config", config)
 
 	if testCreateOffer || testWaitForOffer {

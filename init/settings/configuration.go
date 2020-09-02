@@ -21,6 +21,9 @@ const (
 	DefaultIceCredential string = "Admin@123"
 )
 
+var HomeDir string = ""
+var PathSeperator string = ""
+
 // IceServerConfig stores the ICE server configuration information needed for WebRTC connections
 type IceServerConfig struct {
 	URL        string `json:"URL"`
@@ -48,20 +51,22 @@ func (c *Configuration) createDefault() {
 	}
 	c.IceServers = append(c.IceServers, defaultIce)
 	file, _ := json.Marshal(&c)
-	err := ioutil.WriteFile(ConfigurationFileName, file, 0644)
+	err := ioutil.WriteFile(HomeDir+ConfigurationFileName, file, 0644)
 	if isErr(err) {
 		util.Error.Println("Error writting default configuration file.")
 	}
 }
 
 // Load reads the configuration file or loads default values
-func (c *Configuration) Load() {
-	_, errOpen := os.Open(ConfigurationFileName)
+func (c *Configuration) Load(homeDir, pathSeperator string) {
+	HomeDir = homeDir
+	PathSeperator = pathSeperator
+	_, errOpen := os.Open(HomeDir + ConfigurationFileName)
 	if isErr(errOpen) {
 		util.Error.Println("Configuration file doesn't exist. Creating new configuration with default values.")
 		c.createDefault()
 	} else {
-		file, errRead := ioutil.ReadFile(ConfigurationFileName)
+		file, errRead := ioutil.ReadFile(HomeDir + ConfigurationFileName)
 		if isErr(errRead) {
 			c.createDefault()
 			return

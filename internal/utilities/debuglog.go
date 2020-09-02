@@ -24,9 +24,12 @@ var (
 	Error DebugLog
 )
 
+var HomeDir string = ""
+
 // InitDebugLogFile is used to initialize the debug log file path.
-func InitDebugLogFile(console bool) {
-	file, err := os.OpenFile("debug.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+func InitDebugLogFile(console bool, homeDir string) {
+	HomeDir = homeDir
+	file, err := os.OpenFile(HomeDir+"debug.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 	if err != nil {
 		fmt.Println("Failed to open log file", err)
 	}
@@ -54,7 +57,7 @@ func InitDebugLogFile(console bool) {
 
 // EndDebugLogFile adds x blank lines to debug.log file
 func EndDebugLogFile(x int) {
-	file, err := os.OpenFile("debug.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	file, err := os.OpenFile(HomeDir+"debug.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 	if err != nil {
 		fmt.Println("Failed to open log file", err)
 	}
