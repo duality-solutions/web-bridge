@@ -29,7 +29,7 @@ type Bridges struct {
 	unconnected map[string]*Bridge
 }
 
-func setupBridges(stopchan chan struct{}, links dynamic.ActiveLinks, accounts []dynamic.Account) bool {
+func setupBridges(stopchan *chan struct{}, links dynamic.ActiveLinks, accounts []dynamic.Account) bool {
 	util.Info.Println("setupBridges Started")
 	sessionID := uint16(0)
 	for _, link := range links.Links {
@@ -38,7 +38,7 @@ func setupBridges(stopchan chan struct{}, links dynamic.ActiveLinks, accounts []
 			var linkBridge = NewBridge(link, accounts)
 			linkBridges.unconnected[linkBridge.LinkID()] = &linkBridge
 			linkBridge.SessionID = sessionID
-		case <-stopchan:
+		case <-*stopchan:
 			util.Info.Println("setupBridges stopped")
 			return false
 		}
@@ -47,7 +47,7 @@ func setupBridges(stopchan chan struct{}, links dynamic.ActiveLinks, accounts []
 	return true
 }
 
-func initializeBridges(stopchan chan struct{}) bool {
+func initializeBridges(stopchan *chan struct{}) bool {
 	linkBridges.connected = make(map[string]*Bridge)
 	linkBridges.unconnected = make(map[string]*Bridge)
 	if setupBridges(stopchan, links, accounts) {
@@ -74,7 +74,7 @@ func initializeBridges(stopchan chan struct{}) bool {
 // check for answers loop
 // if new answer found, create a WebRTC bridge and send bridge result to upstream channel
 // on shutdown, clear all DHT offers
-func StartBridges(stopchan chan struct{}, c settings.Configuration, d dynamic.Dynamicd, a []dynamic.Account, l dynamic.ActiveLinks) {
+func StartBridges(stopchan *chan struct{}, c settings.Configuration, d dynamic.Dynamicd, a []dynamic.Account, l dynamic.ActiveLinks) {
 	dynamicd = d
 	config = c
 	accounts = a
@@ -83,7 +83,7 @@ func StartBridges(stopchan chan struct{}, c settings.Configuration, d dynamic.Dy
 		if initializeBridges(stopchan) {
 			for {
 				select {
-				default:
+				case <-time.After(3 * time.Second):
 					if !GetLinkNotifications(stopchan) {
 						return
 					}
@@ -93,7 +93,6 @@ func StartBridges(stopchan chan struct{}, c settings.Configuration, d dynamic.Dy
 					if !GetOffers(stopchan) {
 						return
 					}
-					time.Sleep(3 * time.Second)
 					/*
 						if !DisconnectedLinks(stopchan) {
 							return
@@ -103,7 +102,7 @@ func StartBridges(stopchan chan struct{}, c settings.Configuration, d dynamic.Dy
 						}
 					*/
 					// Update online start time every hour
-				case <-stopchan:
+				case <-*stopchan:
 					util.Info.Println("StartBridges stopped")
 					return
 				}
@@ -117,9 +116,9 @@ func StartBridges(stopchan chan struct{}, c settings.Configuration, d dynamic.Dy
 }
 
 // ShutdownBridges stops the ManageBridges goroutine
-func ShutdownBridges(stopchan chan struct{}) {
+func ShutdownBridges(stopchan *chan struct{}) {
 	//TODO: disconnect all active/connected WebRTC bridges
-	close(stopchan)
+	close(*stopchan)
 	if !NotifyLinksOffline() {
 		util.Error.Println("ShutdownBridges NotifyLinksOffline error")
 	}

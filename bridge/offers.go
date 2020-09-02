@@ -11,14 +11,14 @@ import (
 var mapOffers map[string]int = make(map[string]int)
 
 // GetOffers checks the DHT for WebRTC offers from all links
-func GetOffers(stopchan chan struct{}) bool {
+func GetOffers(stopchan *chan struct{}) bool {
 	l := len(linkBridges.unconnected)
 	getOffersChan := make(chan dynamic.GetVGPMessageReturn, l)
 	for _, link := range linkBridges.unconnected {
 		select {
 		default:
 			dynamicd.GetLinkMessagesAsync(link.LinkID(), link.MyAccount, link.LinkAccount, "webrtc-offer", getOffersChan)
-		case <-stopchan:
+		case <-*stopchan:
 			util.Info.Println("GetOffers stopped")
 			return false
 		}
@@ -88,7 +88,7 @@ getOffersLoop:
 					go WaitForRTC(link)
 				}
 			}
-		case <-stopchan:
+		case <-*stopchan:
 			util.Info.Println("GetOffers stopped")
 			return false
 		}
@@ -131,7 +131,7 @@ func SendOffer(link *Bridge) bool {
 }
 
 // DisconnectedLinks reinitializes the WebRTC link bridge struct
-func DisconnectedLinks(stopchan chan struct{}) bool {
+func DisconnectedLinks(stopchan *chan struct{}) bool {
 	l := len(linkBridges.unconnected)
 	putOffers := make(chan dynamic.DHTPutReturn, l)
 	for _, link := range linkBridges.unconnected {
@@ -175,7 +175,7 @@ func DisconnectedLinks(stopchan chan struct{}) bool {
 			link := linkBridges.unconnected[linkBridge.LinkID()]
 			link.Put = offer.DHTPutJSON
 			util.Info.Println("DisconnectedLinks Offer saved", offer)
-		case <-stopchan:
+		case <-*stopchan:
 			util.Info.Println("DisconnectedLinks stopped")
 			return false
 		}

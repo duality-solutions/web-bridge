@@ -11,7 +11,7 @@ import (
 var mapGetAnswers map[string]dynamic.GetMessageReturnJSON = make(map[string]dynamic.GetMessageReturnJSON)
 
 // SendAnswers uses VPG instant messages to send an answer to a WebRTC offer
-func SendAnswers(stopchan chan struct{}) bool {
+func SendAnswers(stopchan *chan struct{}) bool {
 	util.Info.Println("SendAnswers Started")
 	for _, link := range linkBridges.unconnected {
 		select {
@@ -45,7 +45,7 @@ func SendAnswers(stopchan chan struct{}) bool {
 					}
 				}
 			}
-		case <-stopchan:
+		case <-*stopchan:
 			util.Info.Println("SendAnswers stopped")
 			return false
 		}
@@ -54,7 +54,7 @@ func SendAnswers(stopchan chan struct{}) bool {
 }
 
 // GetAnswers checks Dynamicd for bridge messages received
-func GetAnswers(stopchan chan struct{}) bool {
+func GetAnswers(stopchan *chan struct{}) bool {
 	l := len(linkBridges.connected)
 	getAnswersChan := make(chan dynamic.GetVGPMessageReturn, l)
 	for _, link := range linkBridges.connected {
@@ -65,7 +65,7 @@ func GetAnswers(stopchan chan struct{}) bool {
 			} else {
 				l--
 			}
-		case <-stopchan:
+		case <-*stopchan:
 			util.Info.Println("GetAnswers stopped")
 			return false
 		}
@@ -113,7 +113,7 @@ getAnswersLoop:
 					}
 				}
 			}
-		case <-stopchan:
+		case <-*stopchan:
 			util.Info.Println("GetAnswers stopped")
 			return false
 		}

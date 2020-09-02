@@ -203,7 +203,7 @@ func Init(version, githash string) error {
 		var sync = false
 		stopBridges := make(chan struct{})
 		if acc != nil && al != nil {
-			go bridge.StartBridges(stopBridges, config, *dynamicd, *acc, *al)
+			go bridge.StartBridges(&stopBridges, config, *dynamicd, *acc, *al)
 		}
 		for !shutdown {
 			reader := bufio.NewReader(os.Stdin)
@@ -241,7 +241,7 @@ func Init(version, githash string) error {
 				}
 			}
 		}
-		bridge.ShutdownBridges(stopBridges)
+		bridge.ShutdownBridges(&stopBridges)
 		// Stop dynamicd
 		reqStop, _ := dynamic.NewRequest("dynamic-cli stop")
 		respStop, _ := util.BeautifyJSON(<-dynamicd.ExecCmdRequest(reqStop))

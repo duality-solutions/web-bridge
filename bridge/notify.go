@@ -18,7 +18,7 @@ type OnlineNotification struct {
 }
 
 // NotifyLinksOnline sends a VGP message to all links with online status
-func NotifyLinksOnline(stopchan chan struct{}) bool {
+func NotifyLinksOnline(stopchan *chan struct{}) bool {
 	util.Info.Println("NotifyLinksOnline Started")
 	endEpoch = 0
 	startEpoch = time.Now().Unix()
@@ -37,7 +37,7 @@ func NotifyLinksOnline(stopchan chan struct{}) bool {
 			sendOnlineChan := make(chan dynamic.MessageReturnJSON, 1)
 			dynamicd.SendNotificationMessageAsync(link.MyAccount, link.LinkAccount, encoded, sendOnlineChan)
 			util.Info.Println("NotifyLinksOnline sent", link.LinkAccount, encoded)
-		case <-stopchan:
+		case <-*stopchan:
 			util.Info.Println("NotifyLinksOnline stopped")
 			return false
 		}
@@ -89,7 +89,7 @@ func NotifyLinksOffline() bool {
 }
 
 // GetLinkNotifications gets online notification messages for all unconnected links
-func GetLinkNotifications(stopchan chan struct{}) bool {
+func GetLinkNotifications(stopchan *chan struct{}) bool {
 	//util.Info.Println("GetLinkNotifications Started")
 	for _, link := range linkBridges.unconnected {
 		select {
@@ -124,7 +124,7 @@ func GetLinkNotifications(stopchan chan struct{}) bool {
 					}
 				}
 			}
-		case <-stopchan:
+		case <-*stopchan:
 			util.Info.Println("GetLinkNotifications stopped")
 			return false
 		}
