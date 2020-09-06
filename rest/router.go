@@ -19,35 +19,42 @@ var runner WebBridgeRunner
 // TODO: Add authentication
 // TODO: Add RESTful API documentation with Swagger: https://github.com/swaggo/swag#getting-started
 
+// StartWebServiceRouter is used to setup the Rest server routes
 func StartWebServiceRouter(dynamicd *dynamic.Dynamicd, mode string) {
 	gin.SetMode(mode)
 	runner.dynamicd = dynamicd
 	runner.router = gin.Default()
-	setupBlockchainRoutes()
+	api := runner.router.Group("/api")
+	version := api.Group("/v1")
+	setupBlockchainRoutes(version)
+	setupWalletRoutes(version)
 	runner.router.Run()
 }
 
 // TODO: follow https://rest.bitcoin.com for rest endpoints
-func setupBlockchainRoutes() {
-	api := runner.router.Group("/api")
-	v1 := api.Group("/v1")
-	blockchain := v1.Group("/blockchain")
+func setupBlockchainRoutes(currentVersion *gin.RouterGroup) {
+	blockchain := currentVersion.Group("/blockchain")
 	blockchain.POST("/jsonrpc", runner.handleJSONRPC)
 	blockchain.GET("/info", runner.getinfo)
-	blockchain.GET("/wallet/info", runner.walletinfo)
-	blockchain.PATCH("/wallet/unlock", runner.unlockwallet)
-	blockchain.PATCH("/wallet/lock", runner.lockwallet)
-	blockchain.PATCH("/wallet/encrypt", runner.encryptwallet)
-	blockchain.PATCH("/wallet/changepassphrase", runner.changepassphrase)
-	blockchain.GET("/wallet/users", runner.walletusers)
-	blockchain.GET("/wallet/groups", runner.walletgroups)
-	blockchain.GET("/wallet/link", runner.links)
-	blockchain.POST("/wallet/link/request", runner.linkrequest)
-	blockchain.POST("/wallet/link/accept", runner.linkaccept)
-	blockchain.POST("/wallet/link/message", runner.sendlinkmessage)
-	blockchain.GET("/wallet/link/message", runner.getlinkmessages)
 	blockchain.GET("/users", runner.users)
 	blockchain.GET("/users/:UserID", runner.user)
 	blockchain.GET("/groups", runner.groups)
 	blockchain.GET("/groups/:GroupID", runner.group)
+}
+
+// TODO: follow https://rest.bitcoin.com for rest endpoints
+func setupWalletRoutes(currentVersion *gin.RouterGroup) {
+	wallet := currentVersion.Group("/wallet")
+	wallet.GET("/info", runner.walletinfo)
+	wallet.PATCH("/unlock", runner.unlockwallet)
+	wallet.PATCH("/lock", runner.lockwallet)
+	wallet.PATCH("/encrypt", runner.encryptwallet)
+	wallet.PATCH("/changepassphrase", runner.changepassphrase)
+	wallet.GET("/users", runner.walletusers)
+	wallet.GET("/groups", runner.walletgroups)
+	wallet.GET("/link", runner.links)
+	wallet.POST("/link/request", runner.linkrequest)
+	wallet.POST("/link/accept", runner.linkaccept)
+	wallet.POST("/link/message", runner.sendlinkmessage)
+	wallet.GET("/link/message", runner.getlinkmessages)
 }
