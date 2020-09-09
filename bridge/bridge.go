@@ -26,7 +26,7 @@ type Bridge struct {
 	onErrorEpoch       int64
 	onStateChangeEpoch int64
 	rtcState           string
-	LastDataEpoch      int64
+	lastDataEpoch      int64
 	peerConnection     *webrtc.PeerConnection
 	dataChannel        *webrtc.DataChannel
 	proxyHTTP          *http.Server
@@ -70,6 +70,20 @@ func NewLinkBridge(requester string, recipient string, acc []dynamic.Account) Br
 		}
 	}
 	return brd
+}
+
+// SetLastDataEpoch sets the bridge WebRTC last data epoch time
+func (b *Bridge) SetLastDataEpoch(e int64) {
+	b.bridgeMut.Lock()
+	defer b.bridgeMut.Unlock()
+	b.lastDataEpoch = e
+}
+
+// LastDataEpoch returns the bridge WebRTC last data epoch time
+func (b *Bridge) LastDataEpoch() int64 {
+	b.bridgeMut.RLock()
+	defer b.bridgeMut.RUnlock()
+	return b.lastDataEpoch
 }
 
 // SetState sets the bridge WebRTC state
@@ -256,7 +270,7 @@ func (b *Bridge) String() string {
 		"\nOnErrorEpoch: ", b.onErrorEpoch,
 		"\nOnStateChangeEpoch: ", b.onStateChangeEpoch,
 		"\nRTCStatus: ", b.rtcState,
-		"\nLastDataEpoch: ", b.LastDataEpoch,
+		"\nLastDataEpoch: ", b.lastDataEpoch,
 		"\nState: ", b.state.String(),
 	)
 	if b.peerConnection != nil {
