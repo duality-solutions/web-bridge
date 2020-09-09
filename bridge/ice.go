@@ -60,11 +60,11 @@ func ConnectToIceServicesDetached(config settings.Configuration) (*webrtc.PeerCo
 func DisconnectBridgeIceServices(bridges *Bridges) error {
 	for i, v := range bridges.connected {
 		util.Info.Println("DisconnectBridgeIceServices", i, v)
-		DisconnectIceService(v.PeerConnection)
+		DisconnectIceService(v.PeerConnection())
 	}
 	for i, v := range bridges.unconnected {
 		util.Info.Println("DisconnectBridgeIceServices", i, v)
-		err := DisconnectIceService(v.PeerConnection)
+		err := DisconnectIceService(v.PeerConnection())
 		if err != nil {
 			util.Error.Println("DisconnectBridgeIceServices error", i, err)
 		}

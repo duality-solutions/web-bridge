@@ -35,7 +35,7 @@ func (c *Controller) Connected() map[string]*Bridge {
 	defer c.bridgesMut.Unlock()
 	connected := make(map[string]*Bridge)
 	for _, bridge := range c.bridges {
-		if bridge.State == StateOpenConnection {
+		if bridge.State() == StateOpenConnection {
 			connected[bridge.LinkID()] = bridge
 		}
 	}
@@ -48,7 +48,7 @@ func (c *Controller) Unconnected() map[string]*Bridge {
 	defer c.bridgesMut.Unlock()
 	unconnected := make(map[string]*Bridge)
 	for _, bridge := range c.bridges {
-		if bridge.State != StateOpenConnection {
+		if bridge.State() != StateOpenConnection {
 			unconnected[bridge.LinkID()] = bridge
 		}
 	}

@@ -49,26 +49,26 @@ getOffersLoop:
 					break getOffersLoop
 				}
 				util.Info.Println("GetOffers offer found. Size", offer.MessageSize)
-				if newOffer != link.Offer {
-					link.Offer = newOffer
+				if newOffer != link.Offer() {
+					link.SetOffer(newOffer)
 					pc, err := ConnectToIceServicesDetached(config)
 					if err != nil {
 						util.Error.Println("GetOffers ConnectToIceServices error", link.LinkAccount, err)
 						break getOffersLoop
 					}
-					link.PeerConnection = pc
-					err = link.PeerConnection.SetRemoteDescription(link.Offer)
+					link.SetPeerConnection(pc)
+					err = link.PeerConnection().SetRemoteDescription(link.Offer())
 					if err != nil {
 						util.Error.Println("GetOffers SetRemoteDescription offer error", link.LinkAccount, err)
 						break getOffersLoop
 					}
-					answer, err := link.PeerConnection.CreateAnswer(nil)
+					answer, err := link.PeerConnection().CreateAnswer(nil)
 					if err != nil {
 						util.Error.Println("GetOffers CreateAnswer error", link.LinkAccount, err)
-						link.Offer = webrtc.SessionDescription{}
+						link.SetOffer(webrtc.SessionDescription{})
 						break getOffersLoop
 					}
-					link.Answer = answer
+					link.SetAnswer(answer)
 					encoded, err := util.EncodeObject(answer)
 					if err != nil {
 						util.Error.Println("GetOffers EncodeObject answer error", link.LinkAccount, err)
@@ -79,8 +79,8 @@ getOffersLoop:
 						util.Error.Println("GetOffers dynamicd.SendLinkMessage answer error", link.LinkAccount, err)
 						break getOffersLoop
 					}
-					link.State = StateWaitForRTC
-					link.OnStateChangeEpoch = time.Now().Unix()
+					link.SetState(StateWaitForRTC)
+					link.SetOnStateChangeEpoch(time.Now().Unix())
 					delete(linkBridges.unconnected, link.LinkID())
 					linkBridges.connected[link.LinkID()] = link
 					util.Info.Println("Offer found for", link.LinkAccount, link.LinkID(), "WaitForRTC...")
@@ -103,19 +103,20 @@ func SendOffer(link *Bridge) bool {
 		util.Error.Println("SendOffer error connecting tot ICE services", err)
 		return false
 	}
-	link.PeerConnection = pc
-	dataChannel, err := link.PeerConnection.CreateDataChannel(link.LinkParticipants(), nil)
+	link.SetPeerConnection(pc)
+	dataChannel, err := link.PeerConnection().CreateDataChannel(link.LinkParticipants(), nil)
 	if err != nil {
 		util.Error.Println("SendOffer error creating dataChannel for", link.LinkAccount, link.LinkID())
 		return false
 	}
-	link.DataChannel = dataChannel
-	link.Offer, err = link.PeerConnection.CreateOffer(nil)
+	link.SetDataChannel(dataChannel)
+	offer, err := link.PeerConnection().CreateOffer(nil)
 	if err != nil {
 		util.Error.Println("SendOffer error CreateOffer", err)
 		return false
 	}
-	encoded, err := util.EncodeObject(link.Offer)
+	link.SetOffer(offer)
+	encoded, err := util.EncodeObject(link.Offer())
 	if err != nil {
 		util.Error.Println("SendOffer error EncodeObject", err)
 		return false
@@ -125,8 +126,8 @@ func SendOffer(link *Bridge) bool {
 		util.Error.Println("GetOffers dynamicd.SendLinkMessage answer error", link.LinkAccount, err)
 		return false
 	}
-	link.State = StateWaitForAnswer
-	link.OnStateChangeEpoch = time.Now().Unix()
+	link.SetState(StateWaitForAnswer)
+	link.SetOnStateChangeEpoch(time.Now().Unix())
 	return true
 }
 
@@ -135,33 +136,33 @@ func DisconnectedLinks(stopchan *chan struct{}) bool {
 	l := len(linkBridges.unconnected)
 	putOffers := make(chan dynamic.DHTPutReturn, l)
 	for _, link := range linkBridges.unconnected {
-		if link.State == StateInit {
+		if link.State() == StateInit {
 			util.Info.Println("DisconnectedLinks for", link.LinkParticipants(), link.LinkID())
 			var linkBridge = NewLinkBridge(link.LinkAccount, link.MyAccount, accounts)
 			linkBridge.SessionID = link.SessionID
-			linkBridge.Get = link.Get
 			pc, err := ConnectToIceServicesDetached(config)
 			if err != nil {
 				util.Error.Println("DisconnectedLinks error connecting tot ICE services", err)
 				continue
 			} else {
-				linkBridge.PeerConnection = pc
-				dataChannel, err := linkBridge.PeerConnection.CreateDataChannel(link.LinkParticipants(), nil)
+				linkBridge.SetPeerConnection(pc)
+				dataChannel, err := linkBridge.PeerConnection().CreateDataChannel(link.LinkParticipants(), nil)
 				if err != nil {
 					util.Error.Println("DisconnectedLinks error creating dataChannel for", link.LinkAccount, link.LinkID())
 					continue
 				}
-				linkBridge.DataChannel = dataChannel
+				linkBridge.SetDataChannel(dataChannel)
 			}
-			linkBridge.Offer, _ = linkBridge.PeerConnection.CreateOffer(nil)
-			linkBridge.Answer = link.Answer
-			encoded, err := util.EncodeObject(linkBridge.Offer)
+			offer, _ := linkBridge.PeerConnection().CreateOffer(nil)
+			linkBridge.SetOffer(offer)
+			linkBridge.SetAnswer(link.Answer())
+			encoded, err := util.EncodeObject(linkBridge.Offer())
 			if err != nil {
 				util.Info.Println("DisconnectedLinks error EncodeObject", err)
 			}
 			dynamicd.PutLinkRecord(linkBridge.MyAccount, linkBridge.LinkAccount, encoded, putOffers)
-			linkBridge.State = StateWaitForAnswer
-			link.OnStateChangeEpoch = time.Now().Unix()
+			linkBridge.SetState(StateWaitForAnswer)
+			link.SetOnStateChangeEpoch(time.Now().Unix())
 			linkBridges.unconnected[linkBridge.LinkID()] = &linkBridge
 		} else {
 			l--
@@ -171,9 +172,6 @@ func DisconnectedLinks(stopchan *chan struct{}) bool {
 		select {
 		default:
 			offer := <-putOffers
-			linkBridge := NewLinkBridge(offer.Sender, offer.Receiver, accounts)
-			link := linkBridges.unconnected[linkBridge.LinkID()]
-			link.Put = offer.DHTPutJSON
 			util.Info.Println("DisconnectedLinks Offer saved", offer)
 		case <-*stopchan:
 			util.Info.Println("DisconnectedLinks stopped")

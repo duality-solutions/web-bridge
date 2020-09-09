@@ -90,7 +90,7 @@ func (b *Bridge) StartBridgeNetwork(reader io.Reader, writer io.Writer) {
 		log.Fatalf("Error listening for https connections - %v", err)
 	}
 	b.proxyHTTPS = &ln
-	for b.State != StateDisconnected {
+	for b.State() != StateDisconnected {
 		c, err := ln.Accept()
 		if err != nil {
 			log.Printf("Error accepting new connection - %v", err)

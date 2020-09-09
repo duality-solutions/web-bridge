@@ -112,7 +112,7 @@ func GetLinkNotifications(stopchan *chan struct{}) bool {
 						// send offer
 						util.Info.Println("GetLinkNotifications online message from", link.LinkAccount, "secs:", (time.Now().Unix() - online.StartTime))
 						if SendOffer(link) {
-							link.State = StateWaitForAnswer
+							link.SetState(StateWaitForAnswer)
 							delete(linkBridges.unconnected, link.LinkID())
 							linkBridges.connected[link.LinkID()] = link
 						} else {

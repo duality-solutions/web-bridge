@@ -7,6 +7,7 @@ import (
 	"net"
 	"net/http"
 	"sort"
+	"sync"
 
 	util "github.com/duality-solutions/web-bridge/internal/utilities"
 	"github.com/duality-solutions/web-bridge/rpc/dynamic"
@@ -18,26 +19,26 @@ type Bridge struct {
 	SessionID          uint16
 	MyAccount          string
 	LinkAccount        string
-	Offer              webrtc.SessionDescription
-	Answer             webrtc.SessionDescription
-	OnOpenEpoch        int64
-	OnErrorEpoch       int64
-	OnStateChangeEpoch int64
-	RTCState           string
+	bridgeMut          *sync.RWMutex
+	offer              webrtc.SessionDescription
+	answer             webrtc.SessionDescription
+	onOpenEpoch        int64
+	onErrorEpoch       int64
+	onStateChangeEpoch int64
+	rtcState           string
 	LastDataEpoch      int64
-	PeerConnection     *webrtc.PeerConnection
-	DataChannel        *webrtc.DataChannel
+	peerConnection     *webrtc.PeerConnection
+	dataChannel        *webrtc.DataChannel
 	proxyHTTP          *http.Server
 	proxyHTTPS         *net.Listener
-	Get                dynamic.DHTGetJSON
-	Put                dynamic.DHTPutJSON
-	State
+	state              State
 }
 
 // NewBridge creates a new bridge struct
 func NewBridge(l dynamic.Link, acc []dynamic.Account) Bridge {
 	var brd Bridge
-	brd.State = StateNew
+	brd.bridgeMut = new(sync.RWMutex)
+	brd.state = StateNew
 	for _, a := range acc {
 		if a.ObjectID == l.GetRequestorObjectID() {
 			brd.MyAccount = l.GetRequestorObjectID()
@@ -55,7 +56,8 @@ func NewBridge(l dynamic.Link, acc []dynamic.Account) Bridge {
 // NewLinkBridge creates a new bridge struct
 func NewLinkBridge(requester string, recipient string, acc []dynamic.Account) Bridge {
 	var brd Bridge
-	brd.State = StateNew
+	brd.bridgeMut = new(sync.RWMutex)
+	brd.state = StateNew
 	for _, a := range acc {
 		if a.ObjectID == requester {
 			brd.MyAccount = requester
@@ -70,8 +72,134 @@ func NewLinkBridge(requester string, recipient string, acc []dynamic.Account) Br
 	return brd
 }
 
+// SetState sets the bridge WebRTC state
+func (b *Bridge) SetState(s State) {
+	b.bridgeMut.Lock()
+	defer b.bridgeMut.Unlock()
+	b.state = s
+}
+
+// State returns the bridge WebRTC state
+func (b *Bridge) State() State {
+	b.bridgeMut.RLock()
+	defer b.bridgeMut.RUnlock()
+	return b.state
+}
+
+// SetOnOpenEpoch sets the bridge WebRTC open epoch time
+func (b *Bridge) SetOnOpenEpoch(e int64) {
+	b.bridgeMut.Lock()
+	defer b.bridgeMut.Unlock()
+	b.onOpenEpoch = e
+}
+
+// OnOpenEpoch returns the bridge WebRTC open epoch time
+func (b *Bridge) OnOpenEpoch() int64 {
+	b.bridgeMut.RLock()
+	defer b.bridgeMut.RUnlock()
+	return b.onOpenEpoch
+}
+
+// SetOnErrorEpoch sets the bridge WebRTC error epoch time
+func (b *Bridge) SetOnErrorEpoch(e int64) {
+	b.bridgeMut.Lock()
+	defer b.bridgeMut.Unlock()
+	b.onErrorEpoch = e
+}
+
+// OnErrorEpoch sets the bridge WebRTC error epoch time
+func (b *Bridge) OnErrorEpoch(e int64) {
+	b.bridgeMut.Lock()
+	defer b.bridgeMut.Unlock()
+	b.onErrorEpoch = e
+}
+
+// SetOnStateChangeEpoch returns the bridge WebRTC set on change epoch time
+func (b *Bridge) SetOnStateChangeEpoch(e int64) {
+	b.bridgeMut.RLock()
+	defer b.bridgeMut.RUnlock()
+	b.onStateChangeEpoch = e
+}
+
+// OnStateChangeEpoch returns the bridge WebRTC set on change epoch time
+func (b *Bridge) OnStateChangeEpoch() int64 {
+	b.bridgeMut.RLock()
+	defer b.bridgeMut.RUnlock()
+	return b.onStateChangeEpoch
+}
+
+// SetRTCState sets the bridge WebRTC state
+func (b *Bridge) SetRTCState(s string) {
+	b.bridgeMut.Lock()
+	defer b.bridgeMut.Unlock()
+	b.rtcState = s
+}
+
+// RTCState returns the bridge WebRTC state
+func (b *Bridge) RTCState() string {
+	b.bridgeMut.RLock()
+	defer b.bridgeMut.RUnlock()
+	return b.rtcState
+}
+
+// SetDataChannel sets the bridge WebRTC data channel struct pointer
+func (b *Bridge) SetDataChannel(dc *webrtc.DataChannel) {
+	b.bridgeMut.Lock()
+	defer b.bridgeMut.Unlock()
+	b.dataChannel = dc
+}
+
+// DataChannel returns the bridge WebRTC peer data channel struct pointer
+func (b *Bridge) DataChannel() *webrtc.DataChannel {
+	b.bridgeMut.RLock()
+	defer b.bridgeMut.RUnlock()
+	return b.dataChannel
+}
+
+// SetPeerConnection sets the bridge WebRTC peer connection struct pointer
+func (b *Bridge) SetPeerConnection(pc *webrtc.PeerConnection) {
+	b.bridgeMut.Lock()
+	defer b.bridgeMut.Unlock()
+	b.peerConnection = pc
+}
+
+// PeerConnection returns the bridge WebRTC peer connection struct pointer
+func (b *Bridge) PeerConnection() *webrtc.PeerConnection {
+	b.bridgeMut.RLock()
+	defer b.bridgeMut.RUnlock()
+	return b.peerConnection
+}
+
+// SetOffer sets the bridge offer variable
+func (b *Bridge) SetOffer(o webrtc.SessionDescription) {
+	b.bridgeMut.Lock()
+	defer b.bridgeMut.Unlock()
+	b.offer = o
+}
+
+// Offer returns the bridge offer variable
+func (b *Bridge) Offer() webrtc.SessionDescription {
+	b.bridgeMut.RLock()
+	defer b.bridgeMut.RUnlock()
+	return b.offer
+}
+
+// SetAnswer sets the bridge answer variable
+func (b *Bridge) SetAnswer(o webrtc.SessionDescription) {
+	b.bridgeMut.Lock()
+	defer b.bridgeMut.Unlock()
+	b.answer = o
+}
+
+// Answer returns the bridge answer variable
+func (b *Bridge) Answer() webrtc.SessionDescription {
+	b.bridgeMut.RLock()
+	defer b.bridgeMut.RUnlock()
+	return b.answer
+}
+
 // LinkID returns an hashed id for the link
-func (b Bridge) LinkID() string {
+func (b *Bridge) LinkID() string {
 	var ret string = ""
 	strs := []string{b.MyAccount, b.LinkAccount}
 	sort.Strings(strs)
@@ -86,18 +214,18 @@ func (b Bridge) LinkID() string {
 }
 
 // ListenPort returns the HTTP server listening port
-func (b Bridge) ListenPort() uint16 {
+func (b *Bridge) ListenPort() uint16 {
 	return b.SessionID + StartHTTPPortNumber
 }
 
 // LinkParticipants returns link participants
-func (b Bridge) LinkParticipants() string {
+func (b *Bridge) LinkParticipants() string {
 	return (b.MyAccount + "-" + b.LinkAccount)
 }
 
 // ShutdownHTTPProxyServers returns the HTTP server listening port
 func (b *Bridge) ShutdownHTTPProxyServers() {
-	b.State = StateDisconnected
+	b.SetState(StateDisconnected)
 	if b.proxyHTTP != nil {
 		util.Info.Println("ShutdownHTTPProxyServers http proxyHTTP")
 		b.proxyHTTP.Shutdown(context.Background())
@@ -112,31 +240,34 @@ func (b *Bridge) ShutdownHTTPProxyServers() {
 	}
 }
 
-func (b Bridge) String() string {
+// String returns a string representation of the bridge struct
+func (b *Bridge) String() string {
+	b.bridgeMut.RLock()
+	defer b.bridgeMut.RUnlock()
 	result := fmt.Sprint("Bridge {",
 		"\nSessionID: ", b.SessionID,
 		"\nListenPort: ", b.ListenPort(),
 		"\nMyAccount: ", b.MyAccount,
 		"\nLinkAccount: ", b.LinkAccount,
 		"\nLinkID: ", b.LinkID(),
-		"\nOffer: ", b.Offer.SDP,
-		"\nAnswer: ", b.Answer.SDP,
-		"\nOnOpenEpoch: ", b.OnOpenEpoch,
-		"\nOnErrorEpoch: ", b.OnErrorEpoch,
-		"\nOnStateChangeEpoch: ", b.OnStateChangeEpoch,
-		"\nRTCStatus: ", b.RTCState,
+		"\nOffer: ", b.offer.SDP,
+		"\nAnswer: ", b.answer.SDP,
+		"\nOnOpenEpoch: ", b.onOpenEpoch,
+		"\nOnErrorEpoch: ", b.onErrorEpoch,
+		"\nOnStateChangeEpoch: ", b.onStateChangeEpoch,
+		"\nRTCStatus: ", b.rtcState,
 		"\nLastDataEpoch: ", b.LastDataEpoch,
-		"\nState: ", b.State.String(),
+		"\nState: ", b.state.String(),
 	)
-	if b.PeerConnection != nil {
-		result += fmt.Sprint("\nPeerConnection.ICEConnectionState: ", b.PeerConnection.ICEConnectionState().String(),
-			"\nPeerConnection.ConnectionState: ", b.PeerConnection.ConnectionState().String(),
+	if b.peerConnection != nil {
+		result += fmt.Sprint("\nPeerConnection.ICEConnectionState: ", b.peerConnection.ICEConnectionState().String(),
+			"\nPeerConnection.ConnectionState: ", b.peerConnection.ConnectionState().String(),
 		)
 	} else {
 		result += fmt.Sprint("\nPeerConnection.ICEConnectionState: nil\nPeerConnection.ConnectionState: nil")
 	}
-	if b.DataChannel != nil {
-		result += fmt.Sprint("\nDataChannel.ReadyState: ", b.DataChannel.ReadyState().String())
+	if b.dataChannel != nil {
+		result += fmt.Sprint("\nDataChannel.ReadyState: ", b.dataChannel.ReadyState().String())
 	} else {
 		result += fmt.Sprint("\nDataChannel.ReadyState: nil")
 	}
