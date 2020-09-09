@@ -72,6 +72,25 @@ func NewLinkBridge(requester string, recipient string, acc []dynamic.Account) Br
 	return brd
 }
 
+// SetOfferAnswerStateEpoch sets the bridge WebRTC offer, answer, state and onStateChangeEpoch
+func (b *Bridge) SetOfferAnswerStateEpoch(o webrtc.SessionDescription, a webrtc.SessionDescription, s State, e int64) {
+	b.bridgeMut.Lock()
+	defer b.bridgeMut.Unlock()
+	b.offer = o
+	b.answer = a
+	b.state = s
+	b.onStateChangeEpoch = e
+}
+
+// SetAnswerStateEpoch sets the bridge WebRTC answer, state and onStateChangeEpoch
+func (b *Bridge) SetAnswerStateEpoch(a webrtc.SessionDescription, s State, e int64) {
+	b.bridgeMut.Lock()
+	defer b.bridgeMut.Unlock()
+	b.answer = a
+	b.state = s
+	b.onStateChangeEpoch = e
+}
+
 // SetLastDataEpoch sets the bridge WebRTC last data epoch time
 func (b *Bridge) SetLastDataEpoch(e int64) {
 	b.bridgeMut.Lock()

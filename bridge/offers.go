@@ -68,7 +68,6 @@ getOffersLoop:
 						link.SetOffer(webrtc.SessionDescription{})
 						break getOffersLoop
 					}
-					link.SetAnswer(answer)
 					encoded, err := util.EncodeObject(answer)
 					if err != nil {
 						util.Error.Println("GetOffers EncodeObject answer error", link.LinkAccount, err)
@@ -79,8 +78,7 @@ getOffersLoop:
 						util.Error.Println("GetOffers dynamicd.SendLinkMessage answer error", link.LinkAccount, err)
 						break getOffersLoop
 					}
-					link.SetState(StateWaitForRTC)
-					link.SetOnStateChangeEpoch(time.Now().Unix())
+					link.SetAnswerStateEpoch(answer, StateWaitForRTC, time.Now().Unix())
 					delete(linkBridges.unconnected, link.LinkID())
 					linkBridges.connected[link.LinkID()] = link
 					util.Info.Println("Offer found for", link.LinkAccount, link.LinkID(), "WaitForRTC...")
@@ -154,15 +152,12 @@ func DisconnectedLinks(stopchan *chan struct{}) bool {
 				linkBridge.SetDataChannel(dataChannel)
 			}
 			offer, _ := linkBridge.PeerConnection().CreateOffer(nil)
-			linkBridge.SetOffer(offer)
-			linkBridge.SetAnswer(link.Answer())
 			encoded, err := util.EncodeObject(linkBridge.Offer())
 			if err != nil {
 				util.Info.Println("DisconnectedLinks error EncodeObject", err)
 			}
 			dynamicd.PutLinkRecord(linkBridge.MyAccount, linkBridge.LinkAccount, encoded, putOffers)
-			linkBridge.SetState(StateWaitForAnswer)
-			link.SetOnStateChangeEpoch(time.Now().Unix())
+			linkBridge.SetOfferAnswerStateEpoch(offer, link.Answer(), StateWaitForAnswer, time.Now().Unix())
 			linkBridges.unconnected[linkBridge.LinkID()] = &linkBridge
 		} else {
 			l--

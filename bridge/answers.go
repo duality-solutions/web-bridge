@@ -28,7 +28,6 @@ func SendAnswers(stopchan *chan struct{}) bool {
 						// clear offer since it didn't work
 						// remove from connected and add to unconnected
 					} else {
-						link.SetAnswer(answer)
 						encoded, err := util.EncodeObject(answer)
 						if err != nil {
 							util.Error.Println("SendAnswers EncodeObject error", link.LinkAccount, err)
@@ -37,8 +36,7 @@ func SendAnswers(stopchan *chan struct{}) bool {
 						if err != nil {
 							util.Error.Println("SendAnswers dynamicd.SendLinkMessage error", link.LinkAccount, err)
 						}
-						link.SetState(StateWaitForRTC)
-						link.SetOnStateChangeEpoch(time.Now().Unix())
+						link.SetAnswerStateEpoch(answer, StateWaitForRTC, time.Now().Unix())
 						delete(linkBridges.unconnected, link.LinkID())
 						linkBridges.connected[link.LinkID()] = link
 						go WaitForRTC(link)
@@ -104,9 +102,7 @@ getAnswersLoop:
 					}
 					if newAnswer != link.Answer() {
 						mapGetAnswers[link.LinkID()] = answer
-						link.SetAnswer(newAnswer)
-						link.SetState(StateEstablishRTC)
-						link.SetOnStateChangeEpoch(time.Now().Unix())
+						link.SetAnswerStateEpoch(newAnswer, StateEstablishRTC, time.Now().Unix())
 						util.Info.Println("Answer found for", link.LinkAccount, link.LinkID(), "EstablishRTC...")
 						// send anwser and wait for connection or timeout.
 						go EstablishRTC(link)
