@@ -260,7 +260,7 @@ func Init(version, githash string) error {
 		time.Sleep(time.Second * 5)
 	}
 	util.Info.Println("Looking for dynamicd process pid", dynamicd.Cmd.Process.Pid)
-	util.WaitForStoppedPID(dynamicd.Cmd.Process, time.Second*240)
+	util.WaitForProcessShutdown(dynamicd.Cmd.Process, time.Second*240)
 	util.Info.Println("Exit.")
 	util.EndDebugLogFile(30)
 	return nil
