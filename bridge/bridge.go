@@ -35,8 +35,9 @@ type Bridge struct {
 }
 
 // NewBridge creates a new bridge struct
-func NewBridge(l dynamic.Link, acc []dynamic.Account) Bridge {
+func NewBridge(s uint16, l dynamic.Link, acc []dynamic.Account) Bridge {
 	var brd Bridge
+	brd.SessionID = s
 	brd.bridgeMut = new(sync.RWMutex)
 	brd.state = StateNew
 	for _, a := range acc {
@@ -54,8 +55,9 @@ func NewBridge(l dynamic.Link, acc []dynamic.Account) Bridge {
 }
 
 // NewLinkBridge creates a new bridge struct
-func NewLinkBridge(requester string, recipient string, acc []dynamic.Account) Bridge {
+func NewLinkBridge(s uint16, requester string, recipient string, acc []dynamic.Account) Bridge {
 	var brd Bridge
+	brd.SessionID = s
 	brd.bridgeMut = new(sync.RWMutex)
 	brd.state = StateNew
 	for _, a := range acc {

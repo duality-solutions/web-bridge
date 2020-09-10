@@ -12,9 +12,10 @@ var mapOffers map[string]int = make(map[string]int)
 
 // GetOffers checks the DHT for WebRTC offers from all links
 func GetOffers(stopchan *chan struct{}) bool {
-	l := len(linkBridges.unconnected)
+	bridges := bridgeControler.Unconnected()
+	l := len(bridges)
 	getOffersChan := make(chan dynamic.GetVGPMessageReturn, l)
-	for _, link := range linkBridges.unconnected {
+	for _, link := range bridges {
 		select {
 		default:
 			dynamicd.GetLinkMessagesAsync(link.LinkID(), link.MyAccount, link.LinkAccount, "webrtc-offer", getOffersChan)
@@ -28,7 +29,7 @@ getOffersLoop:
 		select {
 		default:
 			offers := <-getOffersChan
-			link := linkBridges.unconnected[offers.LinkID]
+			link := bridgeControler.GetUnconnected(offers.LinkID)
 			var offer dynamic.GetMessageReturnJSON
 			for _, res := range offers.Messages {
 				if res.TimestampEpoch > offer.TimestampEpoch {
@@ -79,8 +80,7 @@ getOffersLoop:
 						break getOffersLoop
 					}
 					link.SetAnswerStateEpoch(answer, StateWaitForRTC, time.Now().Unix())
-					delete(linkBridges.unconnected, link.LinkID())
-					linkBridges.connected[link.LinkID()] = link
+					bridgeControler.MoveUnconnectedToConnected(link)
 					util.Info.Println("Offer found for", link.LinkAccount, link.LinkID(), "WaitForRTC...")
 					// send anwser and wait for connection or timeout.
 					go WaitForRTC(link)
@@ -131,13 +131,13 @@ func SendOffer(link *Bridge) bool {
 
 // DisconnectedLinks reinitializes the WebRTC link bridge struct
 func DisconnectedLinks(stopchan *chan struct{}) bool {
-	l := len(linkBridges.unconnected)
+	bridges := bridgeControler.Unconnected()
+	l := len(bridges)
 	putOffers := make(chan dynamic.DHTPutReturn, l)
-	for _, link := range linkBridges.unconnected {
+	for _, link := range bridges {
 		if link.State() == StateInit {
 			util.Info.Println("DisconnectedLinks for", link.LinkParticipants(), link.LinkID())
-			var linkBridge = NewLinkBridge(link.LinkAccount, link.MyAccount, accounts)
-			linkBridge.SessionID = link.SessionID
+			var linkBridge = NewLinkBridge(link.SessionID, link.LinkAccount, link.MyAccount, accounts)
 			pc, err := ConnectToIceServicesDetached(config)
 			if err != nil {
 				util.Error.Println("DisconnectedLinks error connecting tot ICE services", err)
@@ -158,7 +158,7 @@ func DisconnectedLinks(stopchan *chan struct{}) bool {
 			}
 			dynamicd.PutLinkRecord(linkBridge.MyAccount, linkBridge.LinkAccount, encoded, putOffers)
 			linkBridge.SetOfferAnswerStateEpoch(offer, link.Answer(), StateWaitForAnswer, time.Now().Unix())
-			linkBridges.unconnected[linkBridge.LinkID()] = &linkBridge
+			bridgeControler.PutUnconnected(&linkBridge)
 		} else {
 			l--
 		}

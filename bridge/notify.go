@@ -19,10 +19,14 @@ type OnlineNotification struct {
 
 // NotifyLinksOnline sends a VGP message to all links with online status
 func NotifyLinksOnline(stopchan *chan struct{}) bool {
+	if bridgeControler == nil {
+		return true
+	}
 	util.Info.Println("NotifyLinksOnline Started")
 	endEpoch = 0
 	startEpoch = time.Now().Unix()
-	for _, link := range linkBridges.unconnected {
+	bridges := bridgeControler.Unconnected()
+	for _, link := range bridges {
 		select {
 		default:
 			notification := OnlineNotification{
@@ -47,11 +51,15 @@ func NotifyLinksOnline(stopchan *chan struct{}) bool {
 
 // NotifyLinksOffline sends a VGP message to all links with offline status
 func NotifyLinksOffline() bool {
+	if bridgeControler == nil {
+		return true
+	}
 	util.Info.Println("NotifyLinksOffline Started")
-	l := len(linkBridges.unconnected) + len(linkBridges.connected)
+	l := bridgeControler.Count()
+	bridges := bridgeControler.Unconnected()
 	sendOfflineChan := make(chan dynamic.MessageReturnJSON, l)
 	endEpoch = time.Now().Unix()
-	for _, link := range linkBridges.unconnected {
+	for _, link := range bridges {
 		notification := OnlineNotification{
 			StartTime: startEpoch,
 			EndTime:   endEpoch,
@@ -63,7 +71,8 @@ func NotifyLinksOffline() bool {
 		}
 		dynamicd.SendNotificationMessageAsync(link.MyAccount, link.LinkAccount, encoded, sendOfflineChan)
 	}
-	for _, link := range linkBridges.connected {
+	bridges = bridgeControler.Connected()
+	for _, link := range bridges {
 		notification := OnlineNotification{
 			StartTime: startEpoch,
 			EndTime:   endEpoch,
@@ -75,7 +84,7 @@ func NotifyLinksOffline() bool {
 		}
 		dynamicd.SendNotificationMessageAsync(link.MyAccount, link.LinkAccount, encoded, sendOfflineChan)
 	}
-	for i := 0; i < l; i++ {
+	for i := uint16(0); i < l; i++ {
 		select {
 		default:
 			notification := <-sendOfflineChan
@@ -91,7 +100,8 @@ func NotifyLinksOffline() bool {
 // GetLinkNotifications gets online notification messages for all unconnected links
 func GetLinkNotifications(stopchan *chan struct{}) bool {
 	//util.Info.Println("GetLinkNotifications Started")
-	for _, link := range linkBridges.unconnected {
+	bridges := bridgeControler.Unconnected()
+	for _, link := range bridges {
 		select {
 		default:
 			notifications, err := dynamicd.GetNotificationMessages(link.MyAccount, link.LinkAccount)
@@ -113,8 +123,7 @@ func GetLinkNotifications(stopchan *chan struct{}) bool {
 						util.Info.Println("GetLinkNotifications online message from", link.LinkAccount, "secs:", (time.Now().Unix() - online.StartTime))
 						if SendOffer(link) {
 							link.SetState(StateWaitForAnswer)
-							delete(linkBridges.unconnected, link.LinkID())
-							linkBridges.connected[link.LinkID()] = link
+							bridgeControler.MoveUnconnectedToConnected(link)
 						} else {
 							break
 						}

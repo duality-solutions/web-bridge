@@ -13,7 +13,8 @@ var mapGetAnswers map[string]dynamic.GetMessageReturnJSON = make(map[string]dyna
 // SendAnswers uses VPG instant messages to send an answer to a WebRTC offer
 func SendAnswers(stopchan *chan struct{}) bool {
 	util.Info.Println("SendAnswers Started")
-	for _, link := range linkBridges.unconnected {
+	bridges := bridgeControler.Unconnected()
+	for _, link := range bridges {
 		select {
 		default:
 			if link.State() == StateSendAnswer && link.PeerConnection() != nil && len(link.Offer().SDP) > MinimumOfferValueLength {
@@ -37,8 +38,7 @@ func SendAnswers(stopchan *chan struct{}) bool {
 							util.Error.Println("SendAnswers dynamicd.SendLinkMessage error", link.LinkAccount, err)
 						}
 						link.SetAnswerStateEpoch(answer, StateWaitForRTC, time.Now().Unix())
-						delete(linkBridges.unconnected, link.LinkID())
-						linkBridges.connected[link.LinkID()] = link
+						bridgeControler.MoveUnconnectedToConnected(link)
 						go WaitForRTC(link)
 					}
 				}
@@ -53,9 +53,10 @@ func SendAnswers(stopchan *chan struct{}) bool {
 
 // GetAnswers checks Dynamicd for bridge messages received
 func GetAnswers(stopchan *chan struct{}) bool {
-	l := len(linkBridges.connected)
+	bridges := bridgeControler.Connected()
+	l := len(bridges)
 	getAnswersChan := make(chan dynamic.GetVGPMessageReturn, l)
-	for _, link := range linkBridges.connected {
+	for _, link := range bridges {
 		select {
 		default:
 			if link.State() == StateWaitForAnswer {
@@ -73,7 +74,7 @@ getAnswersLoop:
 		select {
 		default:
 			answers := <-getAnswersChan
-			link := linkBridges.connected[answers.LinkID]
+			link := bridgeControler.GetConnected(answers.LinkID)
 			if len(answers.Messages) > 0 && link.State() == StateWaitForAnswer {
 				currentAnswer := mapGetAnswers[link.LinkID()]
 				if link.PeerConnection() == nil {

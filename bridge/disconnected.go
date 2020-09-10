@@ -10,7 +10,8 @@ import (
 func StopDisconnected(stopchan chan struct{}) bool {
 	util.Info.Println("StopDisconnected started")
 	currentEpoch := time.Now().Unix()
-	for _, link := range linkBridges.connected {
+	bridges := bridgeControler.Connected()
+	for _, link := range bridges {
 		if (link.State() == StateWaitForRTC || link.State() == StateEstablishRTC) && (currentEpoch-link.OnStateChangeEpoch() > 360) {
 			if link.PeerConnection() != nil {
 				failedPeerConnection := (link.PeerConnection().ConnectionState().String() == "failed")
@@ -28,8 +29,7 @@ func StopDisconnected(stopchan chan struct{}) bool {
 						link.PeerConnection().Close()
 					}
 					link.SetState(StateInit)
-					delete(linkBridges.connected, link.LinkID())
-					linkBridges.unconnected[link.LinkID()] = link
+					bridgeControler.MoveConnectedToUnconnected(link)
 					continue
 				}
 			}
@@ -41,8 +41,7 @@ func StopDisconnected(stopchan chan struct{}) bool {
 				link.PeerConnection().Close()
 			}
 			link.SetState(StateInit)
-			delete(linkBridges.connected, link.LinkID())
-			linkBridges.unconnected[link.LinkID()] = link
+			bridgeControler.MoveConnectedToUnconnected(link)
 		}
 	}
 	return true

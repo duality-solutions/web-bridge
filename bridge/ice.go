@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/duality-solutions/web-bridge/init/settings"
-	util "github.com/duality-solutions/web-bridge/internal/utilities"
 	webrtc "github.com/pion/webrtc/v2"
 )
 
@@ -54,22 +53,6 @@ func ConnectToIceServices(config settings.Configuration) (*webrtc.PeerConnection
 // ConnectToIceServicesDetached uses the configuration settings to establish a connection with ICE servers with detached channels
 func ConnectToIceServicesDetached(config settings.Configuration) (*webrtc.PeerConnection, error) {
 	return connectToIceServicesOption(config, true)
-}
-
-// DisconnectBridgeIceServices calls the close method for a WebRTC peer connection
-func DisconnectBridgeIceServices(bridges *Bridges) error {
-	for i, v := range bridges.connected {
-		util.Info.Println("DisconnectBridgeIceServices", i, v)
-		DisconnectIceService(v.PeerConnection())
-	}
-	for i, v := range bridges.unconnected {
-		util.Info.Println("DisconnectBridgeIceServices", i, v)
-		err := DisconnectIceService(v.PeerConnection())
-		if err != nil {
-			util.Error.Println("DisconnectBridgeIceServices error", i, err)
-		}
-	}
-	return nil
 }
 
 // DisconnectIceService calls the close method for a WebRTC peer connection
