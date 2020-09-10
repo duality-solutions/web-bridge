@@ -259,18 +259,8 @@ func Init(version, githash string) error {
 		util.Info.Println(respStop)
 		time.Sleep(time.Second * 5)
 	}
-
 	util.Info.Println("Looking for dynamicd process pid", dynamicd.Cmd.Process.Pid)
-	_, errFindProcess := os.FindProcess(dynamicd.Cmd.Process.Pid)
-	if errFindProcess == nil {
-		util.Info.Println("Process found. Killing dynamicd process.")
-		if errKill := dynamicd.Cmd.Process.Kill(); err != errKill {
-			util.Error.Println("failed to kill process: ", errKill)
-		}
-	} else {
-		util.Info.Println("Dynamicd process not found")
-	}
-
+	util.WaitForStoppedPID(dynamicd.Cmd.Process, time.Second*240)
 	util.Info.Println("Exit.")
 	util.EndDebugLogFile(30)
 	return nil
