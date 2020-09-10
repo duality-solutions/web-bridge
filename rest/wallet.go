@@ -17,7 +17,7 @@ type unlockWalletRequest struct {
 	MixingOnly bool   `json:"mixingonly"`
 }
 
-type lockWalletRequest struct {
+type encryptWalletRequest struct {
 	Passphrase string `json:"passphrase"`
 }
 
@@ -117,7 +117,7 @@ func (w *WebBridgeRunner) encryptwallet(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Request body is empty"})
 		return
 	}
-	req := lockWalletRequest{}
+	req := encryptWalletRequest{}
 	err = json.Unmarshal(body, &req)
 	if err != nil {
 		strErrMsg := fmt.Sprintf("Request body JSON unmarshal error %v", err)
