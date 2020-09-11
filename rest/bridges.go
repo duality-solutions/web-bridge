@@ -16,7 +16,7 @@ type bridgeInfo struct {
 	LinkID             string `json:"link_id"`
 	OnOpenEpoch        int64  `json:"on_open_epoch"`
 	OnStateChangeEpoch int64  `json:"on_state_changed_epoch"`
-	LastDataEpoch      int64  `json:"last_data_epoch"`
+	OnLastDataEpoch    int64  `json:"on_last_data_epoch"`
 	OnErrorEpoch       int64  `json:"on_error_epoch"`
 	RTCState           string `json:"rtc_status"`
 	ListenPort         uint16 `json:"listen_port"`
@@ -39,7 +39,7 @@ func (w *WebBridgeRunner) bridgesinfo(c *gin.Context) {
 			MyAccount:          bridge.MyAccount,
 			LinkAccount:        bridge.LinkAccount,
 			OnOpenEpoch:        bridge.OnOpenEpoch(),
-			LastDataEpoch:      bridge.LastDataEpoch(),
+			OnLastDataEpoch:    bridge.OnLastDataEpoch(),
 			OnErrorEpoch:       bridge.OnErrorEpoch(),
 			OnStateChangeEpoch: bridge.OnStateChangeEpoch(),
 			RTCState:           bridge.RTCState(),
@@ -68,7 +68,7 @@ func (w *WebBridgeRunner) connectedbridges(c *gin.Context) {
 			MyAccount:          bridge.MyAccount,
 			LinkAccount:        bridge.LinkAccount,
 			OnOpenEpoch:        bridge.OnOpenEpoch(),
-			LastDataEpoch:      bridge.LastDataEpoch(),
+			OnLastDataEpoch:    bridge.OnLastDataEpoch(),
 			OnErrorEpoch:       bridge.OnErrorEpoch(),
 			OnStateChangeEpoch: bridge.OnStateChangeEpoch(),
 			RTCState:           bridge.RTCState(),
@@ -97,7 +97,7 @@ func (w *WebBridgeRunner) unconnectedbridges(c *gin.Context) {
 			MyAccount:          bridge.MyAccount,
 			LinkAccount:        bridge.LinkAccount,
 			OnOpenEpoch:        bridge.OnOpenEpoch(),
-			LastDataEpoch:      bridge.LastDataEpoch(),
+			OnLastDataEpoch:    bridge.OnLastDataEpoch(),
 			OnErrorEpoch:       bridge.OnErrorEpoch(),
 			OnStateChangeEpoch: bridge.OnStateChangeEpoch(),
 			RTCState:           bridge.RTCState(),
