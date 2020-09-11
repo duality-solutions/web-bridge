@@ -143,10 +143,10 @@ func (b *Bridge) SetOnErrorEpoch(e int64) {
 }
 
 // OnErrorEpoch sets the bridge WebRTC error epoch time
-func (b *Bridge) OnErrorEpoch(e int64) {
+func (b *Bridge) OnErrorEpoch() int64 {
 	b.bridgeMut.Lock()
 	defer b.bridgeMut.Unlock()
-	b.onErrorEpoch = e
+	return b.onErrorEpoch
 }
 
 // SetOnStateChangeEpoch returns the bridge WebRTC set on change epoch time
@@ -290,7 +290,7 @@ func (b *Bridge) String() string {
 		"\nOnOpenEpoch: ", b.onOpenEpoch,
 		"\nOnErrorEpoch: ", b.onErrorEpoch,
 		"\nOnStateChangeEpoch: ", b.onStateChangeEpoch,
-		"\nRTCStatus: ", b.rtcState,
+		"\nRTCState: ", b.rtcState,
 		"\nLastDataEpoch: ", b.lastDataEpoch,
 		"\nState: ", b.state.String(),
 	)

@@ -1,6 +1,7 @@
 package bridge
 
 import (
+	"errors"
 	"time"
 
 	"github.com/duality-solutions/web-bridge/init/settings"
@@ -27,6 +28,14 @@ var links dynamic.ActiveLinks
 type Bridges struct {
 	connected   map[string]*Bridge
 	unconnected map[string]*Bridge
+}
+
+// Controler returns the internal bridge controller if it exists
+func Controler() (*Controller, error) {
+	if bridgeControler == nil {
+		return nil, errors.New("The bridge controller is not intialized yet")
+	}
+	return bridgeControler, nil
 }
 
 func setupBridges(stopchan *chan struct{}, links dynamic.ActiveLinks, accounts []dynamic.Account) bool {

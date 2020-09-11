@@ -28,6 +28,7 @@ func StartWebServiceRouter(dynamicd *dynamic.Dynamicd, mode string) {
 	version := api.Group("/v1")
 	setupBlockchainRoutes(version)
 	setupWalletRoutes(version)
+	setupBridgesRoutes(version)
 	runner.router.Run()
 }
 
@@ -57,4 +58,11 @@ func setupWalletRoutes(currentVersion *gin.RouterGroup) {
 	wallet.POST("/link/accept", runner.linkaccept)
 	wallet.POST("/link/message", runner.sendlinkmessage)
 	wallet.GET("/link/message", runner.getlinkmessages)
+}
+
+func setupBridgesRoutes(currentVersion *gin.RouterGroup) {
+	bridges := currentVersion.Group("/bridges")
+	bridges.GET("/info", runner.bridgesinfo)
+	bridges.GET("/connected", runner.connectedbridges)
+	bridges.GET("/unconnected", runner.unconnectedbridges)
 }

@@ -90,3 +90,17 @@ func (c *Controller) Count() uint16 {
 	defer c.bridgesMut.RUnlock()
 	return uint16(len(c.connected) + len(c.unconnected))
 }
+
+// AllBridges returns a map containing all connected and unconnected bridges
+func (c *Controller) AllBridges() map[string]*Bridge {
+	c.bridgesMut.Lock()
+	defer c.bridgesMut.Unlock()
+	allBridges := make(map[string]*Bridge)
+	for _, bridge := range c.connected {
+		allBridges[bridge.LinkID()] = bridge
+	}
+	for _, bridge := range c.unconnected {
+		allBridges[bridge.LinkID()] = bridge
+	}
+	return allBridges
+}
