@@ -19,7 +19,8 @@ type bridgeInfo struct {
 	OnLastDataEpoch    int64  `json:"on_last_data_epoch"`
 	OnErrorEpoch       int64  `json:"on_error_epoch"`
 	RTCState           string `json:"rtc_status"`
-	ListenPort         uint16 `json:"listen_port"`
+	HTTPListenPort     uint16 `json:"http_listen_port"`
+	HTTPSListenPort    uint16 `json:"https_listen_port"`
 }
 
 func (w *WebBridgeRunner) bridgesinfo(c *gin.Context) {
@@ -43,7 +44,8 @@ func (w *WebBridgeRunner) bridgesinfo(c *gin.Context) {
 			OnErrorEpoch:       bridge.OnErrorEpoch(),
 			OnStateChangeEpoch: bridge.OnStateChangeEpoch(),
 			RTCState:           bridge.RTCState(),
-			ListenPort:         bridge.ListenPort(),
+			HTTPListenPort:     bridge.ListenPort(),
+			HTTPSListenPort:    bridge.ListenPort() + 1,
 		}
 		ret[i] = info
 		i++
@@ -72,7 +74,8 @@ func (w *WebBridgeRunner) connectedbridges(c *gin.Context) {
 			OnErrorEpoch:       bridge.OnErrorEpoch(),
 			OnStateChangeEpoch: bridge.OnStateChangeEpoch(),
 			RTCState:           bridge.RTCState(),
-			ListenPort:         bridge.ListenPort(),
+			HTTPListenPort:     bridge.ListenPort(),
+			HTTPSListenPort:    bridge.ListenPort() + 1,
 		}
 		ret[i] = info
 		i++
@@ -101,7 +104,8 @@ func (w *WebBridgeRunner) unconnectedbridges(c *gin.Context) {
 			OnErrorEpoch:       bridge.OnErrorEpoch(),
 			OnStateChangeEpoch: bridge.OnStateChangeEpoch(),
 			RTCState:           bridge.RTCState(),
-			ListenPort:         bridge.ListenPort(),
+			HTTPListenPort:     bridge.ListenPort(),
+			HTTPSListenPort:    bridge.ListenPort() + 1,
 		}
 		ret[i] = info
 		i++
