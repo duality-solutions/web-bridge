@@ -132,25 +132,24 @@ func Init(version, githash string) error {
 	if err != nil {
 		return fmt.Errorf("ConnectToIceServicesDetached error %v", err)
 	}
-	util.Info.Println("Connected to ICE services.")
-
-	dynamicd, proc, err := dynamic.FindDynamicdProcess(false, time.Second*1)
-	if err == nil {
-		// kill existing dynamicd process
-		util.Warning.Println("dynamicd daemon already running. Attempting to kill the process.")
-		err = proc.Kill()
-		if err != nil {
-			return fmt.Errorf("Fatal error, dynamicd daemon process (%v) is running but can't be stopped %v", proc.Pid, err)
-		}
-		time.Sleep(time.Second * 5)
-	}
-	dynamicd, proc, err = dynamic.FindDynamicdProcess(true, time.Second*30)
-	if proc != nil {
-		util.Info.Println("Running dynamicd process found Pid", proc.Pid)
-	} else {
-		return fmt.Errorf("Fatal error starting dynamicd daemon %v ", err)
-	}
+	util.Info.Println("Connected to ICE services:")
 	if !test {
+		dynamicd, proc, err := dynamic.FindDynamicdProcess(false, time.Second*1)
+		if err == nil {
+			// kill existing dynamicd process
+			util.Warning.Println("dynamicd daemon already running. Attempting to kill the process.")
+			err = proc.Kill()
+			if err != nil {
+				return fmt.Errorf("Fatal error, dynamicd daemon process (%v) is running but can't be stopped %v", proc.Pid, err)
+			}
+			time.Sleep(time.Second * 5)
+		}
+		dynamicd, proc, err = dynamic.FindDynamicdProcess(true, time.Second*30)
+		if proc != nil {
+			util.Info.Println("Running dynamicd process found Pid", proc.Pid)
+		} else {
+			return fmt.Errorf("Fatal error starting dynamicd daemon %v ", err)
+		}
 		// make sure wallet is created
 		dynamicd.WaitForWalletCreated()
 		status, errStatus := dynamicd.GetSyncStatus()
@@ -253,10 +252,10 @@ func Init(version, githash string) error {
 		respStop, _ := util.BeautifyJSON(<-dynamicd.ExecCmdRequest(reqStop))
 		util.Info.Println(respStop)
 		time.Sleep(time.Second * 5)
+		util.Info.Println("Looking for dynamicd process pid", dynamicd.Cmd.Process.Pid)
+		util.WaitForProcessShutdown(dynamicd.Cmd.Process, time.Second*240)
+		util.Info.Println("Exit.")
+		util.EndDebugLogFile(30)
 	}
-	util.Info.Println("Looking for dynamicd process pid", dynamicd.Cmd.Process.Pid)
-	util.WaitForProcessShutdown(dynamicd.Cmd.Process, time.Second*240)
-	util.Info.Println("Exit.")
-	util.EndDebugLogFile(30)
 	return nil
 }
