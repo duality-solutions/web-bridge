@@ -129,6 +129,24 @@ func SendOffer(link *Bridge) bool {
 	return true
 }
 
+func sendOnlineNotification(link *Bridge, wait time.Duration) {
+	select {
+	case <-time.After(wait):
+		notification := OnlineNotification{
+			StartTime: startEpoch,
+			EndTime:   endEpoch,
+		}
+		encoded, err := util.EncodeObject(notification)
+		if err != nil {
+			util.Error.Println("DisconnectedLinks EncodeObject error", link.LinkAccount, err)
+			return
+		}
+		sendOnlineChan := make(chan dynamic.MessageReturnJSON, 1)
+		dynamicd.SendNotificationMessageAsync(link.MyAccount, link.LinkAccount, encoded, sendOnlineChan)
+		util.Info.Println("DisconnectedLinks sent online notification to", link.LinkAccount, encoded)
+	}
+}
+
 // DisconnectedLinks reinitializes the WebRTC link bridge struct
 func DisconnectedLinks(stopchan *chan struct{}) bool {
 	bridges := bridgeControler.Unconnected()
@@ -136,19 +154,8 @@ func DisconnectedLinks(stopchan *chan struct{}) bool {
 	startEpoch = time.Now().Unix()
 	for _, link := range bridges {
 		if link.State() == StateInit && link.RTCState() == "closed" {
-			notification := OnlineNotification{
-				StartTime: startEpoch,
-				EndTime:   endEpoch,
-			}
-			encoded, err := util.EncodeObject(notification)
-			if err != nil {
-				util.Error.Println("DisconnectedLinks EncodeObject error", link.LinkAccount, err)
-				break
-			}
-			sendOnlineChan := make(chan dynamic.MessageReturnJSON, 1)
-			dynamicd.SendNotificationMessageAsync(link.MyAccount, link.LinkAccount, encoded, sendOnlineChan)
-			util.Info.Println("DisconnectedLinks sent online notification to", link.LinkAccount, encoded)
 			link.SetRTCState("")
+			go sendOnlineNotification(link, time.Second*60)
 		}
 	}
 	return true
