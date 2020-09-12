@@ -132,45 +132,23 @@ func SendOffer(link *Bridge) bool {
 // DisconnectedLinks reinitializes the WebRTC link bridge struct
 func DisconnectedLinks(stopchan *chan struct{}) bool {
 	bridges := bridgeControler.Unconnected()
-	l := len(bridges)
-	putOffers := make(chan dynamic.DHTPutReturn, l)
+	endEpoch = 0
+	startEpoch = time.Now().Unix()
 	for _, link := range bridges {
-		if link.State() == StateInit {
-			util.Info.Println("DisconnectedLinks for", link.LinkParticipants(), link.LinkID())
-			var linkBridge = NewLinkBridge(link.SessionID, link.LinkAccount, link.MyAccount, accounts)
-			pc, err := ConnectToIceServicesDetached(config)
-			if err != nil {
-				util.Error.Println("DisconnectedLinks error connecting tot ICE services", err)
-				continue
-			} else {
-				linkBridge.SetPeerConnection(pc)
-				dataChannel, err := linkBridge.PeerConnection().CreateDataChannel(link.LinkParticipants(), nil)
-				if err != nil {
-					util.Error.Println("DisconnectedLinks error creating dataChannel for", link.LinkAccount, link.LinkID())
-					continue
-				}
-				linkBridge.SetDataChannel(dataChannel)
+		if link.State() == StateInit && link.RTCState() == "closed" {
+			notification := OnlineNotification{
+				StartTime: startEpoch,
+				EndTime:   endEpoch,
 			}
-			offer, _ := linkBridge.PeerConnection().CreateOffer(nil)
-			encoded, err := util.EncodeObject(linkBridge.Offer())
+			encoded, err := util.EncodeObject(notification)
 			if err != nil {
-				util.Info.Println("DisconnectedLinks error EncodeObject", err)
+				util.Error.Println("DisconnectedLinks EncodeObject error", link.LinkAccount, err)
+				break
 			}
-			dynamicd.PutLinkRecord(linkBridge.MyAccount, linkBridge.LinkAccount, encoded, putOffers)
-			linkBridge.SetOfferAnswerStateEpoch(offer, link.Answer(), StateWaitForAnswer, time.Now().Unix())
-			bridgeControler.PutUnconnected(&linkBridge)
-		} else {
-			l--
-		}
-	}
-	for i := 0; i < l; i++ {
-		select {
-		default:
-			offer := <-putOffers
-			util.Info.Println("DisconnectedLinks Offer saved", offer)
-		case <-*stopchan:
-			util.Info.Println("DisconnectedLinks stopped")
-			return false
+			sendOnlineChan := make(chan dynamic.MessageReturnJSON, 1)
+			dynamicd.SendNotificationMessageAsync(link.MyAccount, link.LinkAccount, encoded, sendOnlineChan)
+			util.Info.Println("DisconnectedLinks sent online notification to", link.LinkAccount, encoded)
+			link.SetRTCState("")
 		}
 	}
 	return true

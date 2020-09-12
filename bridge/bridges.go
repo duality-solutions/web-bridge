@@ -101,10 +101,10 @@ func StartBridges(stopchan *chan struct{}, c settings.Configuration, d dynamic.D
 					if !GetOffers(stopchan) {
 						return
 					}
+					if !DisconnectedLinks(stopchan) {
+						return
+					}
 					/*
-						if !DisconnectedLinks(stopchan) {
-							return
-						}
 						if !StopDisconnected(stopchan) {
 							return
 						}
