@@ -36,7 +36,7 @@ func StartWebServiceRouter(dynamicd *dynamic.Dynamicd, mode string) {
 func setupBlockchainRoutes(currentVersion *gin.RouterGroup) {
 	blockchain := currentVersion.Group("/blockchain")
 	blockchain.POST("/jsonrpc", runner.handleJSONRPC)
-	blockchain.GET("/info", runner.getinfo)
+	blockchain.GET("/", runner.getinfo)
 	blockchain.GET("/users", runner.users)
 	blockchain.GET("/users/:UserID", runner.user)
 	blockchain.GET("/groups", runner.groups)
@@ -46,7 +46,7 @@ func setupBlockchainRoutes(currentVersion *gin.RouterGroup) {
 // TODO: follow https://rest.bitcoin.com for rest endpoints
 func setupWalletRoutes(currentVersion *gin.RouterGroup) {
 	wallet := currentVersion.Group("/wallet")
-	wallet.GET("/info", runner.walletinfo)
+	wallet.GET("/", runner.walletinfo)
 	wallet.PATCH("/unlock", runner.unlockwallet)
 	wallet.PATCH("/lock", runner.lockwallet)
 	wallet.PATCH("/encrypt", runner.encryptwallet)
@@ -62,7 +62,7 @@ func setupWalletRoutes(currentVersion *gin.RouterGroup) {
 
 func setupBridgesRoutes(currentVersion *gin.RouterGroup) {
 	bridges := currentVersion.Group("/bridges")
-	bridges.GET("/info", runner.bridgesinfo)
+	bridges.GET("/", runner.bridgesinfo)
 	bridges.GET("/connected", runner.connectedbridges)
 	bridges.GET("/unconnected", runner.unconnectedbridges)
 }
