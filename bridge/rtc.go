@@ -106,10 +106,12 @@ func EstablishRTC(link *Bridge) {
 	if failedICEConnection {
 		util.Info.Println("EstablishRTC close peer connection", link.LinkParticipants(), link.LinkID())
 		link.PeerConnection().Close()
+		link.SetOnErrorEpoch(time.Now().Unix())
 	}
 	bridgeControler.MoveConnectedToUnconnected(link)
 	util.Info.Println("EstablishRTC stopped!", link.LinkParticipants())
 	link.SetState(StateInit)
+
 	return
 }
 
@@ -200,6 +202,7 @@ func WaitForRTC(link *Bridge) {
 	if failedICEConnection {
 		util.Info.Println("WaitForRTC close peer connection", link.LinkParticipants(), link.LinkID())
 		link.PeerConnection().Close()
+		link.SetOnErrorEpoch(time.Now().Unix())
 	} else {
 		util.Info.Println("WaitForRTC ICEConnectionState", link.LinkParticipants(), link.PeerConnection().ICEConnectionState().String())
 	}
