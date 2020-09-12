@@ -10,10 +10,10 @@ import (
 
 type bridgeInfo struct {
 	SessionID          uint16 `json:"session_id"`
+	LinkID             string `json:"link_id"`
 	State              string `json:"state"`
 	MyAccount          string `json:"my_account"`
 	LinkAccount        string `json:"link_account"`
-	LinkID             string `json:"link_id"`
 	OnOpenEpoch        int64  `json:"on_open_epoch"`
 	OnStateChangeEpoch int64  `json:"on_state_changed_epoch"`
 	OnLastDataEpoch    int64  `json:"on_last_data_epoch"`
@@ -36,6 +36,7 @@ func (w *WebBridgeRunner) bridgesinfo(c *gin.Context) {
 	for _, bridge := range bridges {
 		var info = bridgeInfo{
 			SessionID:          bridge.SessionID,
+			LinkID:             bridge.LinkID(),
 			State:              bridge.State().String(),
 			MyAccount:          bridge.MyAccount,
 			LinkAccount:        bridge.LinkAccount,
@@ -66,6 +67,7 @@ func (w *WebBridgeRunner) connectedbridges(c *gin.Context) {
 	for _, bridge := range bridges {
 		var info = bridgeInfo{
 			SessionID:          bridge.SessionID,
+			LinkID:             bridge.LinkID(),
 			State:              bridge.State().String(),
 			MyAccount:          bridge.MyAccount,
 			LinkAccount:        bridge.LinkAccount,
@@ -96,6 +98,7 @@ func (w *WebBridgeRunner) unconnectedbridges(c *gin.Context) {
 	for _, bridge := range bridges {
 		var info = bridgeInfo{
 			SessionID:          bridge.SessionID,
+			LinkID:             bridge.LinkID(),
 			State:              bridge.State().String(),
 			MyAccount:          bridge.MyAccount,
 			LinkAccount:        bridge.LinkAccount,
