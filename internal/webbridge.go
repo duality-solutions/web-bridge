@@ -170,7 +170,7 @@ func Init(version, githash string) error {
 		}
 		util.Info.Println("dynamic connections", info.Connections)
 
-		acc, errAccounts := dynamicd.GetMyAccounts()
+		acc, errAccounts := dynamicd.GetMyAccounts(time.Second * 120)
 		if errAccounts != nil {
 			util.Error.Println("GetActiveLinks error", errAccounts)
 		} else {
@@ -202,7 +202,7 @@ func Init(version, githash string) error {
 				}
 			}
 		}
-		al, errLinks := dynamicd.GetActiveLinks()
+		al, errLinks := dynamicd.GetActiveLinks(time.Second * 120)
 		if errLinks != nil {
 			util.Error.Println("GetActiveLinks error", errLinks)
 		} else {

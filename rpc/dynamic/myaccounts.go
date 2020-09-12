@@ -2,6 +2,8 @@ package dynamic
 
 import (
 	"encoding/json"
+	"fmt"
+	"time"
 
 	util "github.com/duality-solutions/web-bridge/internal/utilities"
 )
@@ -27,8 +29,7 @@ type Account struct {
 	Expired            bool   `json:"expired"`
 }
 
-// GetMyAccounts returns all BDAP accounts from the wallet
-func (d *Dynamicd) GetMyAccounts() (*[]Account, error) {
+func (d *Dynamicd) myAccounts() (*[]Account, error) {
 	var accountsGeneric map[string]interface{}
 	var accounts = []Account{}
 	req, _ := NewRequest("dynamic-cli mybdapaccounts")
@@ -50,4 +51,24 @@ func (d *Dynamicd) GetMyAccounts() (*[]Account, error) {
 		}
 	}
 	return &accounts, nil
+}
+
+// GetMyAccounts returns all BDAP accounts from the wallet
+func (d *Dynamicd) GetMyAccounts(timeout time.Duration) (*[]Account, error) {
+	myAccounts, err := d.myAccounts()
+	if err != nil {
+		for {
+			select {
+			case <-time.After(time.Second * 5):
+				myAccounts, err = d.myAccounts()
+				if err == nil {
+					return myAccounts, nil
+				}
+			case <-time.After(timeout):
+				return nil, fmt.Errorf("GetMyAccounts failed after timeout")
+			}
+		}
+	} else {
+		return myAccounts, nil
+	}
 }
