@@ -18,12 +18,11 @@ func WatchProcess(stopchan chan struct{}, sleepSecs uint16, walletpassphrase str
 		for {
 			select {
 			default:
-				proc, _ := FindDynamicdProcess()
-				//util.Info.Println("WatchProcess FindDynamicdProcess", i)
+				_, proc, _ := FindDynamicdProcess(false, time.Second*1)
 				if proc == nil {
 					restarts++
 					util.Info.Println("WatchProcess restarting dynamicd process", restarts)
-					dynamicd, err := LoadRPCDynamicd()
+					dynamicd, _, err := FindDynamicdProcess(true, time.Second*30)
 					if err != nil {
 						util.Error.Println("WatchProcess error restarting dynamicd process", restarts, err)
 						continue

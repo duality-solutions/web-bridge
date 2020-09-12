@@ -134,26 +134,21 @@ func Init(version, githash string) error {
 	}
 	util.Info.Println("Connected to ICE services.")
 
-	proc, err := dynamic.FindDynamicdProcess()
+	dynamicd, proc, err := dynamic.FindDynamicdProcess(false, time.Second*1)
 	if err == nil {
-		util.Warning.Println("dynamicd already running. Attempting to kill the process.")
+		// kill existing dynamicd process
+		util.Warning.Println("dynamicd daemon already running. Attempting to kill the process.")
 		err = proc.Kill()
 		if err != nil {
-			return fmt.Errorf("Fatal error, dynamicd process (%v) is running but can't be stopped %v", proc.Pid, err)
+			return fmt.Errorf("Fatal error, dynamicd daemon process (%v) is running but can't be stopped %v", proc.Pid, err)
 		}
+		time.Sleep(time.Second * 5)
 	}
-	// create and run dynamicd
-	dynamicd, err := dynamic.LoadRPCDynamicd()
-	if err != nil {
-		return fmt.Errorf("LoadRPCDynamicd %v", err)
-	}
-
-	proc, err = dynamic.FindDynamicdProcess()
+	dynamicd, proc, err = dynamic.FindDynamicdProcess(true, time.Second*30)
 	if proc != nil {
 		util.Info.Println("Running dynamicd process found Pid", proc.Pid)
 	} else {
-		util.Error.Println(err)
-		// start again or exit app ???
+		return fmt.Errorf("Fatal error starting dynamicd daemon %v ", err)
 	}
 	if !test {
 		// make sure wallet is created
