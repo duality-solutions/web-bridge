@@ -106,6 +106,15 @@ func (c *Configuration) DeleteIceServer(index int) bool {
 	return true
 }
 
+// ReplaceIceServers deleted an existing ICE Server from current configuration
+func (c *Configuration) ReplaceIceServers(fileData ConfigurationFile) bool {
+	c.mut.Lock()
+	defer c.mut.Unlock()
+	c.configFile.IceServers = fileData.IceServers
+	c.updateFile()
+	return true
+}
+
 // ToJSON convert the Configuration struct to JSON
 func (c *Configuration) ToJSON() ConfigurationFile {
 	c.mut.Lock()

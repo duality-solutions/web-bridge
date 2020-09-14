@@ -111,3 +111,34 @@ func (w *WebBridgeRunner) deleteice(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Configuration variable is null. Can not detele from ICE server configuration list."})
 	}
 }
+
+func (w *WebBridgeRunner) replaceice(c *gin.Context) {
+	if configuration != nil {
+		body, err := ioutil.ReadAll(c.Request.Body)
+		if err != nil {
+			strErrMsg := fmt.Sprintf("Request body read all error %v. Can not detele from ICE server configuration list.", err)
+			c.JSON(http.StatusBadRequest, gin.H{"error": strErrMsg})
+			return
+		}
+		if len(body) == 0 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Request body is empty. Can not detele from ICE server configuration list."})
+			return
+		}
+		req := settings.ConfigurationFile{}
+		err = json.Unmarshal(body, &req)
+		if err != nil {
+			strErrMsg := fmt.Sprintf("Request body JSON unmarshal error %v. Can not detele from ICE server configuration list.", err)
+			c.JSON(http.StatusBadRequest, gin.H{"error": strErrMsg})
+			return
+		}
+		if len(req.IceServers) == 0 {
+			strErrMsg := fmt.Sprintf("URL is empty. Can not detele from ICE server configuration list.")
+			c.JSON(http.StatusBadRequest, gin.H{"error": strErrMsg})
+			return
+		}
+		configuration.ReplaceIceServers(req)
+		c.JSON(http.StatusOK, gin.H{"result": configuration.ToJSON()})
+	} else {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Configuration variable is null. Can not detele from ICE server configuration list."})
+	}
+}
