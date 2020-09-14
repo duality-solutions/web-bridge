@@ -11,7 +11,7 @@ type WebBridgeRunner struct {
 	dynamicd      *dynamic.Dynamicd
 	router        *gin.Engine
 	configuration *settings.Configuration
-	*AppShutdown
+	shutdownApp   *AppShutdown
 }
 
 var runner WebBridgeRunner
@@ -27,10 +27,11 @@ func StartWebServiceRouter(c *settings.Configuration, d *dynamic.Dynamicd, a *Ap
 	gin.SetMode(m)
 	runner.configuration = c
 	runner.dynamicd = d
-	runner.AppShutdown = a
+	runner.shutdownApp = a
 	runner.router = gin.Default()
 	api := runner.router.Group("/api")
 	version := api.Group("/v1")
+	version.POST("/shutdown", runner.shutdown)
 	setupBlockchainRoutes(version)
 	setupWalletRoutes(version)
 	setupBridgesRoutes(version)
@@ -80,4 +81,5 @@ func setupConfigRoutes(currentVersion *gin.RouterGroup) {
 	config.PUT("/ice", runner.putice)
 	config.DELETE("/ice", runner.deleteice)
 	config.POST("/ice", runner.replaceice)
+
 }
