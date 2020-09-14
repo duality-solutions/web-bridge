@@ -11,6 +11,7 @@ type WebBridgeRunner struct {
 	dynamicd      *dynamic.Dynamicd
 	router        *gin.Engine
 	configuration *settings.Configuration
+	*AppShutdown
 }
 
 var runner WebBridgeRunner
@@ -22,10 +23,11 @@ var runner WebBridgeRunner
 // TODO: Add RESTful API documentation with Swagger: https://github.com/swaggo/swag#getting-started
 
 // StartWebServiceRouter is used to setup the Rest server routes
-func StartWebServiceRouter(c *settings.Configuration, d *dynamic.Dynamicd, m string) {
+func StartWebServiceRouter(c *settings.Configuration, d *dynamic.Dynamicd, a *AppShutdown, m string) {
 	gin.SetMode(m)
 	runner.configuration = c
 	runner.dynamicd = d
+	runner.AppShutdown = a
 	runner.router = gin.Default()
 	api := runner.router.Group("/api")
 	version := api.Group("/v1")

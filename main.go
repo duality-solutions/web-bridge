@@ -3,8 +3,8 @@ package main
 import (
 	"os"
 
-	webbridge "github.com/duality-solutions/web-bridge/internal"
 	"github.com/duality-solutions/web-bridge/internal/util"
+	"github.com/duality-solutions/web-bridge/internal/webbridge"
 )
 
 // Version is the WebBridge version number in ISO date format
