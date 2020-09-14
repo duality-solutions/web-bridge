@@ -12,6 +12,14 @@ import (
 
 func (w *WebBridgeRunner) config(c *gin.Context) {
 	if configuration != nil {
+		c.JSON(http.StatusOK, gin.H{"result": configuration})
+	} else {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Configuration variable is null."})
+	}
+}
+
+func (w *WebBridgeRunner) getice(c *gin.Context) {
+	if configuration != nil {
 		c.JSON(http.StatusOK, gin.H{"result": configuration.IceServers})
 	} else {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Configuration variable is null."})

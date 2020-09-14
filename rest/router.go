@@ -74,7 +74,7 @@ func setupBridgesRoutes(currentVersion *gin.RouterGroup) {
 func setupConfigRoutes(currentVersion *gin.RouterGroup) {
 	config := currentVersion.Group("/config")
 	config.GET("/", runner.config)
-	config.GET("/ice", runner.config)
+	config.GET("/ice", runner.getice)
 	config.PUT("/ice", runner.putice)
 	//config.POST("/ice", runner.postice)
 	//config.DELETE("/ice", runner.deleteice)
