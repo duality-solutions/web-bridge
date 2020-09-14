@@ -17,7 +17,7 @@ require (
 	github.com/pion/webrtc/v2 v2.2.14
 	github.com/shirou/gopsutil v2.20.4+incompatible
 	golang.org/x/crypto v0.0.0-20200510223506-06a226fb4e37
-	golang.org/x/sys v0.0.0-20200817155316-9781c653f443 // indirect
+	golang.org/x/sys v0.0.0-20200817155316-9781c653f443
 	google.golang.org/protobuf v1.25.0
 	gopkg.in/yaml.v2 v2.3.0 // indirect
 )

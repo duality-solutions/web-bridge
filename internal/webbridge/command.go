@@ -5,18 +5,43 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
+	"github.com/duality-solutions/web-bridge/bridge"
 	"github.com/duality-solutions/web-bridge/internal/util"
 	"github.com/duality-solutions/web-bridge/rest"
 	"github.com/duality-solutions/web-bridge/rpc/dynamic"
+	"golang.org/x/crypto/ssh/terminal"
 )
 
-func appCommandLoop(shutdown *rest.AppShutdown, d *dynamic.Dynamicd, status *dynamic.SyncStatus, sync bool) {
+func unlockWallet(d *dynamic.Dynamicd) bool {
+	fmt.Print("wallet passphrase> ")
+	bytePassword, _ := terminal.ReadPassword(int(os.Stdin.Fd()))
+	walletpassphrase = strings.Trim(string(bytePassword), "\r\n ")
+	err := d.UnlockWallet(walletpassphrase)
+	if err == nil {
+		util.Info.Println("Wallet unlocked.")
+		return true
+	}
+	util.Error.Println(err)
+	return false
+}
+
+func appCommandLoop(stopBridges *chan struct{}, acc *[]dynamic.Account, al *dynamic.ActiveLinks,
+	shutdown *rest.AppShutdown, d *dynamic.Dynamicd,
+	status *dynamic.SyncStatus, sync bool) {
 	go func() {
 		var err error
+		var unlocked, bridgesStarted = false, false
 		for {
 			select {
 			default:
+				errUnlock := d.UnlockWallet("")
+				if errUnlock != nil {
+					util.Info.Println("Wallet locked. Use the unlock command to unlock")
+				} else {
+					unlocked = true
+				}
 				reader := bufio.NewReader(os.Stdin)
 				fmt.Print("web-bridge> ")
 				cmdText, _ := reader.ReadString('\n')
@@ -27,6 +52,16 @@ func appCommandLoop(shutdown *rest.AppShutdown, d *dynamic.Dynamicd, status *dyn
 					util.Info.Println("Exit command. Stopping services.")
 					shutdown.ShutdownAppliction()
 					break
+				} else if strings.HasPrefix(cmdText, "unlock") {
+					unlocked = unlockWallet(d)
+					if unlocked {
+						al, err = d.GetActiveLinks(time.Second * 120)
+						if err != nil {
+							util.Error.Println("GetActiveLinks error", err)
+						} else {
+							util.Info.Printf("Found %v links\n", len(al.Links))
+						}
+					}
 				} else if strings.HasPrefix(cmdText, "dynamic-cli") {
 					req, errNewRequest := dynamic.NewRequest(cmdText)
 					if errNewRequest != nil {
@@ -49,6 +84,11 @@ func appCommandLoop(shutdown *rest.AppShutdown, d *dynamic.Dynamicd, status *dyn
 							sync = true
 						}
 					}
+				}
+				if unlocked && !bridgesStarted && acc != nil && al != nil {
+					util.Info.Println("Starting bridges.")
+					go bridge.StartBridges(stopBridges, config, *d, *acc, *al)
+					bridgesStarted = true
 				}
 			case <-*shutdown.Close:
 				return

@@ -6,10 +6,7 @@ import (
 	"os"
 	"os/user"
 	"runtime"
-	"strings"
 	"time"
-
-	"golang.org/x/crypto/ssh/terminal"
 
 	"github.com/duality-solutions/web-bridge/bridge"
 	"github.com/duality-solutions/web-bridge/init/settings"
@@ -141,23 +138,6 @@ func Init(version, githash string) error {
 		// Start Gin web services
 		go rest.StartWebServiceRouter(&config, dynamicd, &shutdown, mode)
 
-		errUnlock := dynamicd.UnlockWallet("")
-		if errUnlock != nil {
-			util.Info.Println("Wallet locked. Please unlock the wallet to continue.")
-			var unlocked = false
-			for !unlocked {
-				fmt.Print("wallet passphrase> ")
-				bytePassword, _ := terminal.ReadPassword(int(os.Stdin.Fd()))
-				walletpassphrase = strings.Trim(string(bytePassword), "\r\n ")
-				errUnlock = dynamicd.UnlockWallet(walletpassphrase)
-				if errUnlock == nil {
-					util.Info.Println("Wallet unlocked.")
-					unlocked = true
-				} else {
-					util.Error.Println(errUnlock)
-				}
-			}
-		}
 		al, errLinks := dynamicd.GetActiveLinks(time.Second * 120)
 		if errLinks != nil {
 			util.Error.Println("GetActiveLinks error", errLinks)
@@ -169,10 +149,9 @@ func Init(version, githash string) error {
 			go bridge.StartBridges(&stopBridges, config, *dynamicd, *acc, *al)
 		}
 
-		go appCommandLoop(&shutdown, dynamicd, status, sync)
+		go appCommandLoop(&stopBridges, acc, al, &shutdown, dynamicd, status, sync)
 
 		for {
-			util.Info.Println("Waiting for close.")
 			select {
 			case <-*shutdown.Close:
 				util.Info.Println("Shutdown close trigger.")
