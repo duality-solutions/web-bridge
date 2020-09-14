@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"os"
+	"sync"
 
 	util "github.com/duality-solutions/web-bridge/internal/utilities"
 )
@@ -21,8 +22,18 @@ const (
 	DefaultIceCredential string = "Admin@123"
 )
 
-var HomeDir string = ""
-var PathSeperator string = ""
+var homeDir string = ""
+var pathSeperator string = ""
+
+// HomeDir returns the web-bridge home directory
+func HomeDir() string {
+	return homeDir
+}
+
+// PathSeperator returns OS path seperator
+func PathSeperator() string {
+	return pathSeperator
+}
 
 // IceServerConfig stores the ICE server configuration information needed for WebRTC connections
 type IceServerConfig struct {
@@ -31,9 +42,45 @@ type IceServerConfig struct {
 	Credential string `json:"Credential"`
 }
 
+// ConfigurationFile stores the content of the web-bridge configuration file
+type ConfigurationFile struct {
+	IceServers []IceServerConfig `json:"IceServers"`
+}
+
 // Configuration contains the main file settings used when the application launches
 type Configuration struct {
-	IceServers []IceServerConfig `json:"IceServers"`
+	mut        *sync.RWMutex
+	configFile ConfigurationFile
+}
+
+// IceServers returns the current configuration ICE servers
+func (c *Configuration) IceServers() *[]IceServerConfig {
+	c.mut.Lock()
+	defer c.mut.Unlock()
+	return &c.configFile.IceServers
+}
+
+// AddIceServer adds a new ICE Server to the current configuration
+func (c *Configuration) AddIceServer(ice IceServerConfig) bool {
+	c.mut.Lock()
+	defer c.mut.Unlock()
+	c.configFile.IceServers = append(c.configFile.IceServers, ice)
+	return true
+}
+
+// UpdateIceServer updates an existing ICE Server in current configuration
+func (c *Configuration) UpdateIceServer(index int, ice IceServerConfig) bool {
+	c.mut.Lock()
+	defer c.mut.Unlock()
+	c.configFile.IceServers[index] = ice
+	return true
+}
+
+// ToJSON convert the Configuration struct to JSON
+func (c *Configuration) ToJSON() ConfigurationFile {
+	c.mut.Lock()
+	defer c.mut.Unlock()
+	return c.configFile
 }
 
 func isErr(e error) bool {
@@ -49,29 +96,30 @@ func (c *Configuration) createDefault() {
 		DefaultIceUserName,
 		DefaultIceCredential,
 	}
-	c.IceServers = append(c.IceServers, defaultIce)
+	c.configFile.IceServers = append(c.configFile.IceServers, defaultIce)
 	file, _ := json.Marshal(&c)
-	err := ioutil.WriteFile(HomeDir+ConfigurationFileName, file, 0644)
+	err := ioutil.WriteFile(homeDir+ConfigurationFileName, file, 0644)
 	if isErr(err) {
 		util.Error.Println("Error writting default configuration file.")
 	}
 }
 
 // Load reads the configuration file or loads default values
-func (c *Configuration) Load(homeDir, pathSeperator string) {
-	HomeDir = homeDir
-	PathSeperator = pathSeperator
-	_, errOpen := os.Open(HomeDir + ConfigurationFileName)
+func (c *Configuration) Load(dir, seperator string) {
+	c.mut = new(sync.RWMutex)
+	homeDir = dir
+	pathSeperator = seperator
+	_, errOpen := os.Open(homeDir + ConfigurationFileName)
 	if isErr(errOpen) {
 		util.Error.Println("Configuration file doesn't exist. Creating new configuration with default values.")
 		c.createDefault()
 	} else {
-		file, errRead := ioutil.ReadFile(HomeDir + ConfigurationFileName)
+		file, errRead := ioutil.ReadFile(homeDir + ConfigurationFileName)
 		if isErr(errRead) {
 			c.createDefault()
 			return
 		}
-		errUnmarshal := json.Unmarshal([]byte(file), c)
+		errUnmarshal := json.Unmarshal([]byte(file), &c.configFile)
 		if isErr(errUnmarshal) {
 			util.Error.Println("Error unmarshal configuration file. Overwritting file with default values.")
 			c.createDefault()

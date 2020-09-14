@@ -78,7 +78,7 @@ getAnswersLoop:
 			if len(answers.Messages) > 0 && link.State() == StateWaitForAnswer {
 				currentAnswer := mapGetAnswers[link.LinkID()]
 				if link.PeerConnection() == nil {
-					pc, err := ConnectToIceServicesDetached(config)
+					pc, err := ConnectToIceServicesDetached(&config)
 					if err == nil {
 						link.SetPeerConnection(pc)
 					}

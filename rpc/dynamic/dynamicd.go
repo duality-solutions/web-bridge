@@ -103,14 +103,14 @@ func getCmd(ctx context.Context, dataDirPath, binpath, rpcUser, rpcPassword stri
 }
 
 func loadDynamicd(_os, archiveExt string) (*Dynamicd, error) {
-	var dataDirPath string = settings.HomeDir
+	var dataDirPath string = settings.HomeDir()
 	if !util.DirectoryExists(dataDirPath) {
 		err := util.AddDirectory(dataDirPath)
 		if err != nil {
 			return nil, fmt.Errorf("loadDynamicd failed after AddDirectory root %v. %v", dataDirPath, err)
 		}
 	}
-	var dirDelimit string = settings.PathSeperator
+	var dirDelimit string = settings.PathSeperator()
 	if _os == "Windows" {
 		if !initVars {
 			dynDir += dirDelimit

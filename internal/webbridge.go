@@ -128,7 +128,7 @@ func Init(version, githash string) error {
 	}
 
 	// Connect to ICE services
-	_, err := bridge.ConnectToIceServicesDetached(config)
+	_, err := bridge.ConnectToIceServicesDetached(&config)
 	if err != nil {
 		return fmt.Errorf("ConnectToIceServicesDetached error %v", err)
 	}

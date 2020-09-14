@@ -52,7 +52,7 @@ getOffersLoop:
 				util.Info.Println("GetOffers offer found. Size", offer.MessageSize)
 				if newOffer != link.Offer() {
 					link.SetOffer(newOffer)
-					pc, err := ConnectToIceServicesDetached(config)
+					pc, err := ConnectToIceServicesDetached(&config)
 					if err != nil {
 						util.Error.Println("GetOffers ConnectToIceServices error", link.LinkAccount, err)
 						break getOffersLoop
@@ -96,7 +96,7 @@ getOffersLoop:
 
 // SendOffer sends a message with the WebRTC offer embedded to the link
 func SendOffer(link *Bridge) bool {
-	pc, err := ConnectToIceServicesDetached(config)
+	pc, err := ConnectToIceServicesDetached(&config)
 	if err != nil {
 		util.Error.Println("SendOffer error connecting tot ICE services", err)
 		return false

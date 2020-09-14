@@ -12,7 +12,7 @@ import (
 
 func (w *WebBridgeRunner) config(c *gin.Context) {
 	if configuration != nil {
-		c.JSON(http.StatusOK, gin.H{"result": configuration})
+		c.JSON(http.StatusOK, gin.H{"result": configuration.ToJSON()})
 	} else {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Configuration variable is null."})
 	}
@@ -20,7 +20,7 @@ func (w *WebBridgeRunner) config(c *gin.Context) {
 
 func (w *WebBridgeRunner) getice(c *gin.Context) {
 	if configuration != nil {
-		c.JSON(http.StatusOK, gin.H{"result": configuration.IceServers})
+		c.JSON(http.StatusOK, gin.H{"result": configuration.IceServers()})
 	} else {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Configuration variable is null."})
 	}
@@ -30,7 +30,8 @@ func findIceSetting(iceSetting settings.IceServerConfig) (int, error) {
 	if configuration == nil {
 		return -1, fmt.Errorf("configuration variable is null")
 	}
-	for i, ice := range configuration.IceServers {
+	iceServers := *configuration.IceServers()
+	for i, ice := range iceServers {
 		if ice.URL == iceSetting.URL {
 			return i, nil
 		}
@@ -38,7 +39,6 @@ func findIceSetting(iceSetting settings.IceServerConfig) (int, error) {
 	return -1, fmt.Errorf("ICE settings not found")
 }
 
-// TODO configuration.IceServers needs a lock
 // TODO write changes to config file while locked
 func (w *WebBridgeRunner) putice(c *gin.Context) {
 	if configuration != nil {
@@ -66,11 +66,11 @@ func (w *WebBridgeRunner) putice(c *gin.Context) {
 		}
 		index, err := findIceSetting(req)
 		if err != nil {
-			configuration.IceServers = append(configuration.IceServers, req)
+			configuration.AddIceServer(req)
 		} else {
-			configuration.IceServers[index] = req
+			configuration.UpdateIceServer(index, req)
 		}
-		c.JSON(http.StatusOK, gin.H{"result": configuration.IceServers})
+		c.JSON(http.StatusOK, gin.H{"result": configuration.IceServers()})
 	} else {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Configuration variable is null."})
 	}
