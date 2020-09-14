@@ -53,6 +53,25 @@ type Configuration struct {
 	configFile ConfigurationFile
 }
 
+func isErr(e error) bool {
+	if e != nil {
+		return true
+	}
+	return false
+}
+
+func (c *Configuration) updateFile() {
+	fileBytes, err := json.Marshal(&c.configFile)
+	if err != nil {
+		util.Error.Println("Configuration.updateFile() error after marshal configuration file data:", err)
+	}
+	fileName := (homeDir + ConfigurationFileName)
+	err = ioutil.WriteFile(fileName, fileBytes, 0644)
+	if err != nil {
+		util.Error.Println("Configuration.updateFile() error after WriteFile: ", err)
+	}
+}
+
 // IceServers returns the current configuration ICE servers
 func (c *Configuration) IceServers() *[]IceServerConfig {
 	c.mut.Lock()
@@ -65,6 +84,7 @@ func (c *Configuration) AddIceServer(ice IceServerConfig) bool {
 	c.mut.Lock()
 	defer c.mut.Unlock()
 	c.configFile.IceServers = append(c.configFile.IceServers, ice)
+	c.updateFile()
 	return true
 }
 
@@ -73,6 +93,16 @@ func (c *Configuration) UpdateIceServer(index int, ice IceServerConfig) bool {
 	c.mut.Lock()
 	defer c.mut.Unlock()
 	c.configFile.IceServers[index] = ice
+	c.updateFile()
+	return true
+}
+
+// DeleteIceServer deleted an existing ICE Server from current configuration
+func (c *Configuration) DeleteIceServer(index int) bool {
+	c.mut.Lock()
+	defer c.mut.Unlock()
+	c.configFile.IceServers = append(c.configFile.IceServers[:index], c.configFile.IceServers[index+1:]...)
+	c.updateFile()
 	return true
 }
 
@@ -81,13 +111,6 @@ func (c *Configuration) ToJSON() ConfigurationFile {
 	c.mut.Lock()
 	defer c.mut.Unlock()
 	return c.configFile
-}
-
-func isErr(e error) bool {
-	if e != nil {
-		return true
-	}
-	return false
 }
 
 func (c *Configuration) createDefault() {

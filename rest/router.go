@@ -76,6 +76,6 @@ func setupConfigRoutes(currentVersion *gin.RouterGroup) {
 	config.GET("/", runner.config)
 	config.GET("/ice", runner.getice)
 	config.PUT("/ice", runner.putice)
+	config.DELETE("/ice", runner.deleteice)
 	//config.POST("/ice", runner.postice)
-	//config.DELETE("/ice", runner.deleteice)
 }
