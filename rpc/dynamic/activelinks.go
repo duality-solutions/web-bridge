@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	util "github.com/duality-solutions/web-bridge/internal/utilities"
+	"github.com/duality-solutions/web-bridge/internal/util"
 )
 
 // ActiveLinks stores the completed link list returned by

@@ -6,7 +6,7 @@ import (
 	"os"
 	"time"
 
-	util "github.com/duality-solutions/web-bridge/internal/utilities"
+	"github.com/duality-solutions/web-bridge/internal/util"
 	"github.com/pion/webrtc/v2"
 )
 

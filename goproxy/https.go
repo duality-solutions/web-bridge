@@ -18,7 +18,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	util "github.com/duality-solutions/web-bridge/internal/utilities"
+	"github.com/duality-solutions/web-bridge/internal/util"
 	"google.golang.org/protobuf/proto"
 )
 

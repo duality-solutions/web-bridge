@@ -3,7 +3,7 @@ package dynamic
 import (
 	"time"
 
-	util "github.com/duality-solutions/web-bridge/internal/utilities"
+	"github.com/duality-solutions/web-bridge/internal/util"
 )
 
 // WatchProcess creates a go routine that watches for the dynamicd process and restarts if stopped

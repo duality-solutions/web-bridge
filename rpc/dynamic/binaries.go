@@ -4,7 +4,7 @@ import (
 	"os/exec"
 	"strings"
 
-	util "github.com/duality-solutions/web-bridge/internal/utilities"
+	"github.com/duality-solutions/web-bridge/internal/util"
 )
 
 func downloadBinaries(_os, dynDir, dynamicName, cliName, archiveExt string) error {

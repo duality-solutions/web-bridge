@@ -3,7 +3,7 @@ package dynamic
 import (
 	"errors"
 
-	util "github.com/duality-solutions/web-bridge/internal/utilities"
+	"github.com/duality-solutions/web-bridge/internal/util"
 )
 
 func checkBinaryHash(_os, hashDynamicd, hashCli string) error {

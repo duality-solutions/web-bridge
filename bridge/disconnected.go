@@ -3,7 +3,7 @@ package bridge
 import (
 	"time"
 
-	util "github.com/duality-solutions/web-bridge/internal/utilities"
+	"github.com/duality-solutions/web-bridge/internal/util"
 )
 
 // StopDisconnected looks for disconnected bridges and resets them

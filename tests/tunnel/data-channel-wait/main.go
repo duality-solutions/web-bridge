@@ -10,7 +10,7 @@ import (
 	"net/http"
 
 	"github.com/duality-solutions/web-bridge/goproxy"
-	util "github.com/duality-solutions/web-bridge/internal/utilities"
+	"github.com/duality-solutions/web-bridge/internal/util"
 	"github.com/pion/webrtc/v2"
 	"google.golang.org/protobuf/proto"
 )

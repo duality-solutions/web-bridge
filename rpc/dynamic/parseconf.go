@@ -5,7 +5,7 @@ import (
 	"io/ioutil"
 	"strings"
 
-	util "github.com/duality-solutions/web-bridge/internal/utilities"
+	"github.com/duality-solutions/web-bridge/internal/util"
 )
 
 // RemoveConfigComments removes the comments from the config string

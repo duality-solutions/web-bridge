@@ -61,7 +61,7 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	util "github.com/duality-solutions/web-bridge/internal/utilities"
+	"github.com/duality-solutions/web-bridge/internal/util"
 )
 
 // A ParseError is returned for parsing errors.

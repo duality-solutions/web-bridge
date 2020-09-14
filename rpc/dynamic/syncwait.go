@@ -3,7 +3,7 @@ package dynamic
 import (
 	"time"
 
-	util "github.com/duality-solutions/web-bridge/internal/utilities"
+	"github.com/duality-solutions/web-bridge/internal/util"
 )
 
 // WaitForSync waits for the Dynamic blockchain to fully sync

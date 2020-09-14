@@ -3,7 +3,7 @@ package dynamic
 import (
 	"encoding/json"
 
-	util "github.com/duality-solutions/web-bridge/internal/utilities"
+	"github.com/duality-solutions/web-bridge/internal/util"
 )
 
 // MessageReturnJSON stores dynamic RPC send message response

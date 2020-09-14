@@ -12,7 +12,7 @@ import (
 	"regexp"
 
 	goproxy "github.com/duality-solutions/web-bridge/goproxy"
-	util "github.com/duality-solutions/web-bridge/internal/utilities"
+	"github.com/duality-solutions/web-bridge/internal/util"
 	"github.com/inconshreveable/go-vhost"
 	"github.com/pion/webrtc/v2"
 )

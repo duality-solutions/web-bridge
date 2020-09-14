@@ -9,7 +9,7 @@ import (
 	"sort"
 	"sync"
 
-	util "github.com/duality-solutions/web-bridge/internal/utilities"
+	"github.com/duality-solutions/web-bridge/internal/util"
 	"github.com/duality-solutions/web-bridge/rpc/dynamic"
 	"github.com/pion/webrtc/v2"
 )

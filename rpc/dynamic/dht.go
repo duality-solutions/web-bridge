@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"time"
 
-	util "github.com/duality-solutions/web-bridge/internal/utilities"
+	"github.com/duality-solutions/web-bridge/internal/util"
 )
 
 // DHTPutJSON used to store information returned by dht putlinkrecord dev test01 pshare "<offer>"

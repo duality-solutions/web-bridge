@@ -8,8 +8,9 @@ import (
 
 // WebBridgeRunner is used to run the node application.
 type WebBridgeRunner struct {
-	dynamicd *dynamic.Dynamicd
-	router   *gin.Engine
+	dynamicd      *dynamic.Dynamicd
+	router        *gin.Engine
+	configuration *settings.Configuration
 }
 
 var runner WebBridgeRunner
@@ -19,12 +20,11 @@ var runner WebBridgeRunner
 // TODO: Add bridge controller
 // TODO: Add authentication
 // TODO: Add RESTful API documentation with Swagger: https://github.com/swaggo/swag#getting-started
-var configuration *settings.Configuration
 
 // StartWebServiceRouter is used to setup the Rest server routes
 func StartWebServiceRouter(c *settings.Configuration, d *dynamic.Dynamicd, m string) {
-	configuration = c
 	gin.SetMode(m)
+	runner.configuration = c
 	runner.dynamicd = d
 	runner.router = gin.Default()
 	api := runner.router.Group("/api")

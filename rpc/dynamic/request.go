@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	util "github.com/duality-solutions/web-bridge/internal/utilities"
+	"github.com/duality-solutions/web-bridge/internal/util"
 )
 
 // RPCRequest is a type for raw JSON-RPC 1.0 requests.  The Method field identifies

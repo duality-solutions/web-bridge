@@ -6,7 +6,7 @@ import (
 	"os"
 	"sync"
 
-	util "github.com/duality-solutions/web-bridge/internal/utilities"
+	"github.com/duality-solutions/web-bridge/internal/util"
 )
 
 // TODO: Support different ICE service authentication mechanisms

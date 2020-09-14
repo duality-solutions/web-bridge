@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/duality-solutions/web-bridge/init/settings"
-	util "github.com/duality-solutions/web-bridge/internal/utilities"
+	"github.com/duality-solutions/web-bridge/internal/util"
 	"github.com/duality-solutions/web-bridge/rpc/dynamic"
 )
 

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	util "github.com/duality-solutions/web-bridge/internal/utilities"
+	"github.com/duality-solutions/web-bridge/internal/util"
 )
 
 // Account stores a BDAP account object

@@ -4,7 +4,7 @@ import (
 	"os"
 
 	webbridge "github.com/duality-solutions/web-bridge/internal"
-	util "github.com/duality-solutions/web-bridge/internal/utilities"
+	"github.com/duality-solutions/web-bridge/internal/util"
 )
 
 // Version is the WebBridge version number in ISO date format
