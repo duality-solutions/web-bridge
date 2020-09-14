@@ -1,6 +1,7 @@
 package rest
 
 import (
+	"github.com/duality-solutions/web-bridge/init/settings"
 	"github.com/duality-solutions/web-bridge/rpc/dynamic"
 	"github.com/gin-gonic/gin"
 )
@@ -18,17 +19,20 @@ var runner WebBridgeRunner
 // TODO: Add bridge controller
 // TODO: Add authentication
 // TODO: Add RESTful API documentation with Swagger: https://github.com/swaggo/swag#getting-started
+var configuration *settings.Configuration
 
 // StartWebServiceRouter is used to setup the Rest server routes
-func StartWebServiceRouter(dynamicd *dynamic.Dynamicd, mode string) {
-	gin.SetMode(mode)
-	runner.dynamicd = dynamicd
+func StartWebServiceRouter(c *settings.Configuration, d *dynamic.Dynamicd, m string) {
+	configuration = c
+	gin.SetMode(m)
+	runner.dynamicd = d
 	runner.router = gin.Default()
 	api := runner.router.Group("/api")
 	version := api.Group("/v1")
 	setupBlockchainRoutes(version)
 	setupWalletRoutes(version)
 	setupBridgesRoutes(version)
+	setupConfigRoutes(version)
 	runner.router.Run()
 }
 
@@ -65,4 +69,13 @@ func setupBridgesRoutes(currentVersion *gin.RouterGroup) {
 	bridges.GET("/", runner.bridgesinfo)
 	bridges.GET("/connected", runner.connectedbridges)
 	bridges.GET("/unconnected", runner.unconnectedbridges)
+}
+
+func setupConfigRoutes(currentVersion *gin.RouterGroup) {
+	config := currentVersion.Group("/config")
+	config.GET("/", runner.config)
+	config.GET("/ice", runner.config)
+	config.PUT("/ice", runner.putice)
+	//config.POST("/ice", runner.postice)
+	//config.DELETE("/ice", runner.deleteice)
 }

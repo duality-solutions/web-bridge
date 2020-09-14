@@ -177,7 +177,7 @@ func Init(version, githash string) error {
 			mode = "debug"
 		}
 		// Start Gin web services
-		go rest.StartWebServiceRouter(dynamicd, mode)
+		go rest.StartWebServiceRouter(&config, dynamicd, mode)
 
 		errUnlock := dynamicd.UnlockWallet("")
 		if errUnlock != nil {
