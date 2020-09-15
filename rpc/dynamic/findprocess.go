@@ -7,13 +7,13 @@ import (
 	"time"
 
 	"github.com/duality-solutions/web-bridge/internal/util"
-	ps "github.com/shirou/gopsutil/process"
+	"github.com/shirou/gopsutil/process"
 )
 
-func findProcess() (*ps.Process, error) {
-	processList, err := ps.Processes()
+func findProcess() (*process.Process, error) {
+	processList, err := process.Processes()
 	if err != nil {
-		return nil, fmt.Errorf("ps.Processes() Failed")
+		return nil, fmt.Errorf("process.Processes() Failed")
 	}
 	for _, process := range processList {
 		name, _ := process.Name()
@@ -29,7 +29,7 @@ func findProcess() (*ps.Process, error) {
 }
 
 // FindDynamicdProcess returns the dynamicd processes running locally
-func FindDynamicdProcess(start bool, timeout time.Duration) (*Dynamicd, *ps.Process, error) {
+func FindDynamicdProcess(start bool, timeout time.Duration) (*Dynamicd, *process.Process, error) {
 	var dynamicd *Dynamicd
 	var err error
 	if start {
