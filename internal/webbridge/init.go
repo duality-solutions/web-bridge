@@ -15,6 +15,11 @@ import (
 	"github.com/duality-solutions/web-bridge/rpc/dynamic"
 )
 
+const (
+	// DefaultName application name
+	DefaultName string = "web-bridge"
+)
+
 var config settings.Configuration
 var debug = false
 var test = false
@@ -24,7 +29,7 @@ var testWaitForOffer = false
 
 // Init is used to begin all WebBridge tasks
 func Init(version, githash string) error {
-	running, pid, err := util.FindWebBridgeProcess()
+	running, pid, err := util.FindWebBridgeProcess(DefaultName)
 	if running {
 		if err == nil && pid > 0 {
 			return fmt.Errorf("web-bridge process (%v) found running. Can only run one web-bridge instance at a time", pid)
@@ -51,10 +56,10 @@ func Init(version, githash string) error {
 	pathSeperator := ""
 	if runtime.GOOS == "windows" {
 		pathSeperator = `\\`
-		homeDir += pathSeperator + `.web-bridge` + pathSeperator
+		homeDir += pathSeperator + `.` + DefaultName + pathSeperator
 	} else {
 		pathSeperator = `/`
-		homeDir += pathSeperator + `.web-bridge` + pathSeperator
+		homeDir += pathSeperator + `.` + DefaultName + pathSeperator
 	}
 	// initilize debug.log file
 	util.InitDebugLogFile(debug, homeDir)

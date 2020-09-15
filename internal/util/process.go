@@ -39,7 +39,7 @@ func WaitForProcessShutdown(process *os.Process, timeout time.Duration) bool {
 }
 
 // FindWebBridgeProcess returns true if a web-bridge process is already running
-func FindWebBridgeProcess() (bool, int32, error) {
+func FindWebBridgeProcess(wbname string) (bool, int32, error) {
 	processList, err := process.Processes()
 	if err != nil {
 		return false, -1, fmt.Errorf("process.Processes() Failed")
@@ -48,7 +48,7 @@ func FindWebBridgeProcess() (bool, int32, error) {
 	for _, process := range processList {
 		if process.Pid != thisPID {
 			name, _ := process.Name()
-			if strings.Contains(name, "web-bridge") {
+			if strings.Contains(name, wbname) {
 				fmt.Println("FindWebBridgeProcess found", name)
 				return true, process.Pid, nil
 			}

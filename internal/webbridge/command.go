@@ -38,12 +38,12 @@ func appCommandLoop(stopBridges *chan struct{}, acc *[]dynamic.Account, al *dyna
 			default:
 				errUnlock := d.UnlockWallet("")
 				if errUnlock != nil {
-					util.Info.Println("Wallet locked. Use the unlock command to unlock")
+					util.Info.Println("Wallet locked so links are unavailable. Use the unlock command to start your link bridges.")
 				} else {
 					unlocked = true
 				}
 				reader := bufio.NewReader(os.Stdin)
-				fmt.Print("web-bridge> ")
+				fmt.Print(DefaultName + `> `)
 				cmdText, _ := reader.ReadString('\n')
 				if len(cmdText) > 1 {
 					cmdText = strings.Trim(cmdText, "\r\n ") //cmdText[:len(cmdText)-2]
