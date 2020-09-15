@@ -1,8 +1,12 @@
 package util
 
 import (
+	"fmt"
 	"os"
+	"strings"
 	"time"
+
+	"github.com/shirou/gopsutil/process"
 )
 
 // WaitForProcessShutdown waits for a process to shutdown normally or kills it if it runs past the given timeout
@@ -32,4 +36,23 @@ func WaitForProcessShutdown(process *os.Process, timeout time.Duration) bool {
 		Info.Println("WaitForStoppedPID process not found")
 		return true
 	}
+}
+
+// FindWebBridgeProcess returns true if a web-bridge process is already running
+func FindWebBridgeProcess() (bool, int32, error) {
+	processList, err := process.Processes()
+	if err != nil {
+		return false, -1, fmt.Errorf("process.Processes() Failed")
+	}
+	thisPID := int32(os.Getpid())
+	for _, process := range processList {
+		if process.Pid != thisPID {
+			name, _ := process.Name()
+			if strings.Contains(name, "web-bridge") {
+				fmt.Println("FindWebBridgeProcess found", name)
+				return true, process.Pid, nil
+			}
+		}
+	}
+	return false, -1, nil
 }

@@ -24,6 +24,13 @@ var testWaitForOffer = false
 
 // Init is used to begin all WebBridge tasks
 func Init(version, githash string) error {
+	running, pid, err := util.FindWebBridgeProcess()
+	if running {
+		if err == nil && pid > 0 {
+			return fmt.Errorf("web-bridge process (%v) found running. Can only run one web-bridge instance at a time", pid)
+		}
+		return fmt.Errorf("web-bridge process (%v) found running. Can only run one web-bridge instance at a time. Error: %v", pid, err)
+	}
 	args := os.Args[1:]
 	if len(args) > 0 {
 		for _, v := range args {
@@ -75,7 +82,7 @@ func Init(version, githash string) error {
 	}
 
 	// Connect to ICE services
-	_, err := bridge.ConnectToIceServicesDetached(&config)
+	_, err = bridge.ConnectToIceServicesDetached(&config)
 	if err != nil {
 		return fmt.Errorf("ConnectToIceServicesDetached error %v", err)
 	}

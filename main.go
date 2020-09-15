@@ -1,9 +1,9 @@
 package main
 
 import (
+	"fmt"
 	"os"
 
-	"github.com/duality-solutions/web-bridge/internal/util"
 	"github.com/duality-solutions/web-bridge/internal/webbridge"
 )
 
@@ -18,7 +18,7 @@ var GitHash string
 
 func main() {
 	if err := webbridge.Init(Version, GitHash); err != nil {
-		util.Error.Fprintf(os.Stderr, "%s\n", err)
+		fmt.Fprintf(os.Stderr, "%s\n", err)
 		os.Exit(1)
 	}
 }
