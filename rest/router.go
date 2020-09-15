@@ -4,6 +4,10 @@ import (
 	"github.com/duality-solutions/web-bridge/init/settings"
 	"github.com/duality-solutions/web-bridge/rpc/dynamic"
 	"github.com/gin-gonic/gin"
+
+	_ "github.com/duality-solutions/web-bridge/docs"
+	ginSwagger "github.com/swaggo/gin-swagger"
+	"github.com/swaggo/gin-swagger/swaggerFiles"
 )
 
 // WebBridgeRunner is used to run the node application.
@@ -18,9 +22,7 @@ var runner WebBridgeRunner
 
 // TODO: Add rate limitor
 // TODO: Add custom logging
-// TODO: Add bridge controller
 // TODO: Add authentication
-// TODO: Add RESTful API documentation with Swagger: https://github.com/swaggo/swag#getting-started
 
 // StartWebServiceRouter is used to setup the Rest server routes
 func StartWebServiceRouter(c *settings.Configuration, d *dynamic.Dynamicd, a *AppShutdown, m string) {
@@ -36,7 +38,27 @@ func StartWebServiceRouter(c *settings.Configuration, d *dynamic.Dynamicd, a *Ap
 	setupWalletRoutes(version)
 	setupBridgesRoutes(version)
 	setupConfigRoutes(version)
+	setupSwagger(runner.router)
 	runner.router.Run()
+}
+
+// @title WebBridge Restful API Documentation
+// @version 1.0
+// @description WebBridge Rest API discovery website.
+// @termsOfService http://www.duality.solutions/webbridge/terms
+
+// @contact.name API Support
+// @contact.url http://www.duality.solutions/support
+// @contact.email support@duality.solutions
+
+// @license.name Duality
+// @license.url https://github.com/duality-solutions/web-bridge/blob/master/LICENSE.md
+
+// @host http://docs.webbridge.duality.solutions
+// @BasePath /api/v1
+func setupSwagger(root *gin.Engine) {
+	url := ginSwagger.URL("http://localhost:8080/swagger/swagger.json")
+	root.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler, url))
 }
 
 // TODO: follow https://rest.bitcoin.com for rest endpoints

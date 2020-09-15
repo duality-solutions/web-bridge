@@ -10,6 +10,15 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+//
+// @Summary Get all ICE servers in current configuration
+// @Description Returns all the ICE servers in current running configuration
+// @Accept  json
+// @Produce  json
+// @Success 200 {string} string	"ok"
+// @Failure 400 {string} string "Bad request"
+// @Failure 500 {object} string "Internal error"
+// @Router /api/v1/ice [get]
 func (w *WebBridgeRunner) getice(c *gin.Context) {
 	if w.configuration != nil {
 		c.JSON(http.StatusOK, gin.H{"result": w.configuration.IceServers()})
@@ -31,6 +40,15 @@ func (w *WebBridgeRunner) findIceSetting(iceSetting settings.IceServerConfig) (i
 	return -1, fmt.Errorf("ICE settings not found")
 }
 
+//
+// @Summary Add or update an ICE server in current configuration
+// @Description Add or update an ICE server in current configuration and saves the changes to file
+// @Accept  json
+// @Produce  json
+// @Success 200 {string} string	"ok"
+// @Failure 400 {string} string "Bad request"
+// @Failure 500 {object} string "Internal error"
+// @Router /api/v1/ice [put]
 func (w *WebBridgeRunner) putice(c *gin.Context) {
 	if w.configuration != nil {
 		body, err := ioutil.ReadAll(c.Request.Body)

@@ -1,0 +1,57 @@
+basePath: /api/v1
+host: http://docs.webbridge.duality.solutions
+info:
+  contact:
+    email: support@duality.solutions
+    name: API Support
+    url: http://www.duality.solutions/support
+  description: WebBridge Rest API discovery website.
+  license:
+    name: Duality
+    url: https://github.com/duality-solutions/web-bridge/blob/master/LICENSE.md
+  termsOfService: http://www.duality.solutions/webbridge/terms
+  title: WebBridge Restful API Documentation
+  version: "1.0"
+paths:
+  /api/v1/ice:
+    get:
+      consumes:
+      - application/json
+      description: Returns all the ICE servers in current running configuration
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ok
+          schema:
+            type: string
+        "400":
+          description: Bad request
+          schema:
+            type: string
+        "500":
+          description: Internal error
+          schema:
+            type: string
+      summary: Get all ICE servers in current configuration
+    put:
+      consumes:
+      - application/json
+      description: Add or update an ICE server in current configuration and saves the changes to file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ok
+          schema:
+            type: string
+        "400":
+          description: Bad request
+          schema:
+            type: string
+        "500":
+          description: Internal error
+          schema:
+            type: string
+      summary: Add or update an ICE server in current configuration
+swagger: "2.0"
