@@ -157,10 +157,6 @@ func Init(version, githash string) error {
 			util.Info.Printf("Found %v links\n", len(al.Links))
 		}
 
-		if acc != nil && al != nil {
-			go bridge.StartBridges(&stopBridges, config, *dynamicd, *acc, *al)
-		}
-
 		go appCommandLoop(&stopBridges, acc, al, &shutdown, dynamicd, status, sync)
 
 		for {
