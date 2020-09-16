@@ -14,6 +14,25 @@ info:
   version: "1.0"
 paths:
   /api/v1/ice:
+    delete:
+      consumes:
+      - application/json
+      description: Delete an ICE server in current configuration and saves the changes to file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ok
+          schema:
+            type: string
+        "400":
+          description: Bad request
+          schema:
+            type: string
+        "500":
+          description: Internal error
+          schema:
+            type: string
     get:
       consumes:
       - application/json
@@ -33,7 +52,31 @@ paths:
           description: Internal error
           schema:
             type: string
-      summary: Get all ICE servers in current configuration
+    post:
+      consumes:
+      - application/json
+      description: Replaces an ICE server in current configuration and saves the changes to file
+      parameters:
+      - description: Some ID
+        in: path
+        name: some_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ok
+          schema:
+            type: string
+        "400":
+          description: Bad request
+          schema:
+            type: string
+        "500":
+          description: Internal error
+          schema:
+            type: string
     put:
       consumes:
       - application/json
@@ -53,5 +96,4 @@ paths:
           description: Internal error
           schema:
             type: string
-      summary: Add or update an ICE server in current configuration
 swagger: "2.0"

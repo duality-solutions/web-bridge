@@ -7,9 +7,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/duality-solutions/web-bridge/api/models"
 	"github.com/duality-solutions/web-bridge/bridge"
 	"github.com/duality-solutions/web-bridge/internal/util"
-	"github.com/duality-solutions/web-bridge/rest"
 	"github.com/duality-solutions/web-bridge/rpc/dynamic"
 	"golang.org/x/crypto/ssh/terminal"
 )
@@ -28,7 +28,7 @@ func unlockWallet(d *dynamic.Dynamicd) bool {
 }
 
 func appCommandLoop(stopBridges *chan struct{}, acc *[]dynamic.Account, al *dynamic.ActiveLinks,
-	shutdown *rest.AppShutdown, d *dynamic.Dynamicd,
+	shutdown *models.AppShutdown, d *dynamic.Dynamicd,
 	status *dynamic.SyncStatus, sync bool) {
 	go func() {
 		var err error

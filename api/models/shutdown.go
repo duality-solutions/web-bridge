@@ -1,13 +1,11 @@
-package rest
+package models
 
 import (
-	"net/http"
 	"time"
 
 	"github.com/duality-solutions/web-bridge/bridge"
 	"github.com/duality-solutions/web-bridge/internal/util"
 	"github.com/duality-solutions/web-bridge/rpc/dynamic"
-	"github.com/gin-gonic/gin"
 )
 
 // AppShutdown stores the channels and commands needed to safely shutdown the WebBridge service
@@ -34,13 +32,4 @@ func (a *AppShutdown) ShutdownAppliction() {
 		util.EndDebugLogFile(30)
 		close(*a.Close)
 	}()
-}
-
-func (w *WebBridgeRunner) shutdown(c *gin.Context) {
-	if w.shutdownApp != nil {
-		w.shutdownApp.ShutdownAppliction()
-		c.JSON(http.StatusOK, gin.H{"result": "WebBridge is shutting down."})
-	} else {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Configuration variable shutdownApp is null."})
-	}
 }

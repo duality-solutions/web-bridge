@@ -7,24 +7,10 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/duality-solutions/web-bridge/api/models"
 	"github.com/duality-solutions/web-bridge/rpc/dynamic"
 	"github.com/gin-gonic/gin"
 )
-
-type unlockWalletRequest struct {
-	Passphrase string `json:"passphrase"`
-	Timeout    int    `json:"timeout"`
-	MixingOnly bool   `json:"mixingonly"`
-}
-
-type encryptWalletRequest struct {
-	Passphrase string `json:"passphrase"`
-}
-
-type changePassphraseRequest struct {
-	OldPassphrase string `json:"oldpassphrase"`
-	NewPassphrase string `json:"newpassphrase"`
-}
 
 func (w *WebBridgeRunner) unlockwallet(c *gin.Context) {
 	body, err := ioutil.ReadAll(c.Request.Body)
@@ -37,7 +23,7 @@ func (w *WebBridgeRunner) unlockwallet(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Request body is empty"})
 		return
 	}
-	req := unlockWalletRequest{}
+	req := models.UnlockWalletRequest{}
 	err = json.Unmarshal(body, &req)
 	if err != nil {
 		strErrMsg := fmt.Sprintf("Request body JSON unmarshal error %v", err)
@@ -117,7 +103,7 @@ func (w *WebBridgeRunner) encryptwallet(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Request body is empty"})
 		return
 	}
-	req := encryptWalletRequest{}
+	req := models.EncryptWalletRequest{}
 	err = json.Unmarshal(body, &req)
 	if err != nil {
 		strErrMsg := fmt.Sprintf("Request body JSON unmarshal error %v", err)
@@ -161,7 +147,7 @@ func (w *WebBridgeRunner) changepassphrase(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Request body is empty"})
 		return
 	}
-	req := changePassphraseRequest{}
+	req := models.ChangePassphraseRequest{}
 	err = json.Unmarshal(body, &req)
 	if err != nil {
 		strErrMsg := fmt.Sprintf("Request body JSON unmarshal error %v", err)
@@ -213,29 +199,6 @@ func (w *WebBridgeRunner) walletinfo(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"result": result})
-}
-
-type hdAccounts struct {
-	HdAccountIndex     int `json:"hdaccountindex"`
-	HdExternalKeyIndex int `json:"hdexternalkeyindex"`
-	HdInternalKeyIndex int `json:"hdinternalkeyindex"`
-}
-type walletInfoResponse struct {
-	WalletVersion         int        `json:"walletversion"`
-	Balance               float64    `json:"balance"`
-	PrivatesendBalance    float64    `json:"privatesend_balance"`
-	UnconfirmedBalance    float64    `json:"unconfirmed_balance"`
-	ImmatureBalance       float64    `json:"immature_balance"`
-	TxCount               int        `json:"txcount"`
-	KeypoolOldest         int        `json:"keypoololdest"`
-	KeypoolSize           int        `json:"keypoolsize"`
-	KeypoolSizeHdInternal int        `json:"keypoolsize_hd_internal"`
-	KeysLeft              int        `json:"keys_left"`
-	UnlockedUntil         int        `json:"unlocked_until"`
-	PayTxFee              float64    `json:"paytxfee"`
-	HdChainID             string     `json:"hdchainid"`
-	HdAccountCount        int        `json:"hdaccountcount"`
-	HdAccounts            hdAccounts `json:"hdaccounts"`
 }
 
 // getwalletinfo also add if locked or not.

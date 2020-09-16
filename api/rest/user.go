@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/duality-solutions/web-bridge/api/models"
 	"github.com/duality-solutions/web-bridge/rpc/dynamic"
 	"github.com/gin-gonic/gin"
 )
@@ -46,7 +47,7 @@ func (w *WebBridgeRunner) user(c *gin.Context) {
 func (w *WebBridgeRunner) walletusers(c *gin.Context) {
 	strCommand, _ := dynamic.NewRequest(`dynamic-cli mybdapaccounts`)
 	response, _ := <-w.dynamicd.ExecCmdRequest(strCommand)
-	myAccounts := make(map[string]Account)
+	myAccounts := make(map[string]models.Account)
 	err := json.Unmarshal([]byte(response), &myAccounts)
 	if err != nil {
 		strErrMsg := fmt.Sprintf("Results JSON unmarshal error %v", err)
@@ -54,12 +55,11 @@ func (w *WebBridgeRunner) walletusers(c *gin.Context) {
 		return
 	}
 
-	myUsers := make(map[string]Account)
+	myUsers := make(map[string]models.Account)
 	for i, account := range myAccounts {
 		if account.ObjectType == "User Entry" {
 			myUsers[i] = account
 		}
 	}
-
 	c.JSON(http.StatusOK, gin.H{"result": myUsers})
 }

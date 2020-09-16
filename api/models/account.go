@@ -1,4 +1,4 @@
-package rest
+package models
 
 // Account stores a BDAP user and group record
 type Account struct {

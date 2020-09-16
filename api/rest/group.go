@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/duality-solutions/web-bridge/api/models"
 	"github.com/duality-solutions/web-bridge/rpc/dynamic"
 	"github.com/gin-gonic/gin"
 )
@@ -46,7 +47,7 @@ func (w *WebBridgeRunner) group(c *gin.Context) {
 func (w *WebBridgeRunner) walletgroups(c *gin.Context) {
 	strCommand, _ := dynamic.NewRequest(`dynamic-cli mybdapaccounts`)
 	response, _ := <-w.dynamicd.ExecCmdRequest(strCommand)
-	myAccounts := make(map[string]Account)
+	myAccounts := make(map[string]models.Account)
 	err := json.Unmarshal([]byte(response), &myAccounts)
 	if err != nil {
 		strErrMsg := fmt.Sprintf("Results JSON unmarshal error %v", err)
@@ -54,7 +55,7 @@ func (w *WebBridgeRunner) walletgroups(c *gin.Context) {
 		return
 	}
 
-	myGroups := make(map[string]Account)
+	myGroups := make(map[string]models.Account)
 	for i, account := range myAccounts {
 		if account.ObjectType == "Group Entry" {
 			myGroups[i] = account

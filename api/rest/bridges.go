@@ -4,24 +4,10 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/duality-solutions/web-bridge/api/models"
 	"github.com/duality-solutions/web-bridge/bridge"
 	"github.com/gin-gonic/gin"
 )
-
-type bridgeInfo struct {
-	SessionID          uint16 `json:"session_id"`
-	LinkID             string `json:"link_id"`
-	State              string `json:"state"`
-	MyAccount          string `json:"my_account"`
-	LinkAccount        string `json:"link_account"`
-	OnOpenEpoch        int64  `json:"on_open_epoch"`
-	OnStateChangeEpoch int64  `json:"on_state_changed_epoch"`
-	OnLastDataEpoch    int64  `json:"on_last_data_epoch"`
-	OnErrorEpoch       int64  `json:"on_error_epoch"`
-	RTCState           string `json:"rtc_status"`
-	HTTPListenPort     uint16 `json:"http_listen_port"`
-	HTTPSListenPort    uint16 `json:"https_listen_port"`
-}
 
 func (w *WebBridgeRunner) bridgesinfo(c *gin.Context) {
 	controler, err := bridge.Controler()
@@ -31,10 +17,10 @@ func (w *WebBridgeRunner) bridgesinfo(c *gin.Context) {
 		return
 	}
 	bridges := controler.AllBridges()
-	var ret []bridgeInfo = make([]bridgeInfo, len(bridges))
+	var ret []models.BridgeInfo = make([]models.BridgeInfo, len(bridges))
 	i := 0
 	for _, bridge := range bridges {
-		var info = bridgeInfo{
+		var info = models.BridgeInfo{
 			SessionID:          bridge.SessionID,
 			LinkID:             bridge.LinkID(),
 			State:              bridge.State().String(),
@@ -63,9 +49,9 @@ func (w *WebBridgeRunner) connectedbridges(c *gin.Context) {
 	}
 	i := 0
 	bridges := controler.Connected()
-	var ret []bridgeInfo = make([]bridgeInfo, len(bridges))
+	var ret []models.BridgeInfo = make([]models.BridgeInfo, len(bridges))
 	for _, bridge := range bridges {
-		var info = bridgeInfo{
+		var info = models.BridgeInfo{
 			SessionID:          bridge.SessionID,
 			LinkID:             bridge.LinkID(),
 			State:              bridge.State().String(),
@@ -94,9 +80,9 @@ func (w *WebBridgeRunner) unconnectedbridges(c *gin.Context) {
 	}
 	i := 0
 	bridges := controler.Unconnected()
-	var ret []bridgeInfo = make([]bridgeInfo, len(bridges))
+	var ret []models.BridgeInfo = make([]models.BridgeInfo, len(bridges))
 	for _, bridge := range bridges {
-		var info = bridgeInfo{
+		var info = models.BridgeInfo{
 			SessionID:          bridge.SessionID,
 			LinkID:             bridge.LinkID(),
 			State:              bridge.State().String(),

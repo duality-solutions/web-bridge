@@ -5,19 +5,13 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/duality-solutions/web-bridge/api/models"
 	"github.com/duality-solutions/web-bridge/rpc/dynamic"
 	"github.com/gin-gonic/gin"
 )
 
-type jsonRPC struct {
-	JSONRPC interface{}   `json:"jsonrpc"`
-	Method  string        `json:"method"`
-	Params  []interface{} `json:"params"`
-	ID      interface{}   `json:"id"`
-}
-
 func (w *WebBridgeRunner) handleJSONRPC(c *gin.Context) {
-	reqInput := jsonRPC{}
+	reqInput := models.JSONRPC{}
 	err := json.NewDecoder(c.Request.Body).Decode(&reqInput)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err})
