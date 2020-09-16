@@ -11,7 +11,6 @@ import (
 )
 
 //
-// @Summary Get all ICE servers in current configuration
 // @Description Returns all the ICE servers in current running configuration
 // @Accept  json
 // @Produce  json
@@ -41,10 +40,9 @@ func (w *WebBridgeRunner) findIceSetting(iceSetting settings.IceServerConfig) (i
 }
 
 //
-// @Summary Add or update an ICE server in current configuration
 // @Description Add or update an ICE server in current configuration and saves the changes to file
 // @Accept  json
-// @Produce  json
+// @Produce json
 // @Success 200 {string} string	"ok"
 // @Failure 400 {string} string "Bad request"
 // @Failure 500 {object} string "Internal error"
@@ -85,8 +83,21 @@ func (w *WebBridgeRunner) putice(c *gin.Context) {
 	}
 }
 
+//
+// @Description Delete an ICE server in current configuration and saves the changes to file
+// @Accept  json
+// @Produce json
+// @Success 200 {string} string	"ok"
+// @Failure 400 {string} string "Bad request"
+// @Failure 500 {string} string "Internal error"
+// @Router /api/v1/ice [delete]
 func (w *WebBridgeRunner) deleteice(c *gin.Context) {
 	if w.configuration != nil {
+		if len(*w.configuration.IceServers()) < 2 {
+			strErrMsg := fmt.Sprintf("Can not delete last ICE server in configuration")
+			c.JSON(http.StatusBadRequest, gin.H{"error": strErrMsg})
+			return
+		}
 		body, err := ioutil.ReadAll(c.Request.Body)
 		if err != nil {
 			strErrMsg := fmt.Sprintf("Request body read all error %v. Can not detele from ICE server configuration list.", err)
@@ -122,6 +133,14 @@ func (w *WebBridgeRunner) deleteice(c *gin.Context) {
 	}
 }
 
+//
+// @Description Replaces an ICE server in current configuration and saves the changes to file
+// @Accept  json
+// @Produce  json
+// @Success 200 {string} string	"ok"
+// @Failure 400 {string} string "Bad request"
+// @Failure 500 {string} string "Internal error"
+// @Router /api/v1/ice [post]
 func (w *WebBridgeRunner) replaceice(c *gin.Context) {
 	if w.configuration != nil {
 		body, err := ioutil.ReadAll(c.Request.Body)
