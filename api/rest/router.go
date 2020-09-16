@@ -67,6 +67,7 @@ func setupBlockchainRoutes(currentVersion *gin.RouterGroup) {
 	blockchain := currentVersion.Group("/blockchain")
 	blockchain.POST("/jsonrpc", runner.handleJSONRPC)
 	blockchain.GET("/", runner.getinfo)
+	blockchain.GET("/sync", runner.syncstatus)
 	blockchain.GET("/users", runner.users)
 	blockchain.GET("/users/:UserID", runner.user)
 	blockchain.GET("/groups", runner.groups)

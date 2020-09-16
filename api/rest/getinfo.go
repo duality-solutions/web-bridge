@@ -19,3 +19,14 @@ func (w *WebBridgeRunner) getinfo(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, gin.H{"result": info})
 }
+
+func (w *WebBridgeRunner) syncstatus(c *gin.Context) {
+	var status models.SyncStatus
+	req, _ := dynamic.NewRequest("dynamic-cli syncstatus")
+	err := json.Unmarshal([]byte(<-w.dynamicd.ExecCmdRequest(req)), &status)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"result": status})
+}
