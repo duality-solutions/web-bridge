@@ -11,5 +11,5 @@ New Swagger documentation files are saved in the docs directory
 ## Running Swagger Locally
 
 ```http
-http://localhost:8080/swagger/doc.json
+http://localhost:8080/swagger/index.html
 ```

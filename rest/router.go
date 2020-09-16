@@ -57,7 +57,7 @@ func StartWebServiceRouter(c *settings.Configuration, d *dynamic.Dynamicd, a *Ap
 // @host http://docs.webbridge.duality.solutions
 // @BasePath /api/v1
 func setupSwagger(root *gin.Engine) {
-	url := ginSwagger.URL("http://localhost:8080/swagger/swagger.json")
+	url := ginSwagger.URL("http://localhost:8080/swagger/doc.json")
 	root.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler, url))
 }
 
