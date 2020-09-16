@@ -1,7 +1,7 @@
 package rest
 
 import (
-	"github.com/duality-solutions/web-bridge/init/settings"
+	"github.com/duality-solutions/web-bridge/configs/settings"
 	"github.com/duality-solutions/web-bridge/rpc/dynamic"
 	"github.com/gin-gonic/gin"
 

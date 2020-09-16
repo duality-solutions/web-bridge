@@ -3,7 +3,7 @@ package bridge
 import (
 	"fmt"
 
-	"github.com/duality-solutions/web-bridge/init/settings"
+	"github.com/duality-solutions/web-bridge/configs/settings"
 	webrtc "github.com/pion/webrtc/v2"
 )
 

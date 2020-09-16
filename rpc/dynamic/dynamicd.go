@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/duality-solutions/web-bridge/init/settings"
+	"github.com/duality-solutions/web-bridge/configs/settings"
 	"github.com/duality-solutions/web-bridge/internal/util"
 	rpcclient "github.com/duality-solutions/web-bridge/rpc"
 )

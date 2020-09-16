@@ -6,7 +6,7 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"github.com/duality-solutions/web-bridge/init/settings"
+	"github.com/duality-solutions/web-bridge/configs/settings"
 	"github.com/gin-gonic/gin"
 )
 
