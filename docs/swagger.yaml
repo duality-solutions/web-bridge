@@ -1,4 +1,24 @@
 basePath: /api/v1
+definitions:
+  models.ConfigurationFile:
+    properties:
+      IceServers:
+        items:
+          $ref: '#/definitions/models.IceServerConfig'
+        type: array
+    type: object
+  models.IceServerConfig:
+    properties:
+      Credential:
+        description: The ICE server's credentials. Leave blank if it doesn't apply
+        type: string
+      URL:
+        description: 'The ICE server''s full URL with protocol prefix and port: turn:ice.bdap.io:3478'
+        type: string
+      UserName:
+        description: The ICE server's user name. Leave blank if it doesn't apply
+        type: string
+    type: object
 host: http://docs.webbridge.duality.solutions
 info:
   contact:
@@ -18,13 +38,22 @@ paths:
       consumes:
       - application/json
       description: Delete an ICE server in current configuration and saves the changes to file
+      parameters:
+      - description: ICE Configuration
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.IceServerConfig'
       produces:
       - application/json
       responses:
         "200":
           description: ok
           schema:
-            type: string
+            items:
+              $ref: '#/definitions/models.IceServerConfig'
+            type: array
         "400":
           description: Bad request
           schema:
@@ -43,11 +72,9 @@ paths:
         "200":
           description: ok
           schema:
-            type: string
-        "400":
-          description: Bad request
-          schema:
-            type: string
+            items:
+              $ref: '#/definitions/models.IceServerConfig'
+            type: array
         "500":
           description: Internal error
           schema:
@@ -57,18 +84,19 @@ paths:
       - application/json
       description: Replaces an ICE server in current configuration and saves the changes to file
       parameters:
-      - description: Some ID
-        in: path
-        name: some_id
+      - description: ICE Configuration File
+        in: body
+        name: body
         required: true
-        type: integer
+        schema:
+          $ref: '#/definitions/models.ConfigurationFile'
       produces:
       - application/json
       responses:
         "200":
           description: ok
           schema:
-            type: string
+            $ref: '#/definitions/models.ConfigurationFile'
         "400":
           description: Bad request
           schema:
@@ -81,13 +109,22 @@ paths:
       consumes:
       - application/json
       description: Add or update an ICE server in current configuration and saves the changes to file
+      parameters:
+      - description: ICE Configuration
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.IceServerConfig'
       produces:
       - application/json
       responses:
         "200":
           description: ok
           schema:
-            type: string
+            items:
+              $ref: '#/definitions/models.IceServerConfig'
+            type: array
         "400":
           description: Bad request
           schema:

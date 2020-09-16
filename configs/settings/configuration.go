@@ -6,6 +6,7 @@ import (
 	"os"
 	"sync"
 
+	"github.com/duality-solutions/web-bridge/api/models"
 	"github.com/duality-solutions/web-bridge/internal/util"
 )
 
@@ -35,22 +36,10 @@ func PathSeperator() string {
 	return pathSeperator
 }
 
-// IceServerConfig stores the ICE server configuration information needed for WebRTC connections
-type IceServerConfig struct {
-	URL        string `json:"URL"`
-	UserName   string `json:"UserName"`
-	Credential string `json:"Credential"`
-}
-
-// ConfigurationFile stores the content of the web-bridge configuration file
-type ConfigurationFile struct {
-	IceServers []IceServerConfig `json:"IceServers"`
-}
-
 // Configuration contains the main file settings used when the application launches
 type Configuration struct {
 	mut        *sync.RWMutex
-	configFile ConfigurationFile
+	configFile models.ConfigurationFile
 }
 
 func isErr(e error) bool {
@@ -73,14 +62,14 @@ func (c *Configuration) updateFile() {
 }
 
 // IceServers returns the current configuration ICE servers
-func (c *Configuration) IceServers() *[]IceServerConfig {
+func (c *Configuration) IceServers() *[]models.IceServerConfig {
 	c.mut.Lock()
 	defer c.mut.Unlock()
 	return &c.configFile.IceServers
 }
 
 // AddIceServer adds a new ICE Server to the current configuration
-func (c *Configuration) AddIceServer(ice IceServerConfig) bool {
+func (c *Configuration) AddIceServer(ice models.IceServerConfig) bool {
 	c.mut.Lock()
 	defer c.mut.Unlock()
 	c.configFile.IceServers = append(c.configFile.IceServers, ice)
@@ -89,7 +78,7 @@ func (c *Configuration) AddIceServer(ice IceServerConfig) bool {
 }
 
 // UpdateIceServer updates an existing ICE Server in current configuration
-func (c *Configuration) UpdateIceServer(index int, ice IceServerConfig) bool {
+func (c *Configuration) UpdateIceServer(index int, ice models.IceServerConfig) bool {
 	c.mut.Lock()
 	defer c.mut.Unlock()
 	c.configFile.IceServers[index] = ice
@@ -107,7 +96,7 @@ func (c *Configuration) DeleteIceServer(index int) bool {
 }
 
 // ReplaceIceServers deleted an existing ICE Server from current configuration
-func (c *Configuration) ReplaceIceServers(fileData ConfigurationFile) bool {
+func (c *Configuration) ReplaceIceServers(fileData models.ConfigurationFile) bool {
 	c.mut.Lock()
 	defer c.mut.Unlock()
 	c.configFile.IceServers = fileData.IceServers
@@ -116,14 +105,14 @@ func (c *Configuration) ReplaceIceServers(fileData ConfigurationFile) bool {
 }
 
 // ToJSON convert the Configuration struct to JSON
-func (c *Configuration) ToJSON() ConfigurationFile {
+func (c *Configuration) ToJSON() models.ConfigurationFile {
 	c.mut.Lock()
 	defer c.mut.Unlock()
 	return c.configFile
 }
 
 func (c *Configuration) createDefault() {
-	defaultIce := IceServerConfig{
+	defaultIce := models.IceServerConfig{
 		DefaultIceURL,
 		DefaultIceUserName,
 		DefaultIceCredential,

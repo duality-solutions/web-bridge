@@ -1,7 +1,6 @@
 package rest
 
 import (
-	"github.com/duality-solutions/web-bridge/api/models"
 	"github.com/duality-solutions/web-bridge/configs/settings"
 	"github.com/duality-solutions/web-bridge/rpc/dynamic"
 	"github.com/gin-gonic/gin"
@@ -16,7 +15,7 @@ type WebBridgeRunner struct {
 	dynamicd      *dynamic.Dynamicd
 	router        *gin.Engine
 	configuration *settings.Configuration
-	shutdownApp   *models.AppShutdown
+	shutdownApp   *AppShutdown
 }
 
 var runner WebBridgeRunner
@@ -26,7 +25,7 @@ var runner WebBridgeRunner
 // TODO: Add authentication
 
 // StartWebServiceRouter is used to setup the Rest server routes
-func StartWebServiceRouter(c *settings.Configuration, d *dynamic.Dynamicd, a *models.AppShutdown, m string) {
+func StartWebServiceRouter(c *settings.Configuration, d *dynamic.Dynamicd, a *AppShutdown, m string) {
 	gin.SetMode(m)
 	runner.configuration = c
 	runner.dynamicd = d

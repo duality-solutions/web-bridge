@@ -46,13 +46,10 @@ var doc = `{
                     "200": {
                         "description": "ok",
                         "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad request",
-                        "schema": {
-                            "type": "string"
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.IceServerConfig"
+                            }
                         }
                     },
                     "500": {
@@ -71,11 +68,25 @@ var doc = `{
                 "produces": [
                     "application/json"
                 ],
+                "parameters": [
+                    {
+                        "description": "ICE Configuration",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.IceServerConfig"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "ok",
                         "schema": {
-                            "type": "string"
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.IceServerConfig"
+                            }
                         }
                     },
                     "400": {
@@ -102,18 +113,20 @@ var doc = `{
                 ],
                 "parameters": [
                     {
-                        "type": "integer",
-                        "description": "Some ID",
-                        "name": "some_id",
-                        "in": "path",
-                        "required": true
+                        "description": "ICE Configuration File",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.ConfigurationFile"
+                        }
                     }
                 ],
                 "responses": {
                     "200": {
                         "description": "ok",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/models.ConfigurationFile"
                         }
                     },
                     "400": {
@@ -138,11 +151,25 @@ var doc = `{
                 "produces": [
                     "application/json"
                 ],
+                "parameters": [
+                    {
+                        "description": "ICE Configuration",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.IceServerConfig"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "ok",
                         "schema": {
-                            "type": "string"
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.IceServerConfig"
+                            }
                         }
                     },
                     "400": {
@@ -157,6 +184,36 @@ var doc = `{
                             "type": "string"
                         }
                     }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "models.ConfigurationFile": {
+            "type": "object",
+            "properties": {
+                "IceServers": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.IceServerConfig"
+                    }
+                }
+            }
+        },
+        "models.IceServerConfig": {
+            "type": "object",
+            "properties": {
+                "Credential": {
+                    "description": "The ICE server's credentials. Leave blank if it doesn't apply",
+                    "type": "string"
+                },
+                "URL": {
+                    "description": "The ICE server's full URL with protocol prefix and port: turn:ice.bdap.io:3478",
+                    "type": "string"
+                },
+                "UserName": {
+                    "description": "The ICE server's user name. Leave blank if it doesn't apply",
+                    "type": "string"
                 }
             }
         }

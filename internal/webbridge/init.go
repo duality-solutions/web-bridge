@@ -8,7 +8,6 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/duality-solutions/web-bridge/api/models"
 	"github.com/duality-solutions/web-bridge/api/rest"
 	"github.com/duality-solutions/web-bridge/bridge"
 	"github.com/duality-solutions/web-bridge/configs/settings"
@@ -142,7 +141,7 @@ func Init(version, githash string) error {
 		var sync = false
 		closeApp := make(chan struct{})
 		stopBridges := make(chan struct{})
-		shutdown := models.AppShutdown{
+		shutdown := rest.AppShutdown{
 			Close:       &closeApp,
 			StopWatcher: &stopWatcher,
 			StopBridges: &stopBridges,
