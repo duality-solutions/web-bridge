@@ -84,11 +84,11 @@ func setupWalletRoutes(currentVersion *gin.RouterGroup) {
 	wallet.PATCH("/changepassphrase", runner.changepassphrase)
 	wallet.GET("/users", runner.walletusers)
 	wallet.GET("/groups", runner.walletgroups)
-	wallet.GET("/link", runner.links)
-	wallet.POST("/link/request", runner.linkrequest)
-	wallet.POST("/link/accept", runner.linkaccept)
-	wallet.POST("/link/message", runner.sendlinkmessage)
-	wallet.GET("/link/message", runner.getlinkmessages)
+	wallet.GET("/links", runner.links)
+	wallet.POST("/links/request", runner.linkrequest)
+	wallet.POST("/links/accept", runner.linkaccept)
+	wallet.POST("/links/message", runner.sendlinkmessage)
+	wallet.GET("/links/message", runner.getlinkmessages)
 }
 
 func setupBridgesRoutes(currentVersion *gin.RouterGroup) {
