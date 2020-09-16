@@ -15,6 +15,8 @@ jobs:
           - go get -u -v github.com/golang/protobuf/proto
           - go get -u -v github.com/golang/protobuf/protoc-gen-go
           - protoc --go_out=. goproxy/*.proto
+          - go get -u -v github.com/swaggo/swag/cmd/swag
+          - swag init -g rest/router.go
           - go run -race . -debug -test # test run with race
           - ./tests/http-proxy/build.sh
           - ./tests/tunnel/data-channel-create/build.sh
