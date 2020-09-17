@@ -15,7 +15,7 @@ ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 
-package rpcclient
+package rpc
 
 import (
 	"bytes"
@@ -27,7 +27,7 @@ import (
 	"net"
 	"net/http"
 
-	"github.com/duality-solutions/web-bridge/rpc/socks"
+	"github.com/duality-solutions/web-bridge/blockchain/rpc/socks"
 )
 
 // RPCErrorCode represents an error code to be used as a part of an RPCError

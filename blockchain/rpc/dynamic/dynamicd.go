@@ -9,9 +9,9 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/duality-solutions/web-bridge/blockchain/rpc"
 	"github.com/duality-solutions/web-bridge/configs/settings"
 	"github.com/duality-solutions/web-bridge/internal/util"
-	rpcclient "github.com/duality-solutions/web-bridge/rpc"
 )
 
 const (
@@ -49,7 +49,7 @@ type Dynamicd struct {
 	BindAddress    string
 	RPCBindAddress string
 	Cmd            *exec.Cmd
-	ConfigRPC      rpcclient.Config
+	ConfigRPC      rpc.Config
 	WalletPassword string
 }
 
@@ -64,7 +64,7 @@ func newDynamicd(
 	bindaddress string,
 	rpcbindaddress string,
 	cmd *exec.Cmd,
-	configRPC rpcclient.Config,
+	configRPC rpc.Config,
 ) *Dynamicd {
 	d := Dynamicd{
 		Ctx:            ctx,
@@ -180,7 +180,7 @@ func loadDynamicd(_os, archiveExt string) (*Dynamicd, error) {
 		}
 	}
 
-	configRPC := rpcclient.Config{
+	configRPC := rpc.Config{
 		RPCServer:   defaultBind + ":" + strconv.Itoa(int(defaultRPCPort)),
 		RPCUser:     rpcUser,
 		RPCPassword: rpcPassword,
@@ -201,7 +201,7 @@ func (d *Dynamicd) ExecCmdRequest(req *RPCRequest) <-chan string {
 	c := make(chan string)
 	go func() {
 		byteCmd, _ := json.Marshal(req)
-		byteResp, errResp := rpcclient.SendPostRequest(byteCmd, &d.ConfigRPC)
+		byteResp, errResp := rpc.SendPostRequest(byteCmd, &d.ConfigRPC)
 		if errResp != nil {
 			c <- errResp.Error()
 		} else {

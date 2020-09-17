@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/duality-solutions/web-bridge/internal/util"
-	"github.com/duality-solutions/web-bridge/rpc/dynamic"
+	"github.com/duality-solutions/web-bridge/blockchain/rpc/dynamic"
 )
 
 var startEpoch int64

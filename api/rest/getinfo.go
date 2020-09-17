@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/duality-solutions/web-bridge/api/models"
-	"github.com/duality-solutions/web-bridge/rpc/dynamic"
+	"github.com/duality-solutions/web-bridge/blockchain/rpc/dynamic"
 	"github.com/gin-gonic/gin"
 )
 
