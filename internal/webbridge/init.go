@@ -13,6 +13,7 @@ import (
 	"github.com/duality-solutions/web-bridge/configs/settings"
 	"github.com/duality-solutions/web-bridge/internal/util"
 	"github.com/duality-solutions/web-bridge/rpc/dynamic"
+	"github.com/duality-solutions/web-bridge/tests/testauth"
 )
 
 const (
@@ -49,6 +50,11 @@ func Init(version, githash string) error {
 			case "-testWaitForOffer":
 				testWaitForOffer = true
 			}
+		}
+	}
+	if test || debug {
+		if !testauth.TestCerts() {
+			return fmt.Errorf("web-bridge could not load test certificates")
 		}
 	}
 	usr, _ := user.Current()
