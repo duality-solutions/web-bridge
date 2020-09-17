@@ -11,7 +11,7 @@ import (
 	"net/url"
 	"regexp"
 
-	goproxy "github.com/duality-solutions/web-bridge/goproxy"
+	"github.com/duality-solutions/web-bridge/internal/goproxy"
 	"github.com/duality-solutions/web-bridge/internal/util"
 	"github.com/inconshreveable/go-vhost"
 	"github.com/pion/webrtc/v2"

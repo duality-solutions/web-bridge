@@ -12,7 +12,7 @@ import (
 	"regexp"
 	"strconv"
 
-	goproxy "github.com/duality-solutions/web-bridge/goproxy"
+	"github.com/duality-solutions/web-bridge/internal/goproxy"
 	"github.com/duality-solutions/web-bridge/internal/util"
 	"github.com/inconshreveable/go-vhost"
 )
