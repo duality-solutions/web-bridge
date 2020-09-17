@@ -14,7 +14,7 @@ jobs:
         script:
           - go get -u -v github.com/golang/protobuf/proto
           - go get -u -v github.com/golang/protobuf/protoc-gen-go
-          - protoc --go_out=. goproxy/*.proto
+          - protoc --go_out=. internal/goproxy/*.proto
           - go get -u -v github.com/swaggo/swag/cmd/swag
           - swag init -g api/rest/router.go
           - go run -race . -debug -test # test run with race
