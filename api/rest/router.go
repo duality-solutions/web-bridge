@@ -77,6 +77,7 @@ func setupBlockchainRoutes(currentVersion *gin.RouterGroup) {
 func setupWalletRoutes(currentVersion *gin.RouterGroup) {
 	wallet := currentVersion.Group("/wallet")
 	wallet.GET("/", runner.walletinfo)
+	wallet.GET("/mnemonic", runner.mnemonic)
 	wallet.PATCH("/unlock", runner.unlockwallet)
 	wallet.PATCH("/lock", runner.lockwallet)
 	wallet.PATCH("/encrypt", runner.encryptwallet)

@@ -201,4 +201,28 @@ func (w *WebBridgeRunner) walletinfo(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"result": result})
 }
 
+func (w *WebBridgeRunner) mnemonic(c *gin.Context) {
+	strCommand, _ := dynamic.NewRequest(`dynamic-cli dumphdinfo`)
+	response, _ := <-w.dynamicd.ExecCmdRequest(strCommand)
+	if strings.Contains(response, "Please enter the wallet passphrase with walletpassphrase first") {
+		result := models.RPCError{}
+		err := json.Unmarshal([]byte(response), &result)
+		if err != nil {
+			strErrMsg := fmt.Sprintf("Response JSON unmarshal error %v", err)
+			c.JSON(http.StatusBadRequest, gin.H{"error": strErrMsg})
+			return
+		}
+		c.JSON(http.StatusBadRequest, gin.H{"error": result.Error})
+		return
+	}
+	result := models.WalletSeed{}
+	err := json.Unmarshal([]byte(response), &result)
+	if err != nil {
+		strErrMsg := fmt.Sprintf("Results JSON unmarshal error %v", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": strErrMsg})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"result": result})
+}
+
 // getwalletinfo also add if locked or not.

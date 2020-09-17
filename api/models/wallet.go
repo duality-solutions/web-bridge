@@ -15,6 +15,12 @@ type ChangePassphraseRequest struct {
 	NewPassphrase string `json:"newpassphrase"`
 }
 
+type WalletSeed struct {
+	HDSeed             string `json:"hdseed"`
+	Mnemonic           string `json:"mnemonic"`
+	MnemonicPassphrase string `json:"mnemonicpassphrase"`
+}
+
 /*
 type HDAccount struct {
 	HdAccountIndex     int `json:"hdaccountindex"`
