@@ -201,6 +201,14 @@ func (w *WebBridgeRunner) walletinfo(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"result": result})
 }
 
+//
+// @Description Shows the current wallet mnemonic and HD information
+// @Accept  json
+// @Produce  json
+// @Success 200 {object} models.MnemonicResponse "ok"
+// @Failure 400 {object} string "Bad request"
+// @Failure 500 {object} string "Internal error"
+// @Router /api/v1/wallet/mnemonic [get]
 func (w *WebBridgeRunner) getmnemonic(c *gin.Context) {
 	strCommand, _ := dynamic.NewRequest(`dynamic-cli dumphdinfo`)
 	response, _ := <-w.dynamicd.ExecCmdRequest(strCommand)
@@ -215,16 +223,25 @@ func (w *WebBridgeRunner) getmnemonic(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": result.Error})
 		return
 	}
-	result := models.WalletSeed{}
+	result := models.MnemonicResponse{}
 	err := json.Unmarshal([]byte(response), &result)
 	if err != nil {
 		strErrMsg := fmt.Sprintf("Results JSON unmarshal error %v", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": strErrMsg})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": strErrMsg})
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"result": result})
 }
 
+//
+// @Description Replaces the current wallet mnemonic with a new mnemonic
+// @Accept  json
+// @Produce  json
+// @Param body body models.ImportMnemonicRequest true "Mnemonic"
+// @Success 200 {object} string "ok"
+// @Failure 400 {object} string "Bad request"
+// @Failure 500 {object} string "Internal error"
+// @Router /api/v1/wallet/mnemonic [post]
 func (w *WebBridgeRunner) postmnemonic(c *gin.Context) {
 	body, err := ioutil.ReadAll(c.Request.Body)
 	if err != nil {
@@ -264,17 +281,17 @@ func (w *WebBridgeRunner) postmnemonic(c *gin.Context) {
 		err := json.Unmarshal([]byte(response), &result)
 		if err != nil {
 			strErrMsg := fmt.Sprintf("Response JSON unmarshal error %v", err)
-			c.JSON(http.StatusBadRequest, gin.H{"error": strErrMsg})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": strErrMsg})
 			return
 		}
-		c.JSON(http.StatusBadRequest, gin.H{"error": result.Error})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error})
 		return
 	}
 	var result interface{}
 	err = json.Unmarshal([]byte(response), &result)
 	if err != nil {
 		strErrMsg := fmt.Sprintf("Results JSON unmarshal error %v", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": strErrMsg})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": strErrMsg})
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"result": result})

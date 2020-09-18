@@ -19,6 +19,30 @@ definitions:
         description: The ICE server's user name. Leave blank if it doesn't apply
         type: string
     type: object
+  models.ImportMnemonicRequest:
+    properties:
+      language:
+        description: 'Language (string, optional: english|french|chinesesimplified|chinesetraditional|italian|japanese|korean|spanish)'
+        type: string
+      mnemonic:
+        description: Mnemonic (string, required) mnemonic delimited by the dash charactor (-) or space. Use 12 or 24 words
+        type: string
+      passphrase:
+        description: Passphrase (string, optional) mnemonic passphrase used as the 13th or 25th word
+        type: string
+    type: object
+  models.MnemonicResponse:
+    properties:
+      hdseed:
+        description: HDSeed (string, required) deterministic wallet seed
+        type: string
+      mnemonic:
+        description: Mnemonic (string, required) mnemonic associated with HD seed
+        type: string
+      mnemonicpassphrase:
+        description: MnemonicPassphrase (string, optional)  mnemonic passphrase used as the 13th or 25th word
+        type: string
+    type: object
 host: http://docs.webbridge.duality.solutions
 info:
   contact:
@@ -125,6 +149,52 @@ paths:
             items:
               $ref: '#/definitions/models.IceServerConfig'
             type: array
+        "400":
+          description: Bad request
+          schema:
+            type: string
+        "500":
+          description: Internal error
+          schema:
+            type: string
+  /api/v1/wallet/mnemonic:
+    get:
+      consumes:
+      - application/json
+      description: Shows the current wallet mnemonic and HD information
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ok
+          schema:
+            $ref: '#/definitions/models.MnemonicResponse'
+        "400":
+          description: Bad request
+          schema:
+            type: string
+        "500":
+          description: Internal error
+          schema:
+            type: string
+    post:
+      consumes:
+      - application/json
+      description: Replaces the current wallet mnemonic with a new mnemonic
+      parameters:
+      - description: Mnemonic
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.ImportMnemonicRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ok
+          schema:
+            type: string
         "400":
           description: Bad request
           schema:

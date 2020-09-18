@@ -186,6 +186,77 @@ var doc = `{
                     }
                 }
             }
+        },
+        "/api/v1/wallet/mnemonic": {
+            "get": {
+                "description": "Shows the current wallet mnemonic and HD information",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "ok",
+                        "schema": {
+                            "$ref": "#/definitions/models.MnemonicResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Replaces the current wallet mnemonic with a new mnemonic",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                    {
+                        "description": "Mnemonic",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.ImportMnemonicRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "ok",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -213,6 +284,40 @@ var doc = `{
                 },
                 "UserName": {
                     "description": "The ICE server's user name. Leave blank if it doesn't apply",
+                    "type": "string"
+                }
+            }
+        },
+        "models.ImportMnemonicRequest": {
+            "type": "object",
+            "properties": {
+                "language": {
+                    "description": "Language (string, optional: english|french|chinesesimplified|chinesetraditional|italian|japanese|korean|spanish)",
+                    "type": "string"
+                },
+                "mnemonic": {
+                    "description": "Mnemonic (string, required) mnemonic delimited by the dash charactor (-) or space. Use 12 or 24 words",
+                    "type": "string"
+                },
+                "passphrase": {
+                    "description": "Passphrase (string, optional) mnemonic passphrase used as the 13th or 25th word",
+                    "type": "string"
+                }
+            }
+        },
+        "models.MnemonicResponse": {
+            "type": "object",
+            "properties": {
+                "hdseed": {
+                    "description": "HDSeed (string, required) deterministic wallet seed",
+                    "type": "string"
+                },
+                "mnemonic": {
+                    "description": "Mnemonic (string, required) mnemonic associated with HD seed",
+                    "type": "string"
+                },
+                "mnemonicpassphrase": {
+                    "description": "MnemonicPassphrase (string, optional)  mnemonic passphrase used as the 13th or 25th word",
                     "type": "string"
                 }
             }

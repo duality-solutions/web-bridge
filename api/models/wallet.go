@@ -15,12 +15,19 @@ type ChangePassphraseRequest struct {
 	NewPassphrase string `json:"newpassphrase"`
 }
 
-type WalletSeed struct {
-	HDSeed             string `json:"hdseed"`
-	Mnemonic           string `json:"mnemonic"`
+// MnemonicResponse contains the wallet HD seed and mnemonic information
+// swagger:parameters models.WalletSeedResponse
+type MnemonicResponse struct {
+	// HDSeed (string, required) deterministic wallet seed
+	HDSeed string `json:"hdseed"`
+	// Mnemonic (string, required) mnemonic associated with HD seed
+	Mnemonic string `json:"mnemonic"`
+	// MnemonicPassphrase (string, optional)  mnemonic passphrase used as the 13th or 25th word
 	MnemonicPassphrase string `json:"mnemonicpassphrase"`
 }
 
+// ImportMnemonicRequest request payload used to import mnemonic
+// swagger:parameters models.ImportMnemonicRequest
 type ImportMnemonicRequest struct {
 	// Mnemonic (string, required) mnemonic delimited by the dash charactor (-) or space. Use 12 or 24 words
 	Mnemonic string `json:"mnemonic"`
