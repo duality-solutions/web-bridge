@@ -21,6 +21,15 @@ type WalletSeed struct {
 	MnemonicPassphrase string `json:"mnemonicpassphrase"`
 }
 
+type ImportMnemonicRequest struct {
+	// Mnemonic (string, required) mnemonic delimited by the dash charactor (-) or space. Use 12 or 24 words
+	Mnemonic string `json:"mnemonic"`
+	// Language (string, optional: english|french|chinesesimplified|chinesetraditional|italian|japanese|korean|spanish)
+	Language string `json:"language"`
+	// Passphrase (string, optional) mnemonic passphrase used as the 13th or 25th word
+	Passphrase string `json:"passphrase"`
+}
+
 /*
 type HDAccount struct {
 	HdAccountIndex     int `json:"hdaccountindex"`

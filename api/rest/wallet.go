@@ -201,7 +201,7 @@ func (w *WebBridgeRunner) walletinfo(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"result": result})
 }
 
-func (w *WebBridgeRunner) mnemonic(c *gin.Context) {
+func (w *WebBridgeRunner) getmnemonic(c *gin.Context) {
 	strCommand, _ := dynamic.NewRequest(`dynamic-cli dumphdinfo`)
 	response, _ := <-w.dynamicd.ExecCmdRequest(strCommand)
 	if strings.Contains(response, "Please enter the wallet passphrase with walletpassphrase first") {
@@ -217,6 +217,61 @@ func (w *WebBridgeRunner) mnemonic(c *gin.Context) {
 	}
 	result := models.WalletSeed{}
 	err := json.Unmarshal([]byte(response), &result)
+	if err != nil {
+		strErrMsg := fmt.Sprintf("Results JSON unmarshal error %v", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": strErrMsg})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"result": result})
+}
+
+func (w *WebBridgeRunner) postmnemonic(c *gin.Context) {
+	body, err := ioutil.ReadAll(c.Request.Body)
+	if err != nil {
+		strErrMsg := fmt.Sprintf("Request body read all error %v", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": strErrMsg})
+		return
+	}
+	if len(body) == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Request body is empty"})
+		return
+	}
+	req := models.ImportMnemonicRequest{}
+	err = json.Unmarshal(body, &req)
+	if err != nil {
+		strErrMsg := fmt.Sprintf("Request body JSON unmarshal error %v", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": strErrMsg})
+		return
+	}
+	if len(req.Mnemonic) == 0 {
+		strErrMsg := fmt.Sprintf("Request body mnemonic is empty.")
+		c.JSON(http.StatusBadRequest, gin.H{"error": strErrMsg})
+		return
+	}
+	cmd := `dynamic-cli importmnemonic "` + req.Mnemonic + `"`
+	if len(req.Language) > 0 {
+		cmd += ` "` + req.Language + `"`
+	} else {
+		cmd += ` "english"`
+	}
+	if len(req.Passphrase) > 0 {
+		cmd += ` "` + req.Passphrase + `"`
+	}
+	strCommand, _ := dynamic.NewRequest(cmd)
+	response, _ := <-w.dynamicd.ExecCmdRequest(strCommand)
+	if strings.Contains(response, "Error:") {
+		result := models.RPCError{}
+		err := json.Unmarshal([]byte(response), &result)
+		if err != nil {
+			strErrMsg := fmt.Sprintf("Response JSON unmarshal error %v", err)
+			c.JSON(http.StatusBadRequest, gin.H{"error": strErrMsg})
+			return
+		}
+		c.JSON(http.StatusBadRequest, gin.H{"error": result.Error})
+		return
+	}
+	var result interface{}
+	err = json.Unmarshal([]byte(response), &result)
 	if err != nil {
 		strErrMsg := fmt.Sprintf("Results JSON unmarshal error %v", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": strErrMsg})

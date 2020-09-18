@@ -1,8 +1,8 @@
 package rest
 
 import (
-	"github.com/duality-solutions/web-bridge/configs/settings"
 	"github.com/duality-solutions/web-bridge/blockchain/rpc/dynamic"
+	"github.com/duality-solutions/web-bridge/configs/settings"
 	"github.com/gin-gonic/gin"
 
 	_ "github.com/duality-solutions/web-bridge/docs"
@@ -77,7 +77,8 @@ func setupBlockchainRoutes(currentVersion *gin.RouterGroup) {
 func setupWalletRoutes(currentVersion *gin.RouterGroup) {
 	wallet := currentVersion.Group("/wallet")
 	wallet.GET("/", runner.walletinfo)
-	wallet.GET("/mnemonic", runner.mnemonic)
+	wallet.GET("/mnemonic", runner.getmnemonic)
+	wallet.POST("/mnemonic", runner.postmnemonic)
 	wallet.PATCH("/unlock", runner.unlockwallet)
 	wallet.PATCH("/lock", runner.lockwallet)
 	wallet.PATCH("/encrypt", runner.encryptwallet)
