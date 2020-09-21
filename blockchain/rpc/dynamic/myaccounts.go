@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/duality-solutions/web-bridge/api/models"
 	"github.com/duality-solutions/web-bridge/internal/util"
 )
 
@@ -30,22 +31,29 @@ type Account struct {
 }
 
 func (d *Dynamicd) myAccounts() (*[]Account, error) {
-	var accountsGeneric map[string]interface{}
 	var accounts = []Account{}
 	req, _ := NewRequest("dynamic-cli mybdapaccounts")
 	rawResp := []byte(<-d.ExecCmdRequest(req))
-	errUnmarshal := json.Unmarshal(rawResp, &accountsGeneric)
-	if errUnmarshal != nil {
-		return &accounts, errUnmarshal
+	err := json.Unmarshal(rawResp, &accounts)
+	if err != nil {
+		var rpcErr models.RPCError
+		err = json.Unmarshal(rawResp, &rpcErr)
+		if err != nil {
+			util.Error.Printf("Getting accounts from blockchain daemon failed (%v)\n", string(rawResp))
+		}
+	} else {
+		return &accounts, nil
 	}
+	var accountsGeneric map[string]interface{}
+	err = json.Unmarshal(rawResp, &accountsGeneric)
 	for _, v := range accountsGeneric {
 		b, err := json.Marshal(v)
 		if err == nil {
 			var account Account
-			errUnmarshal = json.Unmarshal(b, &account)
-			if errUnmarshal != nil {
-				util.Error.Println("Inner error", errUnmarshal)
-				return nil, errUnmarshal
+			err = json.Unmarshal(b, &account)
+			if err != nil {
+				util.Error.Printf("Getting accounts from blockchain daemon failed (%v)\n", string(rawResp))
+				return nil, err
 			}
 			accounts = append(accounts, account)
 		}
