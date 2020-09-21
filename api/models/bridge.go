@@ -14,3 +14,10 @@ type BridgeInfo struct {
 	HTTPListenPort     uint16 `json:"http_listen_port"`
 	HTTPSListenPort    uint16 `json:"https_listen_port"`
 }
+
+// BridgeRequest stores the ICE server configuration information needed for WebRTC connections
+// swagger:parameters models.BridgeRequest
+type BridgeRequest struct {
+	// LinkID is a deterministic identifier created by hashing the link accounts names in alphabetic order
+	LinkID string `json:"link_id"`
+}

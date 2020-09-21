@@ -9,8 +9,8 @@ import (
 	"sort"
 	"sync"
 
-	"github.com/duality-solutions/web-bridge/internal/util"
 	"github.com/duality-solutions/web-bridge/blockchain/rpc/dynamic"
+	"github.com/duality-solutions/web-bridge/internal/util"
 	"github.com/pion/webrtc/v2"
 )
 
@@ -52,6 +52,17 @@ func NewBridge(s uint16, l dynamic.Link, acc []dynamic.Account) Bridge {
 		}
 	}
 	return brd
+}
+
+// ResetBridge clones an existing bridge into a new struct
+func ResetBridge(b *Bridge) *Bridge {
+	var newBridge Bridge
+	newBridge.bridgeMut = new(sync.RWMutex)
+	newBridge.SessionID = b.SessionID
+	newBridge.state = StateNew
+	newBridge.MyAccount = b.MyAccount
+	newBridge.LinkAccount = b.LinkAccount
+	return &newBridge
 }
 
 // NewLinkBridge creates a new bridge struct
