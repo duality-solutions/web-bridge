@@ -5,7 +5,7 @@ import (
 	"github.com/duality-solutions/web-bridge/configs/settings"
 	"github.com/gin-gonic/gin"
 
-	_ "github.com/duality-solutions/web-bridge/docs"
+	_ "github.com/duality-solutions/web-bridge/docs" // used for Swagger documentation
 	ginSwagger "github.com/swaggo/gin-swagger"
 	"github.com/swaggo/gin-swagger/swaggerFiles"
 )
@@ -97,6 +97,7 @@ func setupBridgesRoutes(currentVersion *gin.RouterGroup) {
 	bridges.GET("/", runner.bridgesinfo)
 	bridges.GET("/connected", runner.connectedbridges)
 	bridges.GET("/unconnected", runner.unconnectedbridges)
+	bridges.POST("/stop/:LinkID", runner.stopbridge)
 }
 
 func setupConfigRoutes(currentVersion *gin.RouterGroup) {
@@ -106,5 +107,4 @@ func setupConfigRoutes(currentVersion *gin.RouterGroup) {
 	config.PUT("/ice", runner.putice)
 	config.DELETE("/ice", runner.deleteice)
 	config.POST("/ice", runner.replaceice)
-
 }

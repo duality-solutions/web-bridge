@@ -50,7 +50,9 @@ func (c *Controller) PutUnconnected(bridge *Bridge) {
 func (c *Controller) MoveConnectedToUnconnected(bridge *Bridge) {
 	c.bridgesMut.Lock()
 	defer c.bridgesMut.Unlock()
-	delete(c.connected, bridge.LinkID())
+	if c.connected[bridge.LinkID()] != nil {
+		delete(c.connected, bridge.LinkID())
+	}
 	c.unconnected[bridge.LinkID()] = bridge
 }
 
@@ -58,7 +60,9 @@ func (c *Controller) MoveConnectedToUnconnected(bridge *Bridge) {
 func (c *Controller) MoveUnconnectedToConnected(bridge *Bridge) {
 	c.bridgesMut.Lock()
 	defer c.bridgesMut.Unlock()
-	delete(c.unconnected, bridge.LinkID())
+	if c.unconnected[bridge.LinkID()] != nil {
+		delete(c.unconnected, bridge.LinkID())
+	}
 	c.connected[bridge.LinkID()] = bridge
 }
 

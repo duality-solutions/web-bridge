@@ -55,14 +55,15 @@ func NewBridge(s uint16, l dynamic.Link, acc []dynamic.Account) Bridge {
 }
 
 // ResetBridge clones an existing bridge into a new struct
-func ResetBridge(b *Bridge) *Bridge {
+func ResetBridge(b *Bridge) Bridge {
 	var newBridge Bridge
 	newBridge.bridgeMut = new(sync.RWMutex)
 	newBridge.SessionID = b.SessionID
-	newBridge.state = StateNew
 	newBridge.MyAccount = b.MyAccount
 	newBridge.LinkAccount = b.LinkAccount
-	return &newBridge
+	newBridge.SetState(StateNew)
+	newBridge.SetRTCState("")
+	return newBridge
 }
 
 // NewLinkBridge creates a new bridge struct
@@ -269,7 +270,16 @@ func (b *Bridge) LinkParticipants() string {
 	return (b.MyAccount + "-" + b.LinkAccount)
 }
 
-// ShutdownHTTPProxyServers returns the HTTP server listening port
+// Shutdown safely closes WebRTC and proxy networks
+func (b *Bridge) Shutdown() {
+	if b.peerConnection.ConnectionState().String() == "connected" {
+		b.dataChannel.Close()
+		b.peerConnection.Close()
+	}
+	b.ShutdownHTTPProxyServers()
+}
+
+// ShutdownHTTPProxyServers closes the proxy server and sets bridge to disconnected
 func (b *Bridge) ShutdownHTTPProxyServers() {
 	b.SetState(StateDisconnected)
 	if b.proxyHTTP != nil {

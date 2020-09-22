@@ -22,6 +22,8 @@ const (
 	StateOpenConnection
 	// StateDisconnected when WebRTC goes from connected to diconnected and open = 8
 	StateDisconnected
+	// StateShutdown when a shutdown command is sent to the bridge = 9
+	StateShutdown
 )
 
 func (s State) String() string {
@@ -30,6 +32,8 @@ func (s State) String() string {
 		return "StateInit"
 	case StateNew:
 		return "StateNew"
+	case StateWaitForOffer:
+		return "StateWaitForOffer"
 	case StateWaitForAnswer:
 		return "StateWaitForAnswer"
 	case StateSendAnswer:
@@ -40,6 +44,10 @@ func (s State) String() string {
 		return "StateEstablishRTC"
 	case StateOpenConnection:
 		return "StateOpenConnection"
+	case StateDisconnected:
+		return "StateDisconnected"
+	case StateShutdown:
+		return "StateShutdown"
 	default:
 		return "Undefined"
 	}

@@ -3,8 +3,8 @@ package bridge
 import (
 	"time"
 
-	"github.com/duality-solutions/web-bridge/internal/util"
 	"github.com/duality-solutions/web-bridge/blockchain/rpc/dynamic"
+	"github.com/duality-solutions/web-bridge/internal/util"
 )
 
 var startEpoch int64
@@ -104,6 +104,9 @@ func GetLinkNotifications(stopchan *chan struct{}) bool {
 	for _, link := range bridges {
 		select {
 		default:
+			if link.state == StateShutdown {
+				continue
+			}
 			notifications, err := dynamicd.GetNotificationMessages(link.MyAccount, link.LinkAccount)
 			if err != nil {
 				util.Error.Println("GetLinkNotifications dynamicd.GetNotificationMessages error", link.LinkAccount, err)
