@@ -9,10 +9,10 @@ import (
 	"time"
 
 	"github.com/duality-solutions/web-bridge/api/rest"
+	"github.com/duality-solutions/web-bridge/blockchain/rpc/dynamic"
 	"github.com/duality-solutions/web-bridge/bridge"
 	"github.com/duality-solutions/web-bridge/configs/settings"
 	"github.com/duality-solutions/web-bridge/internal/util"
-	"github.com/duality-solutions/web-bridge/blockchain/rpc/dynamic"
 	"github.com/duality-solutions/web-bridge/tests/testauth"
 )
 
@@ -55,6 +55,12 @@ func Init(version, githash string) error {
 	if test || debug {
 		if !testauth.TestCerts() {
 			return fmt.Errorf("web-bridge could not load test certificates")
+		}
+		if !testauth.TestExistingSignature() {
+			return fmt.Errorf("web-bridge could run existing key signature test")
+		}
+		if !testauth.TestNewKeySignature() {
+			return fmt.Errorf("web-bridge could run new key signature test")
 		}
 	}
 	usr, _ := user.Current()
