@@ -4,9 +4,9 @@ import (
 	"errors"
 	"time"
 
+	"github.com/duality-solutions/web-bridge/blockchain/rpc/dynamic"
 	"github.com/duality-solutions/web-bridge/configs/settings"
 	"github.com/duality-solutions/web-bridge/internal/util"
-	"github.com/duality-solutions/web-bridge/blockchain/rpc/dynamic"
 )
 
 const (
@@ -87,7 +87,7 @@ func StartBridges(stopchan *chan struct{}, c settings.Configuration, d dynamic.D
 	config = c
 	accounts = a
 	links = l
-	if dynamicd.WaitForSync(stopchan, 10, 10) {
+	if dynamicd.WaitForConnections(stopchan, 10, 10) {
 		if initializeBridges(stopchan) {
 			for {
 				select {

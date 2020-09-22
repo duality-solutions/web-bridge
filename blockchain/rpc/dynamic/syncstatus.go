@@ -28,3 +28,14 @@ func (d *Dynamicd) GetSyncStatus() (*SyncStatus, error) {
 	}
 	return &status, nil
 }
+
+// GetNumberOfConnections returns the number of active blockchain peer connections
+func (d *Dynamicd) GetNumberOfConnections() (int, error) {
+	var status SyncStatus
+	req, _ := NewRequest("dynamic-cli syncstatus")
+	err := json.Unmarshal([]byte(<-d.ExecCmdRequest(req)), &status)
+	if err != nil {
+		return 0, err
+	}
+	return status.Peers, nil
+}
