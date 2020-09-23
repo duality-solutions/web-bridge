@@ -9,12 +9,14 @@ import (
 	"sort"
 	"sync"
 
+	"github.com/duality-solutions/web-bridge/api/models"
 	"github.com/duality-solutions/web-bridge/blockchain/rpc/dynamic"
 	"github.com/duality-solutions/web-bridge/internal/util"
 	"github.com/pion/webrtc/v2"
 )
 
 // Bridge hold information about a link WebRTC bridge connection
+// TODO: Add data transfer rates and upload/download amounts
 type Bridge struct {
 	SessionID          uint16
 	MyAccount          string
@@ -329,4 +331,21 @@ func (b *Bridge) String() string {
 	}
 	result += "\n}"
 	return result
+}
+
+func (b *Bridge) ToJSON() models.BridgeInfo {
+	return models.BridgeInfo{
+		SessionID:          b.SessionID,
+		LinkID:             b.LinkID(),
+		State:              b.State().String(),
+		MyAccount:          b.MyAccount,
+		LinkAccount:        b.LinkAccount,
+		OnOpenEpoch:        b.OnOpenEpoch(),
+		OnStateChangeEpoch: b.OnStateChangeEpoch(),
+		OnLastDataEpoch:    b.OnLastDataEpoch(),
+		OnErrorEpoch:       b.OnErrorEpoch(),
+		RTCState:           b.RTCState(),
+		HTTPListenPort:     b.ListenPort(),
+		HTTPSListenPort:    b.ListenPort() + 1,
+	}
 }

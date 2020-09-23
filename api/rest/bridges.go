@@ -207,7 +207,7 @@ func (w *WebBridgeRunner) restartbridge(c *gin.Context) {
 		c.JSON(status, gin.H{"error": err})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"result": b})
+	c.JSON(http.StatusOK, gin.H{"result": b.ToJSON()})
 }
 
 func (w *WebBridgeRunner) startbridge(c *gin.Context) {
@@ -239,5 +239,5 @@ func (w *WebBridgeRunner) stopbridge(c *gin.Context) {
 		c.JSON(status, gin.H{"error": fmt.Sprintf("%v", err)})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"result": b})
+	c.JSON(http.StatusOK, gin.H{"result": b.ToJSON()})
 }
