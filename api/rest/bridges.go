@@ -187,7 +187,7 @@ func getBridgeFromID(id string) (*bridge.Bridge, int, error) {
 // @Accept  json
 // @Produce  json
 // @Param body body models.BridgeRequest true "Bridge"
-// @Success 200 {object} string "ok"
+// @Success 200 {object} models.BridgeInfo "ok"
 // @Failure 400 {object} string "Bad request"
 // @Failure 500 {object} string "Internal error"
 // @Router /api/v1/bridges/restart [post]
@@ -219,7 +219,7 @@ func (w *WebBridgeRunner) startbridge(c *gin.Context) {
 // @Accept  json
 // @Produce  json
 // @Param body body models.BridgeRequest true "Bridge"
-// @Success 200 {object} string "ok"
+// @Success 200 {object} models.BridgeInfo "ok"
 // @Failure 400 {object} string "Bad request"
 // @Failure 500 {object} string "Internal error"
 // @Router /api/v1/bridges/restart [post]
