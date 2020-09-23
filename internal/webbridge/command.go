@@ -8,9 +8,9 @@ import (
 	"time"
 
 	"github.com/duality-solutions/web-bridge/api/rest"
+	"github.com/duality-solutions/web-bridge/blockchain/rpc/dynamic"
 	"github.com/duality-solutions/web-bridge/bridge"
 	"github.com/duality-solutions/web-bridge/internal/util"
-	"github.com/duality-solutions/web-bridge/blockchain/rpc/dynamic"
 	"golang.org/x/crypto/ssh/terminal"
 )
 
@@ -41,6 +41,9 @@ func appCommandLoop(stopBridges *chan struct{}, acc *[]dynamic.Account, al *dyna
 					util.Info.Println("Wallet locked so links are unavailable. Use the unlock command to start your link bridges.")
 				} else {
 					unlocked = true
+					util.Info.Println("Starting bridges.")
+					go bridge.StartBridges(stopBridges, config, *d, *acc, *al)
+					bridgesStarted = true
 				}
 				reader := bufio.NewReader(os.Stdin)
 				fmt.Print(DefaultName + `> `)
