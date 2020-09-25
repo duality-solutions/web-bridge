@@ -7,6 +7,7 @@ require (
 	github.com/alecthomas/template v0.0.0-20190718012654-fb15b899a751
 	github.com/elazarl/goproxy v0.0.0-20200426045556-49ad98f6dac1
 	github.com/elazarl/goproxy/ext v0.0.0-20200426045556-49ad98f6dac1
+	github.com/gin-gonic/contrib v0.0.0-20200913005814-1c32036e7ea4
 	github.com/gin-gonic/gin v1.6.3
 	github.com/go-ole/go-ole v1.2.4 // indirect
 	github.com/go-openapi/spec v0.19.9 // indirect

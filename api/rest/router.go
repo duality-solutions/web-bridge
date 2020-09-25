@@ -3,6 +3,7 @@ package rest
 import (
 	"github.com/duality-solutions/web-bridge/blockchain/rpc/dynamic"
 	"github.com/duality-solutions/web-bridge/configs/settings"
+	"github.com/gin-gonic/contrib/static"
 	"github.com/gin-gonic/gin"
 
 	_ "github.com/duality-solutions/web-bridge/docs" // used for Swagger documentation
@@ -31,6 +32,7 @@ func StartWebServiceRouter(c *settings.Configuration, d *dynamic.Dynamicd, a *Ap
 	runner.dynamicd = d
 	runner.shutdownApp = a
 	runner.router = gin.Default()
+	setupAdminWebConsole(runner.router)
 	api := runner.router.Group("/api")
 	version := api.Group("/v1")
 	version.POST("/shutdown", runner.shutdown)
@@ -40,6 +42,12 @@ func StartWebServiceRouter(c *settings.Configuration, d *dynamic.Dynamicd, a *Ap
 	setupConfigRoutes(version)
 	setupSwagger(runner.router)
 	runner.router.Run()
+}
+
+func setupAdminWebConsole(root *gin.Engine) {
+	// Setup admin console web application
+	root.Use(static.Serve("/", static.LocalFile("./web/build", true)))
+	root.Use(static.Serve("/admin", static.LocalFile("./web/build", true)))
 }
 
 // @title WebBridge Restful API Documentation
