@@ -113,9 +113,9 @@ func (c *Configuration) ToJSON() models.ConfigurationFile {
 
 func (c *Configuration) createDefault() {
 	defaultIce := models.IceServerConfig{
-		DefaultIceURL,
-		DefaultIceUserName,
-		DefaultIceCredential,
+		URL:        DefaultIceURL,
+		UserName:   DefaultIceUserName,
+		Credential: DefaultIceCredential,
 	}
 	c.configFile.IceServers = append(c.configFile.IceServers, defaultIce)
 	file, _ := json.Marshal(&c)
