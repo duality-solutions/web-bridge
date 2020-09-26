@@ -29,7 +29,8 @@ Install the latest release of Node Virtual Machine (NVM) [Windows](https://githu
 Use NodeJS v12.18.4
 
 ```shell
-nvm install 12.18.4;nvm use 12.18.4;npm install;yarn build
+nvm install 12.18.4;nvm use 12.18.4;
+npm install;yarn build
 ```
 
 ### Build website
