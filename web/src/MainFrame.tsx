@@ -1,23 +1,31 @@
 import React from 'react';
 import { Component } from "react";
-import { Header, Icon, Image, Menu, Segment, Sidebar } from 'semantic-ui-react';
+import { Header, Icon, /*Image,*/ Menu, Segment, Sidebar } from 'semantic-ui-react';
 //import logo from './logo.svg';
 
-export interface SideBarProps {
+export interface MainFrameProps {
+    currentPage?: string
 };
 
-export interface SideBarState {
+export interface MainFrameState {
+    setupComplete?: boolean
 };
 
-export class MainFrame extends Component<SideBarProps, SideBarState> {
-    constructor(props: SideBarProps) {
+export class MainFrame extends Component<MainFrameProps, MainFrameState> {
+    private currentPage: string;
+    constructor(props: MainFrameProps) {
         super(props);
+        this.currentPage = props.currentPage ? props.currentPage : "home";
     }
 
     componentDidMount(): void {
     }
 
     componentWillUnmount(): void {
+    }
+    
+    changePage(): void {
+        console.log("MainFrame.changePage" + this.currentPage);
     }
 
     render() {

@@ -6,7 +6,7 @@ import './App.css';
 function App() {
   return (
       <div>
-        <MainFrame/>
+        <MainFrame currentPage="home"/>
       </div>
   );
 }
