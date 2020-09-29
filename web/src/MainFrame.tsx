@@ -1,69 +1,167 @@
-import React from 'react';
-import { Component } from "react";
-import { Header, Icon, /*Image,*/ Menu, Segment, Sidebar } from 'semantic-ui-react';
+import React, { Component } from "react";
+//import { HomePage } from "./Home";
+import {
+  Button,
+  Dropdown,
+  Grid,
+  Header,
+  Icon,
+  Image,
+  Menu,
+  Modal,
+  Segment
+} from "semantic-ui-react";
+// TODO: Add logo to page
+// Add subpages that display
 //import logo from './logo.svg';
 
 export interface MainFrameProps {
-    currentPage?: string
-};
+  currentPage?: string;
+}
 
 export interface MainFrameState {
-    setupComplete?: boolean
-};
+  setupComplete?: boolean;
+  currentPage?: string;
+  open?: boolean;
+}
 
 export class MainFrame extends Component<MainFrameProps, MainFrameState> {
-    private currentPage: string;
-    constructor(props: MainFrameProps) {
-        super(props);
-        this.currentPage = props.currentPage ? props.currentPage : "home";
-    }
+  private currentPage: string;
+  constructor(props: MainFrameProps) {
+    super(props);
+    this.currentPage = props.currentPage ? props.currentPage : "home";
+    this.state = {
+      setupComplete: false,
+      currentPage: this.currentPage,
+      open: true
+    };
+  }
 
-    componentDidMount(): void {
-    }
+  componentDidMount(): void {}
 
-    componentWillUnmount(): void {
-    }
-    
-    changePage(): void {
-        console.log("MainFrame.changePage" + this.currentPage);
-    }
+  componentWillUnmount(): void {}
 
-    render() {
-        return (
-            <div className="ui sidebar">
-                {/*<img src={logo} className="App-logo" alt="logo" />*/}
-                <Sidebar.Pushable as={Segment}>
-                    <Sidebar
-                        as={Menu}
-                        icon='labeled'
-                        inverted
-                        vertical
-                        visible
-                    >
-                        <Menu.Item as='a'>
-                            <Icon name='home' />
-                            Home
-                        </Menu.Item>
-                        <Menu.Item as='a'>
-                            <Icon name='chain' />
-                            Chain
-                        </Menu.Item>
-                        <Menu.Item as='a'>
-                            <Icon name='user secret' />
-                            Accounts
-                        </Menu.Item>
-                        <Menu.Item as='a'>
-                            <Icon name='connectdevelop' />
-                            Bridges
-                        </Menu.Item>
-                    </Sidebar>
-                    <Sidebar.Pusher>
-                        <Segment basic>
-                            <Header as='h3'>Home</Header>
-                        </Segment>
-                    </Sidebar.Pusher>
-                </Sidebar.Pushable>
+  private changePage(pageName: string): void {
+    this.currentPage = pageName;
+    console.log("MainFrame.changePage " + this.currentPage);
+    this.setState({ currentPage: pageName, open: true });
+  }
+
+  render() {
+    return (
+      <div>
+        <Grid>
+          <Grid.Column width={2}>
+            <div className="menu">
+              <div className="toc">
+                <Menu className="inverted vertical thin left fixed">
+                  <Menu.Item onClick={() => this.changePage("home")} as="a">
+                    <Icon name="home" />
+                    Home
+                  </Menu.Item>
+                  <Menu.Item onClick={() => this.changePage("chain")} as="a">
+                    <Icon name="chain" />
+                    Chain
+                  </Menu.Item>
+                  <Menu.Item onClick={() => this.changePage("accounts")} as="a">
+                    <Icon name="user secret" />
+                    Accounts
+                  </Menu.Item>
+                  <Menu.Item onClick={() => this.changePage("bridges")} as="a">
+                    <Icon name="connectdevelop" />
+                    Bridges
+                  </Menu.Item>
+                  <Dropdown item text="More">
+                    <Dropdown.Menu>
+                      <Dropdown.Item
+                        onClick={() => this.changePage("profile")}
+                        icon="edit"
+                        text="Edit Profile"
+                      />
+                      <Dropdown.Item
+                        onClick={() => this.changePage("language")}
+                        icon="globe"
+                        text="Choose Language"
+                      />
+                      <Dropdown.Item
+                        onClick={() => this.changePage("settings")}
+                        icon="settings"
+                        text="Settings"
+                      />
+                    </Dropdown.Menu>
+                  </Dropdown>
+                </Menu>
+              </div>
             </div>
-        )
-    }
+          </Grid.Column>
+          <Grid.Column stretched width={12}>
+            <div>
+              <div className="article">
+                {this.currentPage === "home" && (
+                  <Segment basic raised textAlign="center">
+                    <Header as="h3">Home</Header>
+                    <Image src="https://react.semantic-ui.com/images/wireframe/paragraph.png" />
+                  </Segment>
+                )}
+                {this.currentPage === "chain" && (
+                  <Segment basic raised textAlign="center">
+                    <Modal
+                      onClose={() => this.setState({ open: false })}
+                      onOpen={() => this.setState({ open: true })}
+                      open={this.state.open}
+                      trigger={<Button>Show Modal</Button>}
+                    >
+                      <Modal.Header>Select a Photo</Modal.Header>
+                      <Modal.Content image>
+                        <Image
+                          size="medium"
+                          src="https://react.semantic-ui.com/images/wireframe/paragraph.png"
+                          wrapped
+                        />
+                        <Modal.Description>
+                          <Header>Default Profile Image</Header>
+                          <p>
+                            We've found the following gravatar image associated
+                            with your e-mail address.
+                          </p>
+                          <p>Is it okay to use this photo?</p>
+                        </Modal.Description>
+                      </Modal.Content>
+                      <Modal.Actions>
+                        <Button
+                          color="black"
+                          onClick={() => this.setState({ open: false })}
+                        >
+                          Nope
+                        </Button>
+                        <Button
+                          content="Yep, that's me"
+                          labelPosition="right"
+                          icon="checkmark"
+                          onClick={() => this.setState({ open: false })}
+                          positive
+                        />
+                      </Modal.Actions>
+                    </Modal>
+                  </Segment>
+                )}
+                {this.currentPage === "accounts" && (
+                  <Segment basic raised textAlign="center">
+                    <Header as="h3">Accounts</Header>
+                    <Image src="https://react.semantic-ui.com/images/wireframe/paragraph.png" />
+                  </Segment>
+                )}
+                {this.currentPage === "bridges" && (
+                  <Segment basic raised textAlign="center">
+                    <Header as="h3">Bridges</Header>
+                    <Image src="https://react.semantic-ui.com/images/wireframe/paragraph.png" />
+                  </Segment>
+                )}
+              </div>
+            </div>
+          </Grid.Column>
+        </Grid>
+      </div>
+    );
+  }
 }
