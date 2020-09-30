@@ -1,5 +1,5 @@
 import React, { Component } from "react";
-//import { HomePage } from "./Home";
+import { Settings } from "./Settings";
 import {
   Button,
   Dropdown,
@@ -155,6 +155,17 @@ export class MainFrame extends Component<MainFrameProps, MainFrameState> {
                   <Segment basic raised textAlign="center">
                     <Header as="h3">Bridges</Header>
                     <Image src="https://react.semantic-ui.com/images/wireframe/paragraph.png" />
+                  </Segment>
+                )}
+                {this.currentPage === "settings" && (
+                  <Segment basic raised textAlign="center">
+                    <Settings
+                      defaultIceUrl="turn:ice.bdap.io:3478"
+                      defaultIceUser="test"
+                      defaultIcePassword="Admin@123"
+                      defaultBind="0.0.0.0"
+                      defaultAllow="127.0.0.1/0"
+                    />
                   </Segment>
                 )}
               </div>
