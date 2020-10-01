@@ -1,6 +1,9 @@
 package util
 
-import "net"
+import (
+	"net"
+	"strings"
+)
 
 // IP address lengths (bytes).
 const (
@@ -27,12 +30,19 @@ func IsValidIPAddress(s string) bool {
 	return false
 }
 
-// IsValidCIDR parses s and returns true if the string is a valid CIDR
+// IsValidCIDRList parses s which is a comma delimited list of CIDRs and returns true if all the CIDR in the list are valid
 // The string s can "192.0.2.0/24" or "2001:db8::/32", as defined in
 // RFC 4632 and RFC 4291.
-func IsValidCIDR(s string) bool {
-	_, _, err := net.ParseCIDR(s)
-	return err == nil
+func IsValidCIDRList(s string) bool {
+	cidrList := strings.Split(s, ",")
+	for _, raw := range cidrList {
+		cidr := strings.Trim(raw, " ")
+		_, _, err := net.ParseCIDR(cidr)
+		if err != nil {
+			return false
+		}
+	}
+	return true
 }
 
 func parseIPv4(s string) bool {

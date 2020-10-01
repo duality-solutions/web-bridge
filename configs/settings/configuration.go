@@ -109,7 +109,7 @@ func (c *Configuration) Load(dir, seperator string) error {
 			c.configFile.WebServer = models.DefaultWebServerConfig()
 			c.updateFile()
 		} else {
-			if !util.IsValidCIDR(c.configFile.WebServer.AllowCIDR) {
+			if !util.IsValidCIDRList(c.configFile.WebServer.AllowCIDR) {
 				return fmt.Errorf("Invalid Web Server allow CIDR: %v", c.configFile.WebServer.AllowCIDR)
 			}
 			if !util.IsValidIPAddress(c.configFile.WebServer.BindAddress) {

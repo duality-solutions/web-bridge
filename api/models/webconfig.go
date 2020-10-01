@@ -14,7 +14,7 @@ func DefaultWebServerConfig() WebServerConfig {
 	return WebServerConfig{
 		BindAddress: "0.0.0.0",
 		ListenPort:  35350,
-		AllowCIDR:   "127.0.0.1/32",
+		AllowCIDR:   "127.0.0.0/8, ::1/128",
 	}
 }
 
