@@ -34,6 +34,7 @@ func StartWebServiceRouter(c *settings.Configuration, d *dynamic.Dynamicd, a *Ap
 	runner.dynamicd = d
 	runner.shutdownApp = a
 	runner.router = gin.Default()
+	runner.router.Use(AllowCIDR(c.ToJSON().WebServer.AllowCIDR))
 	setupAdminWebConsole(runner.router)
 	api := runner.router.Group("/api")
 	version := api.Group("/v1")

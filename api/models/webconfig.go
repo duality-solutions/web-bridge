@@ -12,9 +12,9 @@ type WebServerConfig struct {
 
 func DefaultWebServerConfig() WebServerConfig {
 	return WebServerConfig{
-		BindAddress: "127.0.0.1",
+		BindAddress: "0.0.0.0",
 		ListenPort:  35350,
-		AllowCIDR:   "127.0.0.1/0",
+		AllowCIDR:   "127.0.0.1/32",
 	}
 }
 
