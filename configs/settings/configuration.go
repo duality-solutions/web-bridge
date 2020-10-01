@@ -2,6 +2,7 @@ package settings
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"sync"
@@ -117,7 +118,9 @@ func (c *Configuration) createDefault() {
 		UserName:   DefaultIceUserName,
 		Credential: DefaultIceCredential,
 	}
+	defaultWeb := models.DefaultWebServerConfig()
 	c.configFile.IceServers = append(c.configFile.IceServers, defaultIce)
+	c.configFile.WebServer = defaultWeb
 	file, _ := json.Marshal(&c)
 	err := ioutil.WriteFile(homeDir+ConfigurationFileName, file, 0644)
 	if isErr(err) {
@@ -126,7 +129,7 @@ func (c *Configuration) createDefault() {
 }
 
 // Load reads the configuration file or loads default values
-func (c *Configuration) Load(dir, seperator string) {
+func (c *Configuration) Load(dir, seperator string) error {
 	c.mut = new(sync.RWMutex)
 	homeDir = dir
 	pathSeperator = seperator
@@ -138,13 +141,28 @@ func (c *Configuration) Load(dir, seperator string) {
 		file, errRead := ioutil.ReadFile(homeDir + ConfigurationFileName)
 		if isErr(errRead) {
 			c.createDefault()
-			return
+			return nil
 		}
 		errUnmarshal := json.Unmarshal([]byte(file), &c.configFile)
 		if isErr(errUnmarshal) {
 			util.Error.Println("Error unmarshal configuration file. Overwritting file with default values.")
 			c.createDefault()
 		}
-		util.Info.Println("Configuration loaded.")
+		if c.configFile.WebServer.AllowCIDR == "" && c.configFile.WebServer.BindAddress == "" && c.configFile.WebServer.ListenPort < 1 {
+			c.configFile.WebServer = models.DefaultWebServerConfig()
+			c.updateFile()
+		} else {
+			if !util.IsValidCIDR(c.configFile.WebServer.AllowCIDR) {
+				return fmt.Errorf("Invalid Web Server allow CIDR: %v", c.configFile.WebServer.AllowCIDR)
+			}
+			if !util.IsValidIPAddress(c.configFile.WebServer.BindAddress) {
+				return fmt.Errorf("Invalid Web Server bind IP address: %v", c.configFile.WebServer.BindAddress)
+			}
+			if c.configFile.WebServer.ListenPort < 1 {
+				return fmt.Errorf("Invalid Web Server port: %v", c.configFile.WebServer.ListenPort)
+			}
+		}
+		util.Info.Println("Configuration loaded successfully.")
 	}
+	return nil
 }

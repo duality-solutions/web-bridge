@@ -42,5 +42,5 @@ yarn build
 ## Access admin console locally
 
 ```http
-http://localhost:8080/admin
+http://localhost:35350/admin
 ```

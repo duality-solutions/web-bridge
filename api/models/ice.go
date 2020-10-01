@@ -10,9 +10,3 @@ type IceServerConfig struct {
 	// The ICE server's credentials. Leave blank if it doesn't apply
 	Credential string `json:"Credential"`
 }
-
-// ConfigurationFile stores the content of the web-bridge configuration file
-// swagger:parameters models.ConfigurationFile
-type ConfigurationFile struct {
-	IceServers []IceServerConfig `json:"IceServers"`
-}

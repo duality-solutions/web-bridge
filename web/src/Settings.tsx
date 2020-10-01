@@ -58,8 +58,8 @@ export class Settings extends Component<SettingsProps, SettingsState> {
                 <input placeholder="Bind Address" value={this.defaultBind} />
               </Form.Field>
               <Form.Field>
-                <label>Web Server Allow CDRN</label>
-                <input placeholder="Allow CDRN" value={this.defaultAllow} />
+                <label>Web Server Allow CIDR</label>
+                <input placeholder="Allow CIDR" value={this.defaultAllow} />
               </Form.Field>
             </Form.Group>
             <Button type="submit">Submit</Button>

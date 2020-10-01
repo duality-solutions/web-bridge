@@ -1,6 +1,8 @@
 package rest
 
 import (
+	"fmt"
+
 	"github.com/duality-solutions/web-bridge/blockchain/rpc/dynamic"
 	"github.com/duality-solutions/web-bridge/configs/settings"
 	"github.com/gin-gonic/contrib/static"
@@ -40,8 +42,12 @@ func StartWebServiceRouter(c *settings.Configuration, d *dynamic.Dynamicd, a *Ap
 	setupWalletRoutes(version)
 	setupBridgesRoutes(version)
 	setupConfigRoutes(version)
-	setupSwagger(runner.router)
-	runner.router.Run()
+	bindAddress := c.ToJSON().WebServer.AddressPortString()
+	setupSwagger(runner.router, bindAddress)
+	err := runner.router.Run(bindAddress)
+	if err != nil {
+		panic(fmt.Errorf("StartWebServiceRouter failed to listent to %v: %v", bindAddress, err))
+	}
 }
 
 func setupAdminWebConsole(root *gin.Engine) {
@@ -64,8 +70,8 @@ func setupAdminWebConsole(root *gin.Engine) {
 
 // @host http://docs.webbridge.duality.solutions
 // @BasePath /api/v1
-func setupSwagger(root *gin.Engine) {
-	url := ginSwagger.URL("http://localhost:8080/swagger/doc.json")
+func setupSwagger(root *gin.Engine, address string) {
+	url := ginSwagger.URL(address + "/swagger/doc.json")
 	root.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler, url))
 }
 

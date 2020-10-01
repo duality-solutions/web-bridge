@@ -84,7 +84,10 @@ func Init(version, githash string) error {
 	if test {
 		util.Info.Println("Running WebBridge in test mode.")
 	}
-	config.Load(homeDir, pathSeperator)
+	err = config.Load(homeDir, pathSeperator)
+	if err != nil {
+		util.Info.Println("Error loading configuration file.", err)
+	}
 	util.Info.Println("Config", config)
 
 	if testCreateOffer || testWaitForOffer {
