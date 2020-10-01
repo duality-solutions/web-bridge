@@ -75,6 +75,8 @@ func appCommandLoop(stopBridges *chan struct{}, acc *[]dynamic.Account, al *dyna
 						strResp, _ := util.BeautifyJSON(<-d.ExecCmdRequest(req))
 						util.Info.Println(strResp)
 					}
+				} else if strings.HasPrefix(cmdText, "restart") {
+					rest.RestartWebServiceRouter()
 				} else {
 					util.Warning.Println("Invalid command", cmdText)
 					status, err = d.GetSyncStatus()

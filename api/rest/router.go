@@ -1,7 +1,10 @@
 package rest
 
 import (
+	"context"
 	"fmt"
+	"net/http"
+	"time"
 
 	"github.com/duality-solutions/web-bridge/blockchain/rpc/dynamic"
 	"github.com/duality-solutions/web-bridge/configs/settings"
@@ -19,6 +22,8 @@ type WebBridgeRunner struct {
 	router        *gin.Engine
 	configuration *settings.Configuration
 	shutdownApp   *AppShutdown
+	server        *http.Server
+	mode          string
 }
 
 var runner WebBridgeRunner
@@ -29,13 +34,18 @@ var runner WebBridgeRunner
 
 // StartWebServiceRouter is used to setup the Rest server routes
 func StartWebServiceRouter(c *settings.Configuration, d *dynamic.Dynamicd, a *AppShutdown, m string) {
-	gin.SetMode(m)
 	runner.configuration = c
 	runner.dynamicd = d
 	runner.shutdownApp = a
+	runner.mode = m
+	startWebServiceRoutes()
+}
+
+func startWebServiceRoutes() {
+	gin.SetMode(runner.mode)
 	runner.router = gin.Default()
-	runner.router.Use(AllowCIDR(c.ToJSON().WebServer.AllowCIDR))
-	setupAdminWebConsole(runner.router)
+	runner.router.Use(AllowCIDR(runner.configuration.ToJSON().WebServer.AllowCIDR))
+	setupAdminWebConsole()
 	api := runner.router.Group("/api")
 	version := api.Group("/v1")
 	version.POST("/shutdown", runner.shutdown)
@@ -43,18 +53,37 @@ func StartWebServiceRouter(c *settings.Configuration, d *dynamic.Dynamicd, a *Ap
 	setupWalletRoutes(version)
 	setupBridgesRoutes(version)
 	setupConfigRoutes(version)
-	bindAddress := c.ToJSON().WebServer.AddressPortString()
-	setupSwagger(runner.router, bindAddress)
-	err := runner.router.Run(bindAddress)
-	if err != nil {
-		panic(fmt.Errorf("StartWebServiceRouter failed to listent to %v: %v", bindAddress, err))
-	}
+	setupSwagger()
+	startGinGonic()
 }
 
-func setupAdminWebConsole(root *gin.Engine) {
+func startGinGonic() {
+	runner.server = &http.Server{
+		Addr:    runner.configuration.ToJSON().WebServer.AddressPortString(),
+		Handler: runner.router,
+	}
+	go func() {
+		// Start HTTP service
+		if err := runner.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			panic(fmt.Errorf("ListenAndServe failed: %v", err))
+		}
+	}()
+}
+
+// RestartWebServiceRouter running service is shutdown and a new service is ran with a new configuration
+func RestartWebServiceRouter() {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	if err := runner.server.Shutdown(ctx); err != nil {
+		panic(fmt.Errorf("Server Shutdown: %v", err))
+	}
+	go startWebServiceRoutes()
+}
+
+func setupAdminWebConsole() {
 	// Setup admin console web application
-	root.Use(static.Serve("/", static.LocalFile("./web/build", true)))
-	root.Use(static.Serve("/admin", static.LocalFile("./web/build", true)))
+	runner.router.Use(static.Serve("/", static.LocalFile("./web/build", true)))
+	runner.router.Use(static.Serve("/admin", static.LocalFile("./web/build", true)))
 }
 
 // @title WebBridge Restful API Documentation
@@ -71,9 +100,10 @@ func setupAdminWebConsole(root *gin.Engine) {
 
 // @host http://docs.webbridge.duality.solutions
 // @BasePath /api/v1
-func setupSwagger(root *gin.Engine, address string) {
-	url := ginSwagger.URL(address + "/swagger/doc.json")
-	root.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler, url))
+func setupSwagger() {
+	address := runner.configuration.ToJSON().WebServer.AddressPortString() + "/swagger/doc.json"
+	url := ginSwagger.URL(address)
+	runner.router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler, url))
 }
 
 // TODO: follow https://rest.bitcoin.com for rest endpoints
