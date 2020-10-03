@@ -6,6 +6,13 @@ import (
 )
 
 // UpdateWebServer updates an existing web server settings in current running configuration and file
+func (c *Configuration) WebServer() models.WebServerConfig {
+	c.mut.RLock()
+	defer c.mut.RUnlock()
+	return c.configFile.WebServer
+}
+
+// UpdateWebServer updates an existing web server settings in current running configuration and file
 func (c *Configuration) UpdateWebServer(web models.WebServerConfig) bool {
 	// check values of web before changing.
 	if !util.IsValidIPAddress(web.BindAddress) {

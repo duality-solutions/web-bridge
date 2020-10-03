@@ -152,4 +152,6 @@ func setupConfigRoutes(currentVersion *gin.RouterGroup) {
 	config.PUT("/ice", runner.putice)
 	config.DELETE("/ice", runner.deleteice)
 	config.POST("/ice", runner.replaceice)
+	config.GET("/web", runner.getwebserver)
+	config.POST("/web", runner.updatewebserver)
 }
