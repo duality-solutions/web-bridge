@@ -154,4 +154,5 @@ func setupConfigRoutes(currentVersion *gin.RouterGroup) {
 	config.POST("/ice", runner.replaceice)
 	config.GET("/web", runner.getwebserver)
 	config.POST("/web", runner.updatewebserver)
+	config.PUT("/web/restart", runner.restartwebserver)
 }

@@ -5,7 +5,7 @@ import (
 	"github.com/duality-solutions/web-bridge/internal/util"
 )
 
-// UpdateWebServer updates an existing web server settings in current running configuration and file
+// WebServer returns the existing web server settings in current running configuration and file
 func (c *Configuration) WebServer() models.WebServerConfig {
 	c.mut.RLock()
 	defer c.mut.RUnlock()

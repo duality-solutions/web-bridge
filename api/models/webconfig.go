@@ -10,6 +10,12 @@ type WebServerConfig struct {
 	AllowCIDR   string
 }
 
+// WebServerRestartRequest tells the server when it should restart
+// swagger:parameters models.WebServerRestartRequest
+type WebServerRestartRequest struct {
+	RestartEpoch int64 `json:"restart_epoch"`
+}
+
 func DefaultWebServerConfig() WebServerConfig {
 	return WebServerConfig{
 		BindAddress: "0.0.0.0",
