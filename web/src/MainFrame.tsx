@@ -165,6 +165,7 @@ export class MainFrame extends Component<MainFrameProps, MainFrameState> {
                       defaultIcePassword="Admin@123"
                       defaultBind="0.0.0.0"
                       defaultAllow="127.0.0.1/0"
+                      defaultPort={35350}
                     />
                   </Segment>
                 )}
