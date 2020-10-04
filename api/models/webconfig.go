@@ -35,3 +35,7 @@ func (w WebServerConfig) AddressPortString() string {
 	}
 	return address + ":" + w.PortString()
 }
+
+func (w WebServerConfig) AddressPortRawString() string {
+	return w.BindAddress + ":" + w.PortString()
+}

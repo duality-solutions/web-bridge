@@ -44,7 +44,7 @@ func StartWebServiceRouter(c *settings.Configuration, d *dynamic.Dynamicd, a *Ap
 func startWebServiceRoutes() {
 	gin.SetMode(runner.mode)
 	runner.router = gin.Default()
-	runner.router.Use(AllowCIDR(runner.configuration.ToJSON().WebServer.AllowCIDR))
+	runner.router.Use(AllowCIDR(runner.configuration.WebServer().AllowCIDR))
 	setupAdminWebConsole()
 	api := runner.router.Group("/api")
 	version := api.Group("/v1")
@@ -101,7 +101,7 @@ func setupAdminWebConsole() {
 // @host http://docs.webbridge.duality.solutions
 // @BasePath /api/v1
 func setupSwagger() {
-	address := runner.configuration.ToJSON().WebServer.AddressPortString() + "/swagger/doc.json"
+	address := runner.configuration.WebServer().AddressPortRawString() + "/swagger/doc.json"
 	url := ginSwagger.URL(address)
 	runner.router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler, url))
 }
@@ -148,7 +148,6 @@ func setupBridgesRoutes(currentVersion *gin.RouterGroup) {
 func setupConfigRoutes(currentVersion *gin.RouterGroup) {
 	config := currentVersion.Group("/config")
 	config.GET("/", runner.config)
-	config.OPTIONS("/", runner.config)
 	config.GET("/ice", runner.getice)
 	config.PUT("/ice", runner.putice)
 	config.DELETE("/ice", runner.deleteice)
