@@ -59,7 +59,7 @@ func startWebServiceRoutes() {
 
 func startGinGonic() {
 	runner.server = &http.Server{
-		Addr:    runner.configuration.ToJSON().WebServer.AddressPortString(),
+		Addr:    runner.configuration.WebServer().AddressPortString(),
 		Handler: runner.router,
 	}
 	go func() {
@@ -148,6 +148,7 @@ func setupBridgesRoutes(currentVersion *gin.RouterGroup) {
 func setupConfigRoutes(currentVersion *gin.RouterGroup) {
 	config := currentVersion.Group("/config")
 	config.GET("/", runner.config)
+	config.OPTIONS("/", runner.config)
 	config.GET("/ice", runner.getice)
 	config.PUT("/ice", runner.putice)
 	config.DELETE("/ice", runner.deleteice)

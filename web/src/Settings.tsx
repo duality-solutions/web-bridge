@@ -1,5 +1,7 @@
 import React, { Component } from "react";
 import { Button, Form, Header } from "semantic-ui-react";
+import { RestUrl, RequestConfig } from "./WebServiceConfig";
+import axios from 'axios';
 
 export interface SettingsProps {
   defaultIceUrl: string;
@@ -29,6 +31,15 @@ export class Settings extends Component<SettingsProps, SettingsState> {
   componentDidMount(): void {}
 
   componentWillUnmount(): void {}
+  
+  private getConfigSettings = async () => {
+    await axios.get(RestUrl + "config", RequestConfig).then(function (response) {
+      let config: string = response.data;
+      console.log("Config: " + config);
+    }).catch(function (error) {
+      console.log("Get Settings Post Error: " + error);
+    });
+  }
 
   render() {
     return (
@@ -51,6 +62,7 @@ export class Settings extends Component<SettingsProps, SettingsState> {
                 <input placeholder="Password" value={this.defaultIcePassword} />
               </Form.Field>
             </Form.Group>
+            <Button onClick={() => this.getConfigSettings()} type="submit">Update ICE</Button>
             <Header as="h4">Web Server Settings</Header>
             <Form.Group className="leftAlign field" widths="equal">
               <Form.Field>
@@ -62,7 +74,7 @@ export class Settings extends Component<SettingsProps, SettingsState> {
                 <input placeholder="Allow CIDR" value={this.defaultAllow} />
               </Form.Field>
             </Form.Group>
-            <Button type="submit">Submit</Button>
+            <Button type="submit">Update Web Server</Button>
           </div>
         </Form>
       </div>

@@ -18,7 +18,7 @@ type WebServerRestartRequest struct {
 
 func DefaultWebServerConfig() WebServerConfig {
 	return WebServerConfig{
-		BindAddress: "0.0.0.0",
+		BindAddress: "127.0.0.1",
 		ListenPort:  35350,
 		AllowCIDR:   "127.0.0.0/8, ::1/128",
 	}
@@ -29,5 +29,9 @@ func (w WebServerConfig) PortString() string {
 }
 
 func (w WebServerConfig) AddressPortString() string {
-	return w.BindAddress + ":" + w.PortString()
+	address := w.BindAddress
+	if address == "127.0.0.1" {
+		address = "localhost"
+	}
+	return address + ":" + w.PortString()
 }
