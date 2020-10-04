@@ -155,20 +155,20 @@ func (w *WebBridgeRunner) replaceice(c *gin.Context) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Request body is empty. Can not detele from ICE server configuration list."})
 			return
 		}
-		req := models.ConfigurationFile{}
+		req := []models.IceServerConfig{}
 		err = json.Unmarshal(body, &req)
 		if err != nil {
 			strErrMsg := fmt.Sprintf("Request body JSON unmarshal error %v. Can not detele from ICE server configuration list.", err)
 			c.JSON(http.StatusBadRequest, gin.H{"error": strErrMsg})
 			return
 		}
-		if len(req.IceServers) == 0 {
+		if len(req) == 0 {
 			strErrMsg := fmt.Sprintf("URL is empty. Can not detele from ICE server configuration list.")
 			c.JSON(http.StatusBadRequest, gin.H{"error": strErrMsg})
 			return
 		}
 		w.configuration.ReplaceIceServers(req)
-		c.JSON(http.StatusOK, gin.H{"result": w.configuration.ToJSON()})
+		c.JSON(http.StatusOK, gin.H{"result": w.configuration.IceServers()})
 	} else {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Configuration variable is null. Can not detele from ICE server configuration list."})
 	}

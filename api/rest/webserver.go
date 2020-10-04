@@ -56,8 +56,11 @@ func (w *WebBridgeRunner) updatewebserver(c *gin.Context) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": strErrMsg})
 			return
 		}
-		w.configuration.UpdateWebServer(req)
-		c.JSON(http.StatusOK, gin.H{"result": w.configuration.WebServer()})
+		if w.configuration.UpdateWebServer(req) {
+			c.JSON(http.StatusOK, gin.H{"result": w.configuration.WebServer()})
+		} else {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid value. Web server configure update failed"})
+		}
 	} else {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Configuration variable is null."})
 	}

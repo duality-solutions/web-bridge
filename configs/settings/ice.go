@@ -37,10 +37,10 @@ func (c *Configuration) DeleteIceServer(index int) bool {
 }
 
 // ReplaceIceServers deleted an existing ICE Server from current running configuration and file
-func (c *Configuration) ReplaceIceServers(fileData models.ConfigurationFile) bool {
+func (c *Configuration) ReplaceIceServers(iceServers []models.IceServerConfig) bool {
 	c.mut.Lock()
 	defer c.mut.Unlock()
-	c.configFile.IceServers = fileData.IceServers
+	c.configFile.IceServers = iceServers
 	c.updateFile()
 	return true
 }

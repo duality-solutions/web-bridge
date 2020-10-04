@@ -1,5 +1,13 @@
 import { AxiosRequestConfig } from 'axios';
 
+export interface WebServerRestartRequest {
+    restart_epoch: number
+};
+
+export interface RestartResponse {
+    result: string
+};
+
 export interface IceServerConfig {
     URL: string;
     UserName: string;

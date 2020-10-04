@@ -15,6 +15,9 @@ func (c *Configuration) WebServer() models.WebServerConfig {
 // UpdateWebServer updates an existing web server settings in current running configuration and file
 func (c *Configuration) UpdateWebServer(web models.WebServerConfig) bool {
 	// check values of web before changing.
+	if web.BindAddress == "localhost" {
+		web.BindAddress = "127.0.0.1"
+	}
 	if !util.IsValidIPAddress(web.BindAddress) {
 		return false
 	}
