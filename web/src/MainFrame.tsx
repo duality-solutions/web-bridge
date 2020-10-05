@@ -1,5 +1,6 @@
 import React, { Component } from "react";
 import { Settings } from "./Settings";
+import { TerminalPage } from "./TerminalPage";
 import {
   Button,
   Dropdown,
@@ -70,6 +71,10 @@ export class MainFrame extends Component<MainFrameProps, MainFrameState> {
                   <Menu.Item onClick={() => this.changePage("bridges")} as="a">
                     <Icon name="connectdevelop" />
                     Bridges
+                  </Menu.Item>
+                  <Menu.Item onClick={() => this.changePage("terminal")} as="a">
+                    <Icon name="terminal" />
+                    Terminal
                   </Menu.Item>
                   <Dropdown item text="More">
                     <Dropdown.Menu>
@@ -155,6 +160,12 @@ export class MainFrame extends Component<MainFrameProps, MainFrameState> {
                   <Segment basic raised textAlign="center">
                     <Header as="h3">Bridges</Header>
                     <Image src="https://react.semantic-ui.com/images/wireframe/paragraph.png" />
+                  </Segment>
+                )}
+                {this.currentPage === "terminal" && (
+                  <Segment basic raised textAlign="center">
+                    <Header as="h3">Terminal</Header>
+                    <TerminalPage mode={0} />
                   </Segment>
                 )}
                 {this.currentPage === "settings" && (
