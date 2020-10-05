@@ -138,8 +138,8 @@ func (w *WebBridgeRunner) deleteice(c *gin.Context) {
 // @Description Replaces an ICE server in current configuration and saves the changes to file
 // @Accept  json
 // @Produce  json
-// @Param body body models.ConfigurationFile true "ICE Configuration File"
-// @Success 200 {object} models.ConfigurationFile	"ok"
+// @Param body body []models.IceServerConfig true "ICE Configuration File"
+// @Success 200 {object} []models.IceServerConfig	"ok"
 // @Failure 400 {string} string "Bad request"
 // @Failure 500 {string} string "Internal error"
 // @Router /api/v1/ice [post]

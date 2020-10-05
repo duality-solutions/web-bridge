@@ -71,10 +71,11 @@ export class Settings extends Component<SettingsProps, SettingsState> {
   private updateIceConfig = async () => {
     let IceServer: IceServerConfig = {
       URL: this.state.URL ? this.state.URL : this.state.config.result.IceServers[0].URL,
-      UserName: this.state.UserName ? this.state.config.result.IceServers[0].UserName : "",
-      Credential: this.state.Credential ? this.state.config.result.IceServers[0].Credential : "",
+      UserName: this.state.UserName ? this.state.UserName : this.state.config.result.IceServers[0].UserName,
+      Credential: this.state.Credential ? this.state.Credential : this.state.config.result.IceServers[0].Credential,
     };
-    await axios.post<ConfigurationIceResponse>(RestUrl + "config/ice", IceServer, RequestConfig).then(function (response) {
+    let IceServers: IceServerConfig[] = [ IceServer ]
+    await axios.post<ConfigurationIceResponse>(RestUrl + "config/ice", IceServers, RequestConfig).then(function (response) {
       console.log(response.data);
     }).catch(function (error) {
       console.log("Update ICE Server Config [Post] Error: " + error);
