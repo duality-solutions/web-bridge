@@ -13,7 +13,7 @@ curl -sL https://raw.githubusercontent.com/creationix/nvm/v0.36.0/install.sh -o 
 Use NodeJS v12.18.4
 
 ```bash
-nvm install 12.18.4 && nvm use 12.18.4 && npm install && yarn build
+nvm install 12.18.4 && nvm use 12.18.4 && npm install && npm install -g yarn && yarn build
 ```
 
 ### NVM Windows install
