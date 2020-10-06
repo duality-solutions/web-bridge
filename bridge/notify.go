@@ -110,29 +110,33 @@ func GetLinkNotifications(stopchan *chan struct{}) bool {
 			notifications, err := dynamicd.GetNotificationMessages(link.MyAccount, link.LinkAccount)
 			if err != nil {
 				util.Error.Println("GetLinkNotifications dynamicd.GetNotificationMessages error", link.LinkAccount, err)
+				continue
 			}
-			for _, notification := range *notifications {
-				currentNotification := mapGetNotifications[link.LinkID()]
-				if notification.TimestampEpoch > currentNotification.TimestampEpoch {
-					mapGetNotifications[link.LinkID()] = notification
-					var online OnlineNotification
-					err := util.DecodeObject(notification.Message, &online)
-					if err != nil {
-						util.Error.Println("GetLinkNotifications EncodeObject error", link.LinkAccount, err)
-						break
-					}
-					if online.EndTime == 0 /* && (time.Now().Unix() - online.StartTime) < 36000 */ {
-						// send offer
-						util.Info.Println("GetLinkNotifications online message from", link.LinkAccount, "secs:", (time.Now().Unix() - online.StartTime))
-						if SendOffer(link) {
-							link.SetState(StateWaitForAnswer)
-							bridgeControler.MoveUnconnectedToConnected(link)
-						} else {
-							break
+			if *notifications != nil {
+				returnMessage := *notifications
+				for _, notification := range returnMessage {
+					currentNotification := mapGetNotifications[link.LinkID()]
+					if notification.TimestampEpoch > currentNotification.TimestampEpoch {
+						mapGetNotifications[link.LinkID()] = notification
+						var online OnlineNotification
+						err := util.DecodeObject(notification.Message, &online)
+						if err != nil {
+							util.Error.Println("GetLinkNotifications EncodeObject error", link.LinkAccount, err)
+							continue
 						}
-					} else {
-						// delete notification from map?
-						util.Info.Println("GetLinkNotifications offline message from", link.LinkAccount, "secs:", (time.Now().Unix() - online.EndTime))
+						if online.EndTime == 0 /* && (time.Now().Unix() - online.StartTime) < 36000 */ {
+							// send offer
+							util.Info.Println("GetLinkNotifications online message from", link.LinkAccount, "secs:", (time.Now().Unix() - online.StartTime))
+							if SendOffer(link) {
+								link.SetState(StateWaitForAnswer)
+								bridgeControler.MoveUnconnectedToConnected(link)
+							} else {
+								continue
+							}
+						} else {
+							// delete notification from map?
+							util.Info.Println("GetLinkNotifications offline message from", link.LinkAccount, "secs:", (time.Now().Unix() - online.EndTime))
+						}
 					}
 				}
 			}
