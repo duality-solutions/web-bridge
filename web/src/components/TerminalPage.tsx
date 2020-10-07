@@ -1,8 +1,8 @@
 import React, { Component } from "react";
 import { Grid } from "semantic-ui-react";
 import Terminal from "terminal-in-react";
-import { JsonRpc } from "./Terminal";
-import { RequestConfig, RestUrl } from "./WebServiceConfig";
+import { JsonRpc } from "../api/Terminal";
+import { RequestConfig, RestUrl } from "../api/Config";
 import axios from 'axios';
 
 export interface TerminalProps {

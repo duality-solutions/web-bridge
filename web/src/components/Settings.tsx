@@ -1,16 +1,8 @@
 import React, { Component } from "react";
 import { Button, Form, Header } from "semantic-ui-react";
-import {
-        ConfigurationIceResponse, 
-        ConfigurationResponse, 
-        ConfigurationWebResponse,
-        IceServerConfig,
-        RequestConfig,
-        RestartResponse,
-        RestUrl,
-        WebServerConfig,
-        WebServerRestartRequest }
-from "./WebServiceConfig";
+import { ConfigurationWebResponse, RestartResponse, WebServerConfig, WebServerRestartRequest } from "../api/WebServerConfig";
+import { ConfigurationIceResponse, IceServerConfig } from "../api/IceServerConfig";
+import { ConfigurationResponse, RequestConfig, RestUrl }from "../api/Config";
 import axios from 'axios';
 
 export interface SettingsProps {
