@@ -15,9 +15,13 @@ export interface TerminalState {
 }
 
 export class TerminalPage extends Component<TerminalProps, TerminalState> {
-  /*constructor(props: TerminalProps) {
+  constructor(props: TerminalProps) {
     super(props);
-  }*/
+
+    // bind events
+    this.componentDidMount = this.componentDidMount.bind(this);
+    this.execCommand = this.execCommand.bind(this);
+  }
 
   componentDidMount(): void {
     this.setState({ mode: this.props.mode });

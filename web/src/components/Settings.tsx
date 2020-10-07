@@ -42,6 +42,14 @@ export class Settings extends Component<SettingsProps, SettingsState> {
         AllowCIDR: props.defaultAllow
       }
     }};
+    // bind events
+    this.componentDidMount = this.componentDidMount.bind(this);
+    this.componentWillUnmount = this.componentWillUnmount.bind(this);
+    this.getConfigSettings = this.getConfigSettings.bind(this);
+    this.updateIceConfig = this.updateIceConfig.bind(this);
+    this.updateWebServerConfig = this.updateWebServerConfig.bind(this);
+    this.restartWebServer = this.restartWebServer.bind(this);
+    // set state
     this.setState({ config: configResponse} );
   }
 

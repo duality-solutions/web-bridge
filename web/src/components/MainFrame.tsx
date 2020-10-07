@@ -31,6 +31,11 @@ export class MainFrame extends Component<MainFrameProps, MainFrameState> {
   constructor(props: MainFrameProps) {
     super(props);
     this.currentPage = props.currentPage ? props.currentPage : "home";
+    // bind events
+    this.componentDidMount = this.componentDidMount.bind(this);
+    this.componentWillUnmount = this.componentWillUnmount.bind(this);
+    this.changePage = this.changePage.bind(this);
+    // set state
     this.state = {
       setupComplete: false,
       currentPage: this.currentPage,
@@ -45,6 +50,7 @@ export class MainFrame extends Component<MainFrameProps, MainFrameState> {
   private changePage(pageName: string): void {
     this.currentPage = pageName;
     console.log("MainFrame.changePage " + this.currentPage);
+    
     this.setState({ currentPage: pageName, open: true });
   }
 
