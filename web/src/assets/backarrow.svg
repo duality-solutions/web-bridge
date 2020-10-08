@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="36px" height="36px" viewBox="0 0 36 36" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 52.6 (67491) - http://www.bohemiancoding.com/sketch -->
+    <title>Navigation-arrow</title>
+    <desc>Created with Sketch.</desc>
+    <defs>
+        <path d="M14.2761424,18.3333333 L17.1380712,21.1952621 C17.3984207,21.4556117 17.3984207,21.8777217 17.1380712,22.1380712 C16.8777217,22.3984207 16.4556117,22.3984207 16.1952621,22.1380712 L12.1952621,18.1380712 C11.9349126,17.8777217 11.9349126,17.4556117 12.1952621,17.1952621 L16.1952621,13.1952621 C16.4556117,12.9349126 16.8777217,12.9349126 17.1380712,13.1952621 C17.3984207,13.4556117 17.3984207,13.8777217 17.1380712,14.1380712 L14.2761424,17 L23.3333333,17 C23.7015232,17 24,17.2984768 24,17.6666667 C24,18.0348565 23.7015232,18.3333333 23.3333333,18.3333333 L14.2761424,18.3333333 Z" id="path-1"></path>
+    </defs>
+    <g id="Onboarding" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="Onboarding-3.3.1---restore---secure-file-upload" transform="translate(-51.000000, -366.000000)">
+            <g id="Navigation-arrow" transform="translate(51.000000, 366.000000)">
+                <circle id="Oval" fill="#FAFAFA" cx="18" cy="18" r="18"></circle>
+                <mask id="mask-2" fill="white">
+                    <use xlink:href="#path-1"></use>
+                </mask>
+                <use id="Combined-Shape" fill="#2E77D0" fill-rule="nonzero" xlink:href="#path-1"></use>
+            </g>
+        </g>
+    </g>
+</svg>
