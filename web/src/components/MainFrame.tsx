@@ -13,9 +13,6 @@ import {
   Modal,
   Segment
 } from "semantic-ui-react";
-// TODO: Add logo to page
-// Add subpages that display
-//import logo from './logo.svg';
 
 export interface MainFrameProps {
   currentPage?: string;
@@ -37,13 +34,6 @@ export class MainFrame extends Component<MainFrameProps, MainFrameState> {
     this.componentDidMount = this.componentDidMount.bind(this);
     this.componentWillUnmount = this.componentWillUnmount.bind(this);
     this.changePage = this.changePage.bind(this);
-    // set state
-    this.setState({
-      setupComplete: false,
-      currentPage: this.currentPage,
-      open: true,
-      createWallet: true
-    });
   }
 
   componentDidMount(): void {
@@ -51,7 +41,7 @@ export class MainFrame extends Component<MainFrameProps, MainFrameState> {
       setupComplete: false,
       currentPage: this.currentPage,
       open: true,
-      createWallet: true
+      createWallet: false
     });
   }
 
@@ -67,7 +57,10 @@ export class MainFrame extends Component<MainFrameProps, MainFrameState> {
     return (
       <div>
         {this.state && this.state.createWallet && (
-          <SetupWizard currentStep={1} onComplete={() => this.setState({ createWallet: false })} />
+          <SetupWizard
+            currentStep={1}
+            onComplete={() => this.setState({ createWallet: false })}
+          />
         )}
         {this.state && !this.state.createWallet && (
           <Grid>
@@ -83,15 +76,24 @@ export class MainFrame extends Component<MainFrameProps, MainFrameState> {
                       <Icon name="chain" />
                       Chain
                     </Menu.Item>
-                    <Menu.Item onClick={() => this.changePage("accounts")} as="a">
+                    <Menu.Item
+                      onClick={() => this.changePage("accounts")}
+                      as="a"
+                    >
                       <Icon name="user secret" />
                       Accounts
                     </Menu.Item>
-                    <Menu.Item onClick={() => this.changePage("bridges")} as="a">
+                    <Menu.Item
+                      onClick={() => this.changePage("bridges")}
+                      as="a"
+                    >
                       <Icon name="connectdevelop" />
                       Bridges
                     </Menu.Item>
-                    <Menu.Item onClick={() => this.changePage("terminal")} as="a">
+                    <Menu.Item
+                      onClick={() => this.changePage("terminal")}
+                      as="a"
+                    >
                       <Icon name="terminal" />
                       Terminal
                     </Menu.Item>
@@ -145,8 +147,8 @@ export class MainFrame extends Component<MainFrameProps, MainFrameState> {
                           <Modal.Description>
                             <Header>Default Profile Image</Header>
                             <p>
-                              We've found the following gravatar image associated
-                              with your e-mail address.
+                              We've found the following gravatar image
+                              associated with your e-mail address.
                             </p>
                             <p>Is it okay to use this photo?</p>
                           </Modal.Description>
