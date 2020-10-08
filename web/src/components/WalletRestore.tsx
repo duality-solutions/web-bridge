@@ -1,0 +1,94 @@
+import React, { Component } from "react";
+import { Box } from "./ui/Box";
+import { BackButton } from "./ui/Button";
+import { SCard } from "./ui/Card";
+import { Container } from "./ui/Container";
+import { PassphraseIcon, SecureFileIcon } from "./ui/Images";
+import { Text } from "./ui/Text";
+
+export interface WalletRestoreProps {
+  restoreUsingMnemonic: () => void;
+  restoreWithPassphrase: () => void;
+  cancelRestore: () => void;
+}
+
+export interface WalletRestoreState {
+  useMnemonic?: boolean;
+}
+
+export class WalletRestore extends Component<
+  WalletRestoreProps,
+  WalletRestoreState
+> {
+  private newWallet?: boolean;
+  constructor(props: WalletRestoreProps) {
+    super(props);
+    // bind events
+    this.componentDidMount = this.componentDidMount.bind(this);
+    this.componentWillUnmount = this.componentWillUnmount.bind(this);
+  }
+
+  componentDidMount(): void {
+    this.setState({ useMnemonic: undefined });
+    console.log(this.newWallet);
+  }
+
+  componentWillUnmount(): void {}
+
+  render() {
+    return (
+      <>
+        <Container height="50vh">
+          <Box direction="column" align="center" width="100%">
+            <Box display="flex" direction="row" align="center" width="100%">
+              <BackButton
+                onClick={() => this.props.cancelRestore()}
+                margin="70px 0 0 -350px"
+              />
+              <SCard
+                onClick={() => this.props.restoreUsingMnemonic()}
+                padding="2em 1em 1em 1em"
+                height="140px"
+                width="220px"
+              >
+                <PassphraseIcon
+                  height="60px"
+                  width="60px"
+                  style={{ margin: "0 0 1em 0" }}
+                />
+                <Text
+                  align="center"
+                  color="white"
+                  fontSize="1em"
+                  fontWeight="bold"
+                >
+                  Restore using mnemonic
+                </Text>
+              </SCard>
+              <SCard
+                onClick={() => this.props.restoreWithPassphrase()}
+                padding="2em 1em 1em 1em"
+                height="140px"
+                width="220px"
+              >
+                <SecureFileIcon
+                  height="60px"
+                  width="60px"
+                  style={{ margin: " 0 0 1em 0" }}
+                />
+                <Text
+                  align="center"
+                  color="white"
+                  fontSize="1em"
+                  fontWeight="bold"
+                >
+                  Restore using Secure mnemonic file
+                </Text>
+              </SCard>
+            </Box>
+          </Box>
+        </Container>
+      </>
+    );
+  }
+}
