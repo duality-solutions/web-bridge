@@ -82,7 +82,7 @@ export class WalletRestore extends Component<
                   fontSize="1em"
                   fontWeight="bold"
                 >
-                  Restore using Secure mnemonic file
+                  Restore using secure file
                 </Text>
               </SCard>
             </Box>

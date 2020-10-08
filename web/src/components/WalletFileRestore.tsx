@@ -14,11 +14,11 @@ export interface WalletFileRestoreProps {
 }
 
 export interface WalletFileRestoreState {
-    stateError?: string
+    stateError?: string;
+    error: DropzoneError | undefined;
 }
 
 export class WalletFileRestore extends Component<WalletFileRestoreProps, WalletFileRestoreState> {
-  private newWallet?: boolean;
   constructor(props: WalletFileRestoreProps) {
     super(props);
     // bind events
@@ -31,15 +31,16 @@ export class WalletFileRestore extends Component<WalletFileRestoreProps, WalletF
   componentWillUnmount(): void {}
 
   render() {
-    const [error, setError] = useState<DropzoneError | undefined>(undefined);
     const filesSelectedHandler = (files: FilePathInfo[]) => {
         if (files.length !== 1) {
-            setError({ title: "More that one file selected", message: "Please select only one file" });
+            var error: DropzoneError = { title: "More that one file selected", message: "Please select only one file" };
+            this.setState( { error: error });
             return;
         }
         const file: FilePathInfo = files[0];
         if (file.size > 131072) { //128KiB
-            setError({ title: "File is too large", message: "Please select a mnemonic recovery file" });
+            var error: DropzoneError = { title: "File is too large", message: "Please select a mnemonic recovery file" };
+            this.setState( { error: error });
             return;
         }
         //mnemonicRestoreFilePathSubmitted(file.path);
@@ -66,7 +67,7 @@ export class WalletFileRestore extends Component<WalletFileRestoreProps, WalletF
                                 </Box>
                                 <Box direction="column" width="500px" align="center" margin="0 auto 0 auto">
                                     <H3 margin="0 0 1em 0">Restore using Secure Restore File </H3>
-                                    <Dropzone multiple={false} accept={".psh.json"} filesSelected={filesSelectedHandler} error={error}></Dropzone>
+                                    <Dropzone multiple={false} accept={".psh.json"} filesSelected={filesSelectedHandler} error={this.state && this.state.error}></Dropzone>
                                     {this.state && this.state.stateError ? <Text align="center" color="#e30429">{this.state.stateError}</Text> : <></>}
                                 </Box>
                             </Box>
