@@ -66,7 +66,7 @@ export class SetupWizard extends Component<SetupWizardProps, SetupWizardState> {
           <Grid.Row textAlign="center">
             {this.state && this.state.currentStep === 1 && (
               <Grid.Column>
-                <WalletSetup onComplete={() => this.setState({currentStep: 2})}/>
+                <WalletSetup onComplete={() => this.props.onComplete()}/>
               </Grid.Column>
             )}
           </Grid.Row>

@@ -25,11 +25,16 @@ export class WalletMnemonicRestore extends Component<WalletMnemonicRestoreProps,
     // bind events
     this.componentDidMount = this.componentDidMount.bind(this);
     this.componentWillUnmount = this.componentWillUnmount.bind(this);
+    this.setMnemonic = this.setMnemonic.bind(this);
   }
 
   componentDidMount(): void {}
 
   componentWillUnmount(): void {}
+
+  private setMnemonic(words: string): void {
+    this.setState({ mnemonic: words });
+  }
 
   render() {
 
@@ -49,7 +54,7 @@ export class WalletMnemonicRestore extends Component<WalletMnemonicRestoreProps,
                                 <Box margin="1em 0 0 2em">
                                     <H3 margin="0 0 1em 0">Restore using passphrase </H3>
                                     <MnemonicInput placeholder="Enter passphrase" name="mnemonic-text" 
-                                        /*onChange={e => setMnemonic(e.target.value)}*/ value={this.state && this.state.mnemonic ? this.state.mnemonic : ""} />
+                                        onChange={(e) => this.setMnemonic(e.target.value)} value={this.state && this.state.mnemonic ? this.state.mnemonic : ""} />
                                     {this.state && this.state.stateError
                                         ? <Text align="center" color="#e30429">{this.state.stateError}</Text>
                                         : <></>}

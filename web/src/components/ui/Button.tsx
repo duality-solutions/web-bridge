@@ -19,14 +19,14 @@ interface ButtonProps {
 const StyledButton = styled("button")<ButtonProps>`
   align-self: ${(props) => (props.align ? props.align : "center")};
   justify-content: center;
-  min-width: ${(props) => props.width ? props.width : "218px"};
-  min-height: ${(props) => props.minHeight ? props.minHeight : "2em"};
-  font-size: ${(props) => props.fontSize ? props.fontSize : "1em"};
-  background: ${(props) => (props.primary ? props.theme.blue : "white")};
+  min-width: ${(props) => (props.width ? props.width : "218px")};
+  min-height: ${(props) => (props.minHeight ? props.minHeight : "2em")};
+  font-size: ${(props) => (props.fontSize ? props.fontSize : "1em")};
+  background: ${(props) => (props.primary ? "#0073e6" : "white")};
   border-radius: 3px;
   border: 1px solid ${(props) => (props.primary ? "#0073e6" : "#d2d2d2")};
-  color: ${(props) => (props.primary ? "white" : props.theme.blue)};
-  margin: ${(props) => props.margin ? props.margin : "0 0 0 0"};
+  color: ${(props) => (props.primary ? "white" : "#0073e6")};
+  margin: ${(props) => (props.margin ? props.margin : "0 0 0 0")};
   padding: 0.5em 1em;
   cursor: pointer;
 `;
@@ -47,18 +47,31 @@ const BackButton: React.FunctionComponent<{
 );
 
 interface ArrowButtonProps {
-    label: string;
-    onClick?: () => void;
-    type: "button" | "submit" | "reset" | undefined;
-    disabled?: boolean;
-    focus?: boolean;
+  label: string;
+  onClick?: () => void;
+  type: "button" | "submit" | "reset" | undefined;
+  disabled?: boolean;
+  focus?: boolean;
 }
 
-const ArrowButton:React.FunctionComponent<ArrowButtonProps> = ({ label, onClick, type, disabled, focus }) => (
-<StyledButton autoFocus={focus} onClick={onClick} primary direction="row-reverse" align="flex-end" type={type} disabled={disabled} >
-    {label} <span style={{float:"right"}}>&#8594;</span>
-</StyledButton>
-)
+const ArrowButton: React.FunctionComponent<ArrowButtonProps> = ({
+  label,
+  onClick,
+  disabled,
+  focus
+}) => (
+  <StyledButton
+    autoFocus={focus}
+    onClick={onClick}
+    primary
+    direction="row-reverse"
+    align="flex-end"
+    type={undefined}
+    disabled={disabled}
+  >
+    {label} <span style={{ float: "right" }}>&#8594;</span>
+  </StyledButton>
+);
 
 export default StyledButton;
 
