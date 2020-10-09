@@ -25,6 +25,7 @@ export class WalletSetup extends Component<WalletSetupProps, WalletSetupState> {
     // bind events
     this.componentDidMount = this.componentDidMount.bind(this);
     this.componentWillUnmount = this.componentWillUnmount.bind(this);
+    this.onNewWallet = this.onNewWallet.bind(this);
   }
 
   componentDidMount(): void {
@@ -38,6 +39,10 @@ export class WalletSetup extends Component<WalletSetupProps, WalletSetupState> {
 
   componentWillUnmount(): void {}
 
+  private onNewWallet(): void {
+    this.props.onComplete();
+  }
+
   render() {
     return (
       <>
@@ -50,7 +55,7 @@ export class WalletSetup extends Component<WalletSetupProps, WalletSetupState> {
             <p></p>
             <Box direction="column" align="center" width="100%">
               <Box display="flex" direction="row" align="center" width="100%">
-                <SCard onClick={() => this.setState({ newWallet: true })}>
+                <SCard onClick={() => this.onNewWallet()}>
                   <ImportIcon height="80px" width="80px" />
                   <H3 align="center" color="white">
                     Create Wallet
@@ -73,13 +78,6 @@ export class WalletSetup extends Component<WalletSetupProps, WalletSetupState> {
             </Box>
           </Container>
         )}
-        {this.state && this.state.newWallet === true && (
-          <Container height="50vh">
-            <H3 align="center" color="green">
-              Create Wallet
-            </H3>
-          </Container>
-        )}
         {this.state &&
           this.state.newWallet === false &&
           this.state.restoreUsingMnemonic === false &&
@@ -92,7 +90,7 @@ export class WalletSetup extends Component<WalletSetupProps, WalletSetupState> {
                   restoreWithPassphrase: false
                 })
               }
-              restoreWithPassphrase={() =>
+              restoreWithSecureFile={() =>
                 this.setState({
                   restoreUsingMnemonic: false,
                   restoreWithPassphrase: true
@@ -104,18 +102,18 @@ export class WalletSetup extends Component<WalletSetupProps, WalletSetupState> {
           this.state.newWallet === false &&
           this.state.restoreUsingMnemonic === true &&
           this.state.restoreWithPassphrase === false && (
-            <WalletMnemonicRestore 
+            <WalletMnemonicRestore
               onComplete={() => this.props.onComplete()}
-              onCancel={() => this.setState( { restoreUsingMnemonic: false })}
+              onCancel={() => this.setState({ restoreUsingMnemonic: false })}
             />
-        )}
+          )}
         {this.state &&
           this.state.newWallet === false &&
           this.state.restoreUsingMnemonic === false &&
           this.state.restoreWithPassphrase === true && (
-            <WalletFileRestore 
+            <WalletFileRestore
               onComplete={() => this.props.onComplete()}
-              onCancel={() => this.setState( { restoreWithPassphrase: false })}
+              onCancel={() => this.setState({ restoreWithPassphrase: false })}
             />
           )}
       </>

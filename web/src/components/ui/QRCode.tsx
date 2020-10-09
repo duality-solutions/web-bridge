@@ -136,8 +136,19 @@ export const QRCode: React.FunctionComponent<QRCodeProps> = (props) => {
     drawPositioningPattern(0, 0, length, props, ctx);
     drawPositioningPattern(length - 7, 0, length, props, ctx);
     drawPositioningPattern(0, length - 7, length, props, ctx);
-  }, [value, ecLevel, size, bgColor, fgColor, qrStyle]);
-
+  }, [
+    actualSize,
+    cellSize,
+    length,
+    props,
+    qrCode,
+    value,
+    ecLevel,
+    size,
+    bgColor,
+    fgColor,
+    qrStyle
+  ]);
   return (
     <div
       style={{

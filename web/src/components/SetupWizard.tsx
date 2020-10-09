@@ -20,7 +20,7 @@ export class SetupWizard extends Component<SetupWizardProps, SetupWizardState> {
   }
 
   componentDidMount(): void {
-    this.setState({currentStep: this.props.currentStep });
+    this.setState({ currentStep: this.props.currentStep });
   }
 
   componentWillUnmount(): void {}
@@ -32,41 +32,51 @@ export class SetupWizard extends Component<SetupWizardProps, SetupWizardState> {
           <Grid.Row>
             <StepGroup widths="seven">
               <Step
-                icon="address card"
+                icon="privacy"
                 href="#"
-                active={this.state && this.state.currentStep === 1 ? true : false}
-                disabled={this.state && this.state.currentStep === 1 ? false : true}
+                active={
+                  this.state && this.state.currentStep === 1 ? true : false
+                }
+                disabled={
+                  this.state && this.state.currentStep === 1 ? false : true
+                }
+              />
+              <Step
+                icon="user"
+                href="#"
+                active={
+                  this.state && this.state.currentStep === 2 ? true : false
+                }
+                disabled={
+                  this.state && this.state.currentStep === 2 ? false : true
+                }
               />
               <Step
                 icon="handshake"
                 href="#"
-                active={this.state && this.state.currentStep === 2 ? true : false}
-                disabled={this.state && this.state.currentStep === 2 ? false : true}
-              />
-              <Step
-                icon="tasks"
-                href="#"
-                active={this.state && this.state.currentStep === 3 ? true : false}
-                disabled={this.state && this.state.currentStep === 3 ? false : true}
-              />
-              <Step
-                icon="puzzle piece"
-                href="#"
-                active={this.state && this.state.currentStep === 4 ? true : false}
-                disabled={this.state && this.state.currentStep === 4 ? false : true}
+                active={
+                  this.state && this.state.currentStep === 3 ? true : false
+                }
+                disabled={
+                  this.state && this.state.currentStep === 3 ? false : true
+                }
               />
               <Step
                 icon="checkmark"
                 href="#"
-                active={this.state && this.state.currentStep === 5 ? true : false}
-                disabled={this.state && this.state.currentStep === 5 ? false : true}
+                active={
+                  this.state && this.state.currentStep === 4 ? true : false
+                }
+                disabled={
+                  this.state && this.state.currentStep === 4 ? false : true
+                }
               />
             </StepGroup>
           </Grid.Row>
           <Grid.Row textAlign="center">
             {this.state && this.state.currentStep === 1 && (
               <Grid.Column>
-                <WalletSetup onComplete={() => this.props.onComplete()}/>
+                <WalletSetup onComplete={() => this.props.onComplete()} />
               </Grid.Column>
             )}
           </Grid.Row>

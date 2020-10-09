@@ -27,38 +27,42 @@ export class WalletFileRestore extends Component<
     // bind events
     this.componentDidMount = this.componentDidMount.bind(this);
     this.componentWillUnmount = this.componentWillUnmount.bind(this);
+    this.filesSelectedHandler = this.filesSelectedHandler.bind(this);
   }
 
   componentDidMount(): void {}
 
   componentWillUnmount(): void {}
 
-  render() {
-    const filesSelectedHandler = (files: FilePathInfo[]) => {
-      var error: DropzoneError;
-      if (files.length !== 1) {
-        error = {
-          title: "More that one file selected",
-          message: "Please select only one file"
-        };
-        this.setState({ error: error });
-        return;
-      }
-      const file: FilePathInfo = files[0];
-      if (file.size > 131072) {
-        //128KiB
-        error = {
-          title: "File is too large",
-          message: "Please select a mnemonic recovery file"
-        };
-        this.setState({ error: error });
-        return;
-      }
-      //mnemonicRestoreFilePathSubmitted(file.path);
-      //secureFilePassword();
-      this.props.onComplete();
-    };
+  private filesSelectedHandler = (files: FilePathInfo[]) => {
+    var error: DropzoneError;
+    if (files.length !== 1) {
+      error = {
+        title: "More that one file selected",
+        message: "Please select only one file"
+      };
+      this.setState({ error: error });
+      return;
+    }
+    const file: FilePathInfo = files[0];
+    if (file.size > 131072) {
+      //128KiB
+      error = {
+        title: "File is too large",
+        message: "Please select a mnemonic recovery file"
+      };
+      this.setState({ error: error });
+      return;
+    }
+    console.log("file.path");
+    console.log(file.path);
+    // todo: get full file path
+    //mnemonicRestoreFilePathSubmitted(file.path);
+    //secureFilePassword();
+    this.props.onComplete();
+  };
 
+  render() {
     return (
       <>
         <H1 align="center" colored fontWeight="600">
@@ -105,7 +109,7 @@ export class WalletFileRestore extends Component<
                       <Dropzone
                         multiple={false}
                         accept={".psh.json"}
-                        filesSelected={filesSelectedHandler}
+                        filesSelected={this.filesSelectedHandler}
                         error={this.state && this.state.error}
                       ></Dropzone>
                       {this.state && this.state.stateError ? (

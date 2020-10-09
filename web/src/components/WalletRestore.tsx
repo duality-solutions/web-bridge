@@ -8,7 +8,7 @@ import { Text } from "./ui/Text";
 
 export interface WalletRestoreProps {
   restoreUsingMnemonic: () => void;
-  restoreWithPassphrase: () => void;
+  restoreWithSecureFile: () => void;
   cancelRestore: () => void;
 }
 
@@ -66,7 +66,7 @@ export class WalletRestore extends Component<
                 </Text>
               </SCard>
               <SCard
-                onClick={() => this.props.restoreWithPassphrase()}
+                onClick={() => this.props.restoreWithSecureFile()}
                 padding="2em 1em 1em 1em"
                 height="140px"
                 width="220px"
