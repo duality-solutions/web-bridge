@@ -30,7 +30,6 @@ export class WalletRestore extends Component<
 
   componentDidMount(): void {
     this.setState({ useMnemonic: undefined });
-    console.log(this.newWallet);
   }
 
   componentWillUnmount(): void {}

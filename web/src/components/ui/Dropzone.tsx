@@ -18,12 +18,10 @@ interface DropzoneProps {
 }
 
 interface DropzoneState {
+  fileContents: string | ArrayBuffer | null;
 }
 
-export class Dropzone extends Component<
-DropzoneProps,
-DropzoneState
-> {
+export class Dropzone extends Component<DropzoneProps, DropzoneState> {
   private dirFileInputRef: React.RefObject<HTMLInputElement>;
   constructor(props: DropzoneProps) {
     super(props);
@@ -31,6 +29,7 @@ DropzoneState
     // bind events
     this.componentDidMount = this.componentDidMount.bind(this);
     this.componentWillUnmount = this.componentWillUnmount.bind(this);
+    this.loadFilesDataReader = this.loadFilesDataReader.bind(this);
   }
 
   componentDidMount(): void {
@@ -40,6 +39,22 @@ DropzoneState
   }
 
   componentWillUnmount(): void {}
+
+  private loadFilesDataReader = (files: File[]) => {
+    let selectedFiles: FilePathInfo[] = [];
+    files.forEach((file) => {
+      let reader = new FileReader();
+      reader.readAsDataURL(file);
+      const fileInfo: FilePathInfo = {
+        path: file.name,
+        type: file.type,
+        size: file.size,
+        fileReader: reader
+      };
+      selectedFiles.push(fileInfo);
+    });
+    this.props.filesSelected(selectedFiles);
+  };
 
   render() {
     return (
@@ -60,9 +75,7 @@ DropzoneState
           onDrop={(e) => {
             e.preventDefault();
             const files = [...e.dataTransfer.files];
-            this.props.filesSelected(
-              files.map((f) => ({ path: f.name, type: f.type, size: f.size }))
-            );
+            this.loadFilesDataReader(files);
           }}
         >
           {this.props.error ? (
@@ -107,9 +120,7 @@ DropzoneState
                 return;
               }
               const files = [...e.currentTarget.files];
-              this.props.filesSelected(
-                files.map((f) => ({ path: f.name, type: f.type, size: f.size }))
-              );
+              this.loadFilesDataReader(files);
             }}
             style={{ display: "none" }}
           />
@@ -141,11 +152,7 @@ DropzoneState
                     return;
                   }
                   const files = [...e.currentTarget.files];
-                  if (this.props.directoriesSelected) {
-                    this.props.directoriesSelected(
-                      files.map((f) => ({ path: f.name, type: "", size: 0 }))
-                    );
-                  }
+                  this.loadFilesDataReader(files);
                 }}
                 style={{ display: "none" }}
               />

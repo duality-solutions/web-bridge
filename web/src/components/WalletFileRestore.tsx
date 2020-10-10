@@ -5,8 +5,9 @@ import { Card } from "./ui/Card";
 import { Container } from "./ui/Container";
 import { Dropzone, DropzoneError } from "./ui/Dropzone";
 import { SecureFileIcon } from "./ui/Images";
-import { H1, H3, Text } from "./ui/Text";
+import { H3, Text } from "./ui/Text";
 import { FilePathInfo } from "../shared/FilePathInfo";
+import { WalletRestoreFilePassword } from "./WalletRestoreFilePassword";
 
 export interface WalletFileRestoreProps {
   onComplete: () => void;
@@ -15,7 +16,9 @@ export interface WalletFileRestoreProps {
 
 export interface WalletFileRestoreState {
   stateError?: string;
-  error: DropzoneError | undefined;
+  error?: DropzoneError;
+  fileContents?: string | ArrayBuffer;
+  mnemonic?: string;
 }
 
 export class WalletFileRestore extends Component<
@@ -28,104 +31,126 @@ export class WalletFileRestore extends Component<
     this.componentDidMount = this.componentDidMount.bind(this);
     this.componentWillUnmount = this.componentWillUnmount.bind(this);
     this.filesSelectedHandler = this.filesSelectedHandler.bind(this);
+    this.loadSecureFileData = this.loadSecureFileData.bind(this);
+    this.onMnemonic = this.onMnemonic.bind(this);
   }
 
-  componentDidMount(): void {}
+  componentDidMount(): void {
+    this.setState({ fileContents: undefined });
+  }
 
   componentWillUnmount(): void {}
 
+  private loadSecureFileData = (file: FilePathInfo, reader?: FileReader) => {
+    if (reader) {
+      if (reader.result) {
+        this.setState({ fileContents: reader.result, error: undefined, stateError: undefined });
+      }
+    }
+  };
+
+  private onMnemonic = (wordlist: string) => {
+    // check mnemonic
+    // call web service
+    // complete if valid
+    this.setState({ mnemonic: wordlist });
+  };
+
   private filesSelectedHandler = (files: FilePathInfo[]) => {
-    var error: DropzoneError;
+    var dropError: DropzoneError;
     if (files.length !== 1) {
-      error = {
+      dropError = {
         title: "More that one file selected",
         message: "Please select only one file"
       };
-      this.setState({ error: error });
+      this.setState({ error: dropError });
       return;
     }
     const file: FilePathInfo = files[0];
-    if (file.size > 131072) {
-      //128KiB
-      error = {
+    if (file.size > 131072) { //128KiB
+      dropError = {
         title: "File is too large",
         message: "Please select a mnemonic recovery file"
       };
-      this.setState({ error: error });
+      this.setState({ error: dropError, stateError: dropError.message });
       return;
     }
-    console.log("file.path");
-    console.log(file.path);
-    // todo: get full file path
-    //mnemonicRestoreFilePathSubmitted(file.path);
-    //secureFilePassword();
-    this.props.onComplete();
+    if (file.fileReader) {
+      file.fileReader.onload = () => {
+        this.loadSecureFileData(file, file.fileReader);
+      };
+    }
   };
 
   render() {
     return (
       <>
-        <H1 align="center" colored fontWeight="600">
-          Restore Account
-        </H1>
-        <Container height="50vh" margin="10% 0 0 0">
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              return false;
-            }}
-          >
-            <Box direction="column" align="center" width="100%">
-              <Box
-                direction="column"
-                width="700px"
-                align="start"
-                margin="0 auto 0 auto"
-              >
-                <BackButton
-                  onClick={() => this.props.onCancel()}
-                  margin="150px 0 0 -80px"
-                />
-                <Card
-                  width="100%"
-                  align="center"
-                  minHeight="225px"
-                  padding="2em 4em 2em 2em"
+        {this.state && !this.state.fileContents && (
+          <Container height="50vh" margin="10% 0 0 0">
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                return true;
+              }}
+            >
+              <Box direction="column" align="center" width="100%">
+                <Box
+                  direction="column"
+                  width="700px"
+                  align="start"
+                  margin="0 auto 0 auto"
                 >
-                  <Box display="flex" direction="row" margin="0">
-                    <Box width="60px" margin="0">
-                      <SecureFileIcon width="60px" height="60px" />
+                  <BackButton
+                    onClick={() => this.props.onCancel()}
+                    margin="150px 0 0 -80px"
+                  />
+                  <Card
+                    width="100%"
+                    align="center"
+                    minHeight="225px"
+                    padding="2em 4em 2em 2em"
+                  >
+                    <Box display="flex" direction="row" margin="0">
+                      <Box width="60px" margin="0">
+                        <SecureFileIcon width="60px" height="60px" />
+                      </Box>
+                      <Box
+                        direction="column"
+                        width="500px"
+                        align="center"
+                        margin="0 auto 0 auto"
+                      >
+                        <H3 margin="0 0 1em 0">
+                          Restore using Secure Restore File{" "}
+                        </H3>
+                        <Dropzone
+                          multiple={false}
+                          accept={".psh.json"}
+                          filesSelected={this.filesSelectedHandler}
+                          error={this.state && this.state.error}
+                        ></Dropzone>
+                        {this.state && this.state.stateError ? (
+                          <Text align="center" color="#e30429">
+                            {this.state.stateError}
+                          </Text>
+                        ) : (
+                          <></>
+                        )}
+                      </Box>
                     </Box>
-                    <Box
-                      direction="column"
-                      width="500px"
-                      align="center"
-                      margin="0 auto 0 auto"
-                    >
-                      <H3 margin="0 0 1em 0">
-                        Restore using Secure Restore File{" "}
-                      </H3>
-                      <Dropzone
-                        multiple={false}
-                        accept={".psh.json"}
-                        filesSelected={this.filesSelectedHandler}
-                        error={this.state && this.state.error}
-                      ></Dropzone>
-                      {this.state && this.state.stateError ? (
-                        <Text align="center" color="#e30429">
-                          {this.state.stateError}
-                        </Text>
-                      ) : (
-                        <></>
-                      )}
-                    </Box>
-                  </Box>
-                </Card>
+                  </Card>
+                </Box>
               </Box>
-            </Box>
-          </form>
-        </Container>
+            </form>
+          </Container>
+        )}
+        {this.state && this.state.fileContents && (
+          <WalletRestoreFilePassword
+            cancelPassword={() => this.setState({ fileContents: undefined })}
+            onMnemonic={(wordlist) => this.onMnemonic(wordlist)}
+          />
+        )}
       </>
     );
   }

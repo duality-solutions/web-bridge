@@ -34,7 +34,6 @@ export class WalletSetup extends Component<WalletSetupProps, WalletSetupState> {
       restoreUsingMnemonic: false,
       restoreWithPassphrase: false
     });
-    console.log(this.newWallet);
   }
 
   componentWillUnmount(): void {}
