@@ -1,13 +1,13 @@
 import React, { Component } from "react";
-import { Box } from "./ui/Box";
-import { BackButton } from "./ui/Button";
-import { Card } from "./ui/Card";
-import { Container } from "./ui/Container";
-import { Dropzone, DropzoneError } from "./ui/Dropzone";
-import { SecureFileIcon } from "./ui/Images";
-import { H3, Text } from "./ui/Text";
-import { FilePathInfo } from "../shared/FilePathInfo";
-import { WalletRestoreFilePassword } from "./WalletRestoreFilePassword";
+import { Box } from "../ui/Box";
+import { BackButton } from "../ui/Button";
+import { Card } from "../ui/Card";
+import { Container } from "../ui/Container";
+import { Dropzone, DropzoneError } from "../ui/Dropzone";
+import { SecureFileIcon } from "../ui/Images";
+import { H3, Text } from "../ui/Text";
+import { FilePathInfo } from "../../shared/FilePathInfo";
+import { WalletRestoreFilePassword } from "./RestoreFilePassword";
 
 export interface WalletFileRestoreProps {
   onComplete: () => void;

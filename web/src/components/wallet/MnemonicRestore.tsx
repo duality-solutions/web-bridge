@@ -1,11 +1,11 @@
 import React, { Component } from "react";
-import { Box } from "./ui/Box";
-import { ArrowButton, BackButton } from "./ui/Button";
-import { Card } from "./ui/Card";
-import { Container } from "./ui/Container";
-import { SecureFileIcon } from "./ui/Images";
-import { MnemonicInput } from "./ui/Input";
-import { H1, H3, Text } from "./ui/Text";
+import { Box } from "../ui/Box";
+import { ArrowButton, BackButton } from "../ui/Button";
+import { Card } from "../ui/Card";
+import { Container } from "../ui/Container";
+import { SecureFileIcon } from "../ui/Images";
+import { MnemonicInput } from "../ui/Input";
+import { H1, H3, Text } from "../ui/Text";
 
 export interface WalletMnemonicRestoreProps {
   onComplete: () => void;

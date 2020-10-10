@@ -1,12 +1,12 @@
 import React, { Component } from "react";
-import { Container } from "./ui/Container";
-import { SCard } from "./ui/Card";
-import { Box } from "./ui/Box";
-import { H1, H3, Text } from "./ui/Text";
-import { ImportIcon, RestoreIcon } from "./ui/Images";
-import { WalletRestore } from "./WalletRestore";
-import { WalletFileRestore } from "./WalletFileRestore";
-import { WalletMnemonicRestore } from "./WalletMnemonicRestore";
+import { Container } from "../ui/Container";
+import { SCard } from "../ui/Card";
+import { Box } from "../ui/Box";
+import { H1, H3, Text } from "../ui/Text";
+import { ImportIcon, RestoreIcon } from "../ui/Images";
+import { WalletRestore } from "./Restore";
+import { WalletFileRestore } from "./FileRestore";
+import { WalletMnemonicRestore } from "./MnemonicRestore";
 
 export interface WalletSetupProps {
   onComplete: () => void;

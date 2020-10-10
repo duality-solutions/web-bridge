@@ -1,11 +1,11 @@
 import React, { Component } from "react";
-import { Box } from "./ui/Box";
-import { ArrowButton, BackButton } from "./ui/Button";
-import { Card } from "./ui/Card";
-import { Container } from "./ui/Container";
-import { Input } from "./ui/Input";
-import { SecureFileIcon } from "./ui/Images";
-import { H3, Text } from "./ui/Text";
+import { Box } from "../ui/Box";
+import { ArrowButton, BackButton } from "../ui/Button";
+import { Card } from "../ui/Card";
+import { Container } from "../ui/Container";
+import { Input } from "../ui/Input";
+import { SecureFileIcon } from "../ui/Images";
+import { H3, Text } from "../ui/Text";
 
 export interface WalletRestoreFilePasswordProps {
   cancelPassword: () => void;

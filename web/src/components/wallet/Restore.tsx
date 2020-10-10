@@ -1,10 +1,10 @@
 import React, { Component } from "react";
-import { Box } from "./ui/Box";
-import { BackButton } from "./ui/Button";
-import { SCard } from "./ui/Card";
-import { Container } from "./ui/Container";
-import { PassphraseIcon, SecureFileIcon } from "./ui/Images";
-import { Text } from "./ui/Text";
+import { Box } from "../ui/Box";
+import { BackButton } from "../ui/Button";
+import { SCard } from "../ui/Card";
+import { Container } from "../ui/Container";
+import { PassphraseIcon, SecureFileIcon } from "../ui/Images";
+import { Text } from "../ui/Text";
 
 export interface WalletRestoreProps {
   restoreUsingMnemonic: () => void;

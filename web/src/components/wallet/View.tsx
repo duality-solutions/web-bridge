@@ -1,9 +1,9 @@
 import React, { Component } from "react";
-import { Box } from "./ui/Box";
-import { Card } from "./ui/Card";
-import { Container } from "./ui/Container";
-import { QRCode } from "./ui/QRCode";
-import { H1, H3 } from "./ui/Text";
+import { Box } from "../ui/Box";
+import { Card } from "../ui/Card";
+import { Container } from "../ui/Container";
+import { QRCode } from "../ui/QRCode";
+import { H1, H3 } from "../ui/Text";
 
 export interface WalletViewProps {}
 

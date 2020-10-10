@@ -1,6 +1,6 @@
 import React, { Component } from "react";
 import { Grid, Step, StepGroup } from "semantic-ui-react";
-import { WalletSetup } from "./WalletSetup";
+import { WalletSetup } from "./wallet/Setup";
 
 export interface SetupWizardProps {
   currentStep: number;

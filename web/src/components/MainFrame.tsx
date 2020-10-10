@@ -2,7 +2,7 @@ import React, { Component } from "react";
 import { Settings } from "./Settings";
 import { TerminalPage } from "./TerminalPage";
 import { SetupWizard } from "./SetupWizard";
-import { WalletView } from "./WalletView";
+import { WalletView } from "./wallet/View";
 import {
   Button,
   Dropdown,
