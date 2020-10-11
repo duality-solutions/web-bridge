@@ -206,8 +206,8 @@ func (w *WebBridgeRunner) walletinfo(c *gin.Context) {
 // @Accept  json
 // @Produce  json
 // @Success 200 {object} models.MnemonicResponse "ok"
-// @Failure 400 {object} string "Bad request"
-// @Failure 500 {object} string "Internal error"
+// @Failure 400 {object} models.ErrorResponse "Bad request"
+// @Failure 500 {object} models.ErrorResponse "Internal error"
 // @Router /api/v1/wallet/mnemonic [get]
 func (w *WebBridgeRunner) getmnemonic(c *gin.Context) {
 	strCommand, _ := dynamic.NewRequest(`dynamic-cli dumphdinfo`)
