@@ -69,9 +69,11 @@ export class WalletMnemonicRestore extends Component<
                       <SecureFileIcon width="60px" height="60px" />
                     </Box>
                     <Box margin="1em 0 0 2em">
-                      <H3 margin="0 0 1em 0">Restore using passphrase </H3>
+                      <H3 margin="0 0 1em 0">
+                        Restore using mnemonic passphrase{" "}
+                      </H3>
                       <MnemonicInput
-                        placeholder="Enter passphrase"
+                        placeholder="Enter mnemonic passphrase"
                         name="mnemonic-text"
                         onChange={(e) => this.setMnemonic(e.target.value)}
                         value={

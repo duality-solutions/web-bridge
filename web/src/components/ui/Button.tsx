@@ -57,22 +57,38 @@ interface ArrowButtonProps {
 const ArrowButton: React.FunctionComponent<ArrowButtonProps> = ({
   label,
   onClick,
+  type,
   disabled,
   focus
 }) => (
   <StyledButton
     autoFocus={focus}
     onClick={onClick}
-    primary
     direction="row-reverse"
     align="flex-end"
-    type={undefined}
+    type={type}
     disabled={disabled}
   >
     {label} <span style={{ float: "right" }}>&#8594;</span>
   </StyledButton>
 );
 
+const LightButton = styled("button")<ButtonProps>`
+  align-self: ${(props) => (props.align ? props.align : "center")};
+  justify-content: center;
+  min-width: 218px;
+  min-height: 2em;
+  font-size: 1em;
+  background: white;
+  border-radius: 3px;
+  border: 2px solid ${(props) => props.theme.blue};
+  color: ${(props) => props.theme.blue};
+  /* margin: 0.5em 1em; */
+  margin: 0 0 0 0;
+  padding: 0.5em 1em;
+  cursor: pointer;
+`;
+
 export default StyledButton;
 
-export { BackButton, ArrowButton };
+export { ArrowButton, BackButton, LightButton };

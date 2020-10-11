@@ -4,9 +4,10 @@ import backarrow from "../../assets/backarrow.svg";
 import importwallet from "../../assets/import.svg";
 import logo from "../../assets/logo.svg";
 import passphrase from "../../assets/passphrase.svg";
+import passwordentry from "../../assets/passwordentry.svg";
 import restoreWallet from "../../assets/restore.svg";
+import safe from "../../assets/safe.svg";
 import securefile from "../../assets/securefile.svg";
-
 
 interface ImageProps {
   src?: string;
@@ -104,6 +105,40 @@ const SecureFileIcon: React.FunctionComponent<ImageProps & Styleable> = ({
   />
 );
 
+const PasswordEntry: React.FunctionComponent<ImageProps & Styleable> = ({
+  width,
+  height,
+  margin,
+  onClick,
+  style
+}) => (
+  <SvgIcon
+    onClick={onClick}
+    style={{ cursor: "pointer", ...style }}
+    src={passwordentry}
+    width={width || "50px"}
+    height={height || "30px"}
+    margin={margin || "0 10px"}
+  />
+);
+
+const SafeImage: React.FunctionComponent<ImageProps & Styleable> = ({
+  width,
+  height,
+  margin,
+  onClick,
+  style
+}) => (
+  <SvgIcon
+    onClick={onClick}
+    style={{ cursor: "pointer", ...style }}
+    src={safe}
+    width={width || "50px"}
+    height={height || "30px"}
+    margin={margin || "0 10px"}
+  />
+);
+
 const BackArrow: React.FunctionComponent<ImageProps & Styleable> = ({
   width,
   height,
@@ -123,10 +158,12 @@ const BackArrow: React.FunctionComponent<ImageProps & Styleable> = ({
 
 export {
   SvgIcon as AppLogo,
-  PlainAppLogo,
+  BackArrow,
   ImportIcon,
-  RestoreIcon,
   PassphraseIcon,
-  SecureFileIcon,
-  BackArrow
+  PasswordEntry,
+  PlainAppLogo,
+  RestoreIcon,
+  SafeImage,
+  SecureFileIcon
 };
