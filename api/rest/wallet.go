@@ -297,4 +297,40 @@ func (w *WebBridgeRunner) postmnemonic(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"result": result})
 }
 
+//
+// @Description Returns a default standard wallet address
+// @Accept  json
+// @Produce  json
+// @Success 200 {object} models.WalletAddressResponse "ok"
+// @Failure 400 {object} string "Bad request"
+// @Failure 500 {object} string "Internal error"
+// @Router /api/v1/wallet/defaultaddress [get]
+func (w *WebBridgeRunner) defaultaddress(c *gin.Context) {
+	cmd := `dynamic-cli getaccountaddress "default"`
+	reqCnd, _ := dynamic.NewRequest(cmd)
+	response, _ := <-w.dynamicd.ExecCmdRequest(reqCnd)
+	if strings.Contains(response, "Error:") {
+		result := models.RPCError{}
+		err := json.Unmarshal([]byte(response), &result)
+		if err != nil {
+			strErrMsg := fmt.Sprintf("Response JSON unmarshal error %v", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": strErrMsg})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error})
+		return
+	}
+	var address interface{}
+	err := json.Unmarshal([]byte(response), &address)
+	if err != nil {
+		strErrMsg := fmt.Sprintf("Results JSON unmarshal error %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": strErrMsg})
+		return
+	}
+	addResp := models.WalletAddressResponse{
+		Address: fmt.Sprintf("%v", address),
+	}
+	c.JSON(http.StatusOK, gin.H{"result": addResp})
+}
+
 // getwalletinfo also add if locked or not.

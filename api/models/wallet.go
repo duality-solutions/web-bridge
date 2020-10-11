@@ -37,6 +37,13 @@ type ImportMnemonicRequest struct {
 	Passphrase string `json:"passphrase"`
 }
 
+// WalletAddressResponse response containing a wallet address
+// swagger:parameters models.WalletAddressResponse
+type WalletAddressResponse struct {
+	// Address (string, required) wallet address
+	Address string `json:"address"`
+}
+
 /*
 type HDAccount struct {
 	HdAccountIndex     int `json:"hdaccountindex"`
