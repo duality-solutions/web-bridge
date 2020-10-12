@@ -100,9 +100,6 @@ export class WalletSetup extends Component<WalletSetupProps, WalletSetupState> {
         )}
         {this.state && this.state.setupState === SetupState.NewWarned && (
           <MnemonicBackup
-            mnemonic={
-              "mule already toss salute very clump oppose problem garage skull twist season"
-            }
             onCancel={() => this.setState({ setupState: SetupState.Init })}
           />
         )}

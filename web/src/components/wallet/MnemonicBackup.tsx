@@ -5,11 +5,11 @@ import { Card } from "../ui/Card";
 import { Container } from "../ui/Container";
 import { Divider } from "../ui/Divider";
 import { PasswordEntry, SafeImage, SecureFileIcon } from "../ui/Images";
-import { LoadingSpinner } from "../ui/LoadingSpinner";
 import { H3, Text } from "../ui/Text";
+import { RequestConfig, RestUrl } from "../../api/Config";
+import axios from "axios";
 
 export interface MnemonicBackupProps {
-  mnemonic?: string;
   onCancel: () => void;
 }
 
@@ -28,10 +28,11 @@ export class MnemonicBackup extends Component<
     this.componentWillUnmount = this.componentWillUnmount.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
     this.handleFileCreation = this.handleFileCreation.bind(this);
+    this.getMnemonic = this.getMnemonic.bind(this);
   }
 
   componentDidMount(): void {
-    this.setState({ mnemonic: this.props.mnemonic });
+    this.getMnemonic();
   }
 
   componentWillUnmount(): void {}
@@ -45,6 +46,18 @@ export class MnemonicBackup extends Component<
   handleFileCreation = (e: FormEvent) => {
     //if we don't prevent form submission, causes a browser reload
     e.preventDefault();
+  };
+
+  private getMnemonic = async () => {
+    var self = this;
+    await axios
+      .get(RestUrl + "wallet/mnemonic", RequestConfig)
+      .then(function (response) {
+        self.setState({ mnemonic: response.data.mnemonic });
+      })
+      .catch(function (error) {
+        console.log("Execute wallet/mnemonic [Get] Error: " + error);
+      });
   };
 
   render() {
@@ -84,7 +97,7 @@ export class MnemonicBackup extends Component<
                         margin="0"
                         //notUserSelectable
                       >
-                        {this.props.mnemonic}
+                        {this.state.mnemonic}
                       </Text>
                     </Card>
                     <Box display="flex" direction="row">
@@ -144,14 +157,6 @@ export class MnemonicBackup extends Component<
               </Box>
             </form>
           </Container>
-        )}
-        {this.state && !this.state.mnemonic && (
-          <LoadingSpinner
-            active={typeof this.props.mnemonic === "undefined"}
-            label="Generating your mnemonic passphrase"
-            size={50}
-            opaque
-          />
         )}
       </>
     );
