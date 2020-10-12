@@ -20,7 +20,7 @@ func (w *WebBridgeRunner) users(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": strErrMsg})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"result": result})
+	c.JSON(http.StatusOK, result)
 }
 
 func (w *WebBridgeRunner) user(c *gin.Context) {
@@ -40,7 +40,7 @@ func (w *WebBridgeRunner) user(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": strErrMsg})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"result": result})
+	c.JSON(http.StatusOK, result)
 	return
 }
 
@@ -61,5 +61,5 @@ func (w *WebBridgeRunner) walletusers(c *gin.Context) {
 			myUsers[i] = account
 		}
 	}
-	c.JSON(http.StatusOK, gin.H{"result": myUsers})
+	c.JSON(http.StatusOK, myUsers)
 }

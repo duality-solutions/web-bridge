@@ -17,7 +17,7 @@ func (w *WebBridgeRunner) getinfo(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"result": info})
+	c.JSON(http.StatusOK, info)
 }
 
 func (w *WebBridgeRunner) syncstatus(c *gin.Context) {
@@ -28,5 +28,5 @@ func (w *WebBridgeRunner) syncstatus(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"result": status})
+	c.JSON(http.StatusOK, status)
 }

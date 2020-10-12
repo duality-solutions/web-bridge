@@ -20,7 +20,7 @@ func (w *WebBridgeRunner) groups(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": strErrMsg})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"result": result})
+	c.JSON(http.StatusOK, result)
 }
 
 func (w *WebBridgeRunner) group(c *gin.Context) {
@@ -40,7 +40,7 @@ func (w *WebBridgeRunner) group(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": strErrMsg})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"result": result})
+	c.JSON(http.StatusOK, result)
 	return
 }
 
@@ -62,5 +62,5 @@ func (w *WebBridgeRunner) walletgroups(c *gin.Context) {
 		}
 	}
 
-	c.JSON(http.StatusOK, gin.H{"result": myGroups})
+	c.JSON(http.StatusOK, myGroups)
 }

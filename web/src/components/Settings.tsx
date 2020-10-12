@@ -28,7 +28,7 @@ export interface SettingsState {
 export class Settings extends Component<SettingsProps, SettingsState> {
   constructor(props: SettingsProps) {
     super(props);
-    let configResponse: ConfigurationResponse = { result: {
+    let configResponse: ConfigurationResponse = { 
       IceServers: [
         {
           URL: props.defaultIceUrl,
@@ -41,7 +41,7 @@ export class Settings extends Component<SettingsProps, SettingsState> {
         ListenPort: props.defaultPort,
         AllowCIDR: props.defaultAllow
       }
-    }};
+    };
     // bind events
     this.componentDidMount = this.componentDidMount.bind(this);
     this.componentWillUnmount = this.componentWillUnmount.bind(this);
@@ -70,9 +70,9 @@ export class Settings extends Component<SettingsProps, SettingsState> {
 
   private updateIceConfig = async () => {
     let IceServer: IceServerConfig = {
-      URL: this.state.URL ? this.state.URL : this.state.config.result.IceServers[0].URL,
-      UserName: this.state.UserName ? this.state.UserName : this.state.config.result.IceServers[0].UserName,
-      Credential: this.state.Credential ? this.state.Credential : this.state.config.result.IceServers[0].Credential,
+      URL: this.state.URL ? this.state.URL : this.state.config.IceServers[0].URL,
+      UserName: this.state.UserName ? this.state.UserName : this.state.config.IceServers[0].UserName,
+      Credential: this.state.Credential ? this.state.Credential : this.state.config.IceServers[0].Credential,
     };
     let IceServers: IceServerConfig[] = [ IceServer ]
     await axios.post<ConfigurationIceResponse>(RestUrl + "config/ice", IceServers, RequestConfig).then(function (response) {
@@ -84,9 +84,9 @@ export class Settings extends Component<SettingsProps, SettingsState> {
 
   private updateWebServerConfig = async () => {
     let webserver: WebServerConfig = {
-      BindAddress: this.state.BindAddress ? this.state.BindAddress : this.state.config.result.WebServer.BindAddress,
-      ListenPort: this.state.ListenPort ? this.state.ListenPort : this.state.config.result.WebServer.ListenPort,
-      AllowCIDR: this.state.AllowCIDR ? this.state.AllowCIDR : this.state.config.result.WebServer.AllowCIDR,
+      BindAddress: this.state.BindAddress ? this.state.BindAddress : this.state.config.WebServer.BindAddress,
+      ListenPort: this.state.ListenPort ? this.state.ListenPort : this.state.config.WebServer.ListenPort,
+      AllowCIDR: this.state.AllowCIDR ? this.state.AllowCIDR : this.state.config.WebServer.AllowCIDR,
     };
     await axios.post<ConfigurationWebResponse>(RestUrl + "config/web", webserver, RequestConfig).then(function (response) {
       console.log(response.data);
@@ -97,7 +97,7 @@ export class Settings extends Component<SettingsProps, SettingsState> {
 
   private restartWebServer = async () => {
     let postData: WebServerRestartRequest = {
-      restart_epoch: 0,
+      RestartEpoch: 0,
     };
     await axios.put<RestartResponse>(RestUrl + "config/web/restart", postData, RequestConfig).then(function (response) {
       console.log(response.data);
@@ -122,7 +122,7 @@ export class Settings extends Component<SettingsProps, SettingsState> {
                   data-position="bottom right"
                   data-inverted
                   onChange={(e, data) => this.setState( { URL: String(data.value) })}
-                  defaultValue={this.state ? this.state.config.result.IceServers[0].URL : ""}
+                  defaultValue={this.state ? this.state.config.IceServers[0].URL : ""}
                 />
               </Form.Field>
               <Form.Field>
@@ -133,7 +133,7 @@ export class Settings extends Component<SettingsProps, SettingsState> {
                   data-position="bottom right"
                   data-inverted
                   onChange={(e, data) => this.setState( { UserName: String(data.value) })}
-                  defaultValue={this.state ? this.state.config.result.IceServers[0].UserName : ""}
+                  defaultValue={this.state ? this.state.config.IceServers[0].UserName : ""}
                 />
               </Form.Field>
               <Form.Field>
@@ -144,7 +144,7 @@ export class Settings extends Component<SettingsProps, SettingsState> {
                   data-position="bottom right"
                   data-inverted
                   onChange={(e, data) => this.setState( { Credential: String(data.value) })}
-                  defaultValue={this.state ? this.state.config.result.IceServers[0].Credential: ""}
+                  defaultValue={this.state ? this.state.config.IceServers[0].Credential: ""}
                 />
               </Form.Field>
             </Form.Group>
@@ -159,7 +159,7 @@ export class Settings extends Component<SettingsProps, SettingsState> {
                   data-position="bottom right"
                   data-inverted
                   onChange={(e, data) => this.setState( { BindAddress: String(data.value) })}
-                  defaultValue={this.state ? this.state.BindAddress ? this.state.BindAddress : this.state.config.result.WebServer.BindAddress : "" }
+                  defaultValue={this.state ? this.state.BindAddress ? this.state.BindAddress : this.state.config.WebServer.BindAddress : "" }
                 />
               </Form.Field>
               <Form.Field>
@@ -170,7 +170,7 @@ export class Settings extends Component<SettingsProps, SettingsState> {
                   data-position="bottom right"
                   data-inverted
                   onChange={(e, data) => this.setState( { ListenPort: Number(data.value) })}
-                  defaultValue={this.state ? this.state.ListenPort ? this.state.ListenPort : this.state.config.result.WebServer.ListenPort : "" }
+                  defaultValue={this.state ? this.state.ListenPort ? this.state.ListenPort : this.state.config.WebServer.ListenPort : "" }
                 />
               </Form.Field>
               <Form.Field>
@@ -181,7 +181,7 @@ export class Settings extends Component<SettingsProps, SettingsState> {
                   data-position="bottom right"
                   data-inverted
                   onChange={(e, data) => this.setState( { AllowCIDR: String(data.value) })}
-                  defaultValue={this.state ? this.state.AllowCIDR ? this.state.AllowCIDR : this.state.config.result.WebServer.AllowCIDR : "" }
+                  defaultValue={this.state ? this.state.AllowCIDR ? this.state.AllowCIDR : this.state.config.WebServer.AllowCIDR : "" }
                 />
               </Form.Field>
             </Form.Group>

@@ -6,7 +6,5 @@ export interface IceServerConfig {
 };
 
 export interface ConfigurationIceResponse {
-    result: {
-        IceServers: IceServerConfig[];
-    }
+    IceServers: IceServerConfig[];
 };

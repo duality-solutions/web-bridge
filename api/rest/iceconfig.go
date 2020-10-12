@@ -19,7 +19,7 @@ import (
 // @Router /api/v1/ice [get]
 func (w *WebBridgeRunner) getice(c *gin.Context) {
 	if w.configuration != nil {
-		c.JSON(http.StatusOK, gin.H{"result": w.configuration.IceServers()})
+		c.JSON(http.StatusOK, w.configuration.IceServers())
 	} else {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Configuration variable is null."})
 	}
@@ -77,7 +77,7 @@ func (w *WebBridgeRunner) putice(c *gin.Context) {
 		} else {
 			w.configuration.UpdateIceServer(index, req)
 		}
-		c.JSON(http.StatusOK, gin.H{"result": w.configuration.IceServers()})
+		c.JSON(http.StatusOK, w.configuration.IceServers())
 	} else {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Configuration variable is null. Can not add ICE server to configuration."})
 	}
@@ -128,7 +128,7 @@ func (w *WebBridgeRunner) deleteice(c *gin.Context) {
 			strErrMsg := fmt.Sprintf("Setting not found by URL %v. Can not detele from ICE server configuration list.", req.URL)
 			c.JSON(http.StatusBadRequest, gin.H{"error": strErrMsg})
 		}
-		c.JSON(http.StatusOK, gin.H{"result": w.configuration.IceServers()})
+		c.JSON(http.StatusOK, w.configuration.IceServers())
 	} else {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Configuration variable is null. Can not detele from ICE server configuration list."})
 	}
@@ -168,7 +168,7 @@ func (w *WebBridgeRunner) replaceice(c *gin.Context) {
 			return
 		}
 		w.configuration.ReplaceIceServers(req)
-		c.JSON(http.StatusOK, gin.H{"result": w.configuration.IceServers()})
+		c.JSON(http.StatusOK, w.configuration.IceServers())
 	} else {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Configuration variable is null. Can not detele from ICE server configuration list."})
 	}

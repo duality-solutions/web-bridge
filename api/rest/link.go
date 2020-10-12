@@ -57,7 +57,7 @@ func (w *WebBridgeRunner) links(c *gin.Context) {
 			myLinks[key] = linkObj
 		}
 	}
-	c.JSON(http.StatusOK, gin.H{"result": myLinks})
+	c.JSON(http.StatusOK, myLinks)
 }
 
 func (w *WebBridgeRunner) linkrequest(c *gin.Context) {
@@ -89,7 +89,7 @@ func (w *WebBridgeRunner) linkrequest(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"result": result})
+	c.JSON(http.StatusOK, result)
 }
 
 func (w *WebBridgeRunner) linkaccept(c *gin.Context) {
@@ -121,7 +121,7 @@ func (w *WebBridgeRunner) linkaccept(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"result": result})
+	c.JSON(http.StatusOK, result)
 }
 
 func (w *WebBridgeRunner) sendlinkmessage(c *gin.Context) {
@@ -165,7 +165,7 @@ func (w *WebBridgeRunner) sendlinkmessage(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": strErrMsg})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"result": ret})
+	c.JSON(http.StatusOK, ret)
 }
 
 func (w *WebBridgeRunner) getlinkmessages(c *gin.Context) {
@@ -207,5 +207,5 @@ func (w *WebBridgeRunner) getlinkmessages(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": strErrMsg})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"result": ret})
+	c.JSON(http.StatusOK, ret)
 }

@@ -8,7 +8,7 @@ import (
 
 func (w *WebBridgeRunner) config(c *gin.Context) {
 	if w.configuration != nil {
-		c.JSON(http.StatusOK, gin.H{"result": w.configuration.ToJSON()})
+		c.JSON(http.StatusOK, w.configuration.ToJSON())
 	} else {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Configuration variable is null."})
 	}

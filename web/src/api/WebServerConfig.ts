@@ -1,10 +1,10 @@
 
 export interface WebServerRestartRequest {
-    restart_epoch: number
+    RestartEpoch: number
 };
 
 export interface RestartResponse {
-    result: string
+    Result: string
 };
 
 export interface WebServerConfig {
@@ -14,7 +14,5 @@ export interface WebServerConfig {
 };
 
 export interface ConfigurationWebResponse {
-    result: {
-        WebServer: WebServerConfig;
-    }
+    WebServer: WebServerConfig;
 };

@@ -40,7 +40,7 @@ func (w *WebBridgeRunner) bridgesinfo(c *gin.Context) {
 		ret[i] = info
 		i++
 	}
-	c.JSON(http.StatusOK, gin.H{"result": ret})
+	c.JSON(http.StatusOK, ret)
 }
 
 func (w *WebBridgeRunner) connectedbridges(c *gin.Context) {
@@ -71,7 +71,7 @@ func (w *WebBridgeRunner) connectedbridges(c *gin.Context) {
 		ret[i] = info
 		i++
 	}
-	c.JSON(http.StatusOK, gin.H{"result": ret})
+	c.JSON(http.StatusOK, ret)
 }
 
 func (w *WebBridgeRunner) unconnectedbridges(c *gin.Context) {
@@ -102,7 +102,7 @@ func (w *WebBridgeRunner) unconnectedbridges(c *gin.Context) {
 		ret[i] = info
 		i++
 	}
-	c.JSON(http.StatusOK, gin.H{"result": ret})
+	c.JSON(http.StatusOK, ret)
 }
 
 func shutdownBridge(b *bridge.Bridge) (int, error) {
@@ -207,7 +207,7 @@ func (w *WebBridgeRunner) restartbridge(c *gin.Context) {
 		c.JSON(status, gin.H{"error": err})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"result": b.ToJSON()})
+	c.JSON(http.StatusOK, b.ToJSON())
 }
 
 func (w *WebBridgeRunner) startbridge(c *gin.Context) {
@@ -239,5 +239,5 @@ func (w *WebBridgeRunner) stopbridge(c *gin.Context) {
 		c.JSON(status, gin.H{"error": fmt.Sprintf("%v", err)})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"result": b.ToJSON()})
+	c.JSON(http.StatusOK, b.ToJSON())
 }

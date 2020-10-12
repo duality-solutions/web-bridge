@@ -48,5 +48,5 @@ func (w *WebBridgeRunner) handleJSONRPC(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": strErrMsg})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"result": result})
+	c.JSON(http.StatusOK, result)
 }

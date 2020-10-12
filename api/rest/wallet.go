@@ -230,7 +230,7 @@ func (w *WebBridgeRunner) getmnemonic(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": strErrMsg})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"result": result})
+	c.JSON(http.StatusOK, result)
 }
 
 //
@@ -330,7 +330,7 @@ func (w *WebBridgeRunner) defaultaddress(c *gin.Context) {
 	addResp := models.WalletAddressResponse{
 		Address: fmt.Sprintf("%v", address),
 	}
-	c.JSON(http.StatusOK, gin.H{"result": addResp})
+	c.JSON(http.StatusOK, addResp)
 }
 
 //

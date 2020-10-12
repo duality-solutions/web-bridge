@@ -31,9 +31,9 @@ export class WalletView extends Component<WalletViewProps, WalletViewState> {
   private getWalletAddresses = () => {
     var self = this;
     axios.get<WalletAddressResponse>(RestUrl + "wallet/defaultaddress", RequestConfig).then(function (response) {
-      self.setState( { walletAddress: response.data.result.address });
+      self.setState( { walletAddress: response.data.address });
     }).catch(function (error) {
-        console.log("Execute dynamic-cli JSON RCP [Get] Error: " + error);
+      console.log("Execute dynamic-cli JSON RCP [Get] Error: " + error);
     });
   };
 
