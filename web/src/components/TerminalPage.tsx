@@ -68,9 +68,9 @@ export class TerminalPage extends Component<TerminalProps, TerminalState> {
             id: "123" // TODO: create unique id
         };
         await axios.post<object>(RestUrl + "blockchain/jsonrpc", command, RequestConfig).then(function (response) {
-            console.log(JSON.stringify(response.data, null, 2));
+          console.log(JSON.stringify(response.data, null, 2));
         }).catch(function (error) {
-            console.log("Execute dynamic-cli JSON RCP [Put] Error: " + error);
+          console.log("Execute dynamic-cli JSON RCP [Put] Error: " + error);
         });
     }
   }

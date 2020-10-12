@@ -8,6 +8,9 @@ import { SecureFileIcon } from "../ui/Images";
 import { H3, Text } from "../ui/Text";
 import { FilePathInfo } from "../../shared/FilePathInfo";
 import { WalletRestoreFilePassword } from "./RestoreFilePassword";
+import { RequestConfig, RestUrl } from "../../api/Config";
+import { ImportMnemonicRequest } from "../../shared/Mnemonic";
+import axios from 'axios';
 
 export interface WalletFileRestoreProps {
   onComplete: () => void;
@@ -44,16 +47,40 @@ export class WalletFileRestore extends Component<
   private loadSecureFileData = (file: FilePathInfo, reader?: FileReader) => {
     if (reader) {
       if (reader.result) {
-        this.setState({ fileContents: reader.result, error: undefined, stateError: undefined });
+        this.setState({
+          fileContents: reader.result,
+          error: undefined,
+          stateError: undefined
+        });
       }
     }
   };
 
-  private onMnemonic = (wordlist: string) => {
-    // check mnemonic
-    // call web service
-    // complete if valid
-    this.setState({ mnemonic: wordlist });
+  private onMnemonic = async (wordlist: string) => {
+    const wordCount = wordlist.split(" ").length;
+    if (
+      wordCount === 12 ||
+      wordCount === 13 ||
+      wordCount === 24 ||
+      wordCount === 25
+    ) {
+      var request: ImportMnemonicRequest = {
+        mnemonic: wordlist
+      }
+      await axios.post<ImportMnemonicRequest>(RestUrl + "wallet/mnemonic", request, RequestConfig).then(function (response) {
+        console.log(JSON.stringify(response.data, null, 2));
+      }).catch(function (error) {
+        console.log("Execute wallet/mnemonic [Post] Error: " + error);
+      });
+      this.setState({ mnemonic: wordlist });
+      this.props.onComplete();
+    } else {
+      var err: DropzoneError = {
+        title: "Incorrect Word Count",
+        message: "Count needs to be 12, 13, 24 or 25 words"
+      };
+      this.setState({ error: err });
+    }
   };
 
   private filesSelectedHandler = (files: FilePathInfo[]) => {
@@ -149,6 +176,7 @@ export class WalletFileRestore extends Component<
           <WalletRestoreFilePassword
             cancelPassword={() => this.setState({ fileContents: undefined })}
             onMnemonic={(wordlist) => this.onMnemonic(wordlist)}
+            fileContents={this.state.fileContents}
           />
         )}
       </>
