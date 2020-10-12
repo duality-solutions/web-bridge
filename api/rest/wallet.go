@@ -333,4 +333,37 @@ func (w *WebBridgeRunner) defaultaddress(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"result": addResp})
 }
 
+//
+// @Description Returns a list of transactions received or sent from this wallet
+// @Accept  json
+// @Produce  json
+// @Success 200 {object} []models.TransactionsResponse "ok"
+// @Failure 400 {object} string "Bad request"
+// @Failure 500 {object} string "Internal error"
+// @Router /api/v1/wallet/transactions [get]
+func (w *WebBridgeRunner) gettransactions(c *gin.Context) {
+	cmd := `dynamic-cli listtransactions`
+	reqCnd, _ := dynamic.NewRequest(cmd)
+	response, _ := <-w.dynamicd.ExecCmdRequest(reqCnd)
+	if strings.Contains(response, "Error:") {
+		result := models.RPCError{}
+		err := json.Unmarshal([]byte(response), &result)
+		if err != nil {
+			strErrMsg := fmt.Sprintf("Response JSON unmarshal error %v", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": strErrMsg})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error})
+		return
+	}
+	var transactions []models.TransactionsResponse
+	err := json.Unmarshal([]byte(response), &transactions)
+	if err != nil {
+		strErrMsg := fmt.Sprintf("Results JSON unmarshal error %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": strErrMsg})
+		return
+	}
+	c.JSON(http.StatusOK, transactions)
+}
+
 // getwalletinfo also add if locked or not.

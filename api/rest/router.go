@@ -136,6 +136,7 @@ func setupWalletRoutes(currentVersion *gin.RouterGroup) {
 	wallet.POST("/links/message", runner.sendlinkmessage)
 	wallet.GET("/links/message", runner.getlinkmessages)
 	wallet.GET("/defaultaddress", runner.defaultaddress)
+	wallet.GET("/transactions", runner.gettransactions)
 }
 
 func setupBridgesRoutes(currentVersion *gin.RouterGroup) {
