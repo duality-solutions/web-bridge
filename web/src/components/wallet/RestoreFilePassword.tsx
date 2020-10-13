@@ -17,6 +17,7 @@ export interface WalletRestoreFilePasswordProps {
 export interface WalletRestoreFilePasswordState {
   passwordText?: string;
   error?: string;
+  mnemonic?: string;
 }
 
 export class WalletRestoreFilePassword extends Component<
@@ -41,11 +42,12 @@ export class WalletRestoreFilePassword extends Component<
       const { decrypt } = getAesEncryptor(mnemonicFilePassphrase);
       try {
         const mnemonic = decrypt(this.props.fileContents.toString());
+        this.setState( { mnemonic: mnemonic } );
         this.props.onMnemonic(mnemonic);
       }
       catch(e) {
         console.log('Error:', e);
-        this.setState( {error: "Incorrect password" } );
+        this.setState( { error: "Incorrect password" } );
       }
     }
   }
