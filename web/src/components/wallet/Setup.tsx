@@ -9,6 +9,7 @@ import { MnemonicWarning } from "./MnemonicWarning";
 import { WalletRestore } from "./Restore";
 import { WalletFileRestore } from "./FileRestore";
 import { WalletMnemonicRestore } from "./MnemonicRestore";
+import { WalletPassword } from "./WalletPassword";
 
 enum SetupState {
   Init = 1,
@@ -17,7 +18,7 @@ enum SetupState {
   Restore,
   RestoreWithMnemonic,
   RestoreWithSecureFile,
-  Right
+  CreatePassword
 }
 
 export interface WalletSetupProps {
@@ -101,6 +102,15 @@ export class WalletSetup extends Component<WalletSetupProps, WalletSetupState> {
         {this.state && this.state.setupState === SetupState.NewWarned && (
           <MnemonicBackup
             onCancel={() => this.setState({ setupState: SetupState.Init })}
+            onComplete={() =>
+              this.setState({ setupState: SetupState.CreatePassword })
+            }
+          />
+        )}
+        {this.state && this.state.setupState === SetupState.CreatePassword && (
+          <WalletPassword
+            onComplete={() => this.props.onComplete()}
+            uiType={"CREATE"}
           />
         )}
         {this.state && this.state.setupState === SetupState.Restore && (
