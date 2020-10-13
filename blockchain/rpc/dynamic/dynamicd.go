@@ -187,6 +187,7 @@ func loadDynamicd(_os, archiveExt string) (*Dynamicd, error) {
 		NoTLS:       true,
 	}
 	util.Info.Println("dynamicd starting...")
+	time.Sleep(time.Second * 5)
 	dynamicd := newDynamicd(ctx, cancel, dataDirPath, rpcUser, rpcPassword, defaultPort, defaultRPCPort, defaultBind, defaultBind, cmd, configRPC)
 	if errStart := dynamicd.Cmd.Start(); errStart != nil {
 		return nil, fmt.Errorf("loadDynamicd failed at dynamicd.Cmd.Start(). %v", errStart)
