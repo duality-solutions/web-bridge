@@ -111,6 +111,7 @@ export class WalletSetup extends Component<WalletSetupProps, WalletSetupState> {
           <WalletPassword
             onComplete={() => this.props.onComplete()}
             uiType={"CREATE"}
+            onCancel={() => this.setState({ setupState: SetupState.Init })}
           />
         )}
         {this.state && this.state.setupState === SetupState.Restore && (

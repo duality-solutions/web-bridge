@@ -2,7 +2,7 @@ import React, { ChangeEvent, Component } from "react";
 import { Container } from "../ui/Container";
 import { Card } from "../ui/Card";
 import { Box } from "../ui/Box";
-import { ArrowButton } from "../ui/Button";
+import { ArrowButton, BackButton } from "../ui/Button";
 import { Input } from "../ui/Input";
 import { LoadingSpinner } from "../ui/LoadingSpinner";
 import { Text } from "../ui/Text";
@@ -18,8 +18,8 @@ export interface ValidationResult<T> {
 
 export interface WalletPasswordProps {
   onComplete: () => void;
+  onCancel: () => void;
   password?: string;
-
   uiType: PasswordUiType;
 }
 
@@ -81,6 +81,10 @@ export class WalletPassword extends Component<
               align="start"
               margin="0 auto 0 auto"
             >
+              <BackButton
+                onClick={() => this.props.onCancel()}
+                margin="130px 0 0 -100px"
+              />
               <Card
                 width="100%"
                 align="center"
