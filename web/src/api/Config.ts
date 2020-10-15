@@ -7,7 +7,8 @@ export interface ConfigurationResponse {
     WebServer: WebServerConfig;
 };
 
-export const RestUrl: string = "http://localhost:35350/api/v1/";
+// TODO: read settings file to get rest web server URL and port instead of using RestBaseUrl constant variable 
+export const RestBaseUrl: string = "http://localhost:35350/api/v1";
 
 export const RequestConfig: AxiosRequestConfig = {
     headers: {

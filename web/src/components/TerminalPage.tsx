@@ -2,7 +2,7 @@ import React, { Component } from "react";
 import { Grid } from "semantic-ui-react";
 import Terminal from "terminal-in-react";
 import { JsonRpc } from "../api/Terminal";
-import { RequestConfig, RestUrl } from "../api/Config";
+import { RequestConfig } from "../api/Config";
 import axios from 'axios';
 
 export interface TerminalProps {
@@ -67,7 +67,7 @@ export class TerminalPage extends Component<TerminalProps, TerminalState> {
             params: paramsObj,
             id: "123" // TODO: create unique id
         };
-        await axios.post<object>(RestUrl + "blockchain/jsonrpc", command, RequestConfig).then(function (response) {
+        await axios.post<object>("/blockchain/jsonrpc", command, RequestConfig).then(function (response) {
           console.log(JSON.stringify(response.data, null, 2));
         }).catch(function (error) {
           console.log("Execute dynamic-cli JSON RCP [Put] Error: " + error);

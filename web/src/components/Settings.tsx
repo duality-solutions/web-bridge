@@ -2,7 +2,7 @@ import React, { Component } from "react";
 import { Button, Form, Header } from "semantic-ui-react";
 import { ConfigurationWebResponse, RestartResponse, WebServerConfig, WebServerRestartRequest } from "../api/WebServerConfig";
 import { ConfigurationIceResponse, IceServerConfig } from "../api/IceServerConfig";
-import { ConfigurationResponse, RequestConfig, RestUrl }from "../api/Config";
+import { ConfigurationResponse, RequestConfig }from "../api/Config";
 import axios from 'axios';
 
 export interface SettingsProps {
@@ -24,7 +24,7 @@ export interface SettingsState {
   AllowCIDR?: string;
 }
 
-// TODO: read settings file to get rest web server URL and port instead of using RestUrl constant variable 
+
 export class Settings extends Component<SettingsProps, SettingsState> {
   constructor(props: SettingsProps) {
     super(props);
@@ -61,7 +61,7 @@ export class Settings extends Component<SettingsProps, SettingsState> {
   
   private getConfigSettings = async () => {
     var self = this;
-    await axios.get<ConfigurationResponse>(RestUrl + "config", RequestConfig).then(function (response) {
+    await axios.get<ConfigurationResponse>("/config", RequestConfig).then(function (response) {
       self.setState({ config: response.data });
     }).catch(function (error) {
       console.log("Get Configuration Settings [Get] Error: " + error);
@@ -75,7 +75,7 @@ export class Settings extends Component<SettingsProps, SettingsState> {
       Credential: this.state.Credential ? this.state.Credential : this.state.config.IceServers[0].Credential,
     };
     let IceServers: IceServerConfig[] = [ IceServer ]
-    await axios.post<ConfigurationIceResponse>(RestUrl + "config/ice", IceServers, RequestConfig).then(function (response) {
+    await axios.post<ConfigurationIceResponse>("/config/ice", IceServers, RequestConfig).then(function (response) {
       console.log(response.data);
     }).catch(function (error) {
       console.log("Update ICE Server Config [Post] Error: " + error);
@@ -88,7 +88,7 @@ export class Settings extends Component<SettingsProps, SettingsState> {
       ListenPort: this.state.ListenPort ? this.state.ListenPort : this.state.config.WebServer.ListenPort,
       AllowCIDR: this.state.AllowCIDR ? this.state.AllowCIDR : this.state.config.WebServer.AllowCIDR,
     };
-    await axios.post<ConfigurationWebResponse>(RestUrl + "config/web", webserver, RequestConfig).then(function (response) {
+    await axios.post<ConfigurationWebResponse>("/config/web", webserver, RequestConfig).then(function (response) {
       console.log(response.data);
     }).catch(function (error) {
       console.log("Update Web Server Config [Post] Error: " + error);
@@ -99,7 +99,7 @@ export class Settings extends Component<SettingsProps, SettingsState> {
     let postData: WebServerRestartRequest = {
       RestartEpoch: 0,
     };
-    await axios.put<RestartResponse>(RestUrl + "config/web/restart", postData, RequestConfig).then(function (response) {
+    await axios.put<RestartResponse>("/config/web/restart", postData, RequestConfig).then(function (response) {
       console.log(response.data);
     }).catch(function (error) {
       console.log("Web Server Restart [Put] Error: " + error);

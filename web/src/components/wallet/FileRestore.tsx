@@ -9,7 +9,7 @@ import { LoadingSpinner } from "../ui/LoadingSpinner";
 import { H3, Text } from "../ui/Text";
 import { FilePathInfo } from "../../shared/FilePathInfo";
 import { WalletRestoreFilePassword } from "./RestoreFilePassword";
-import { RequestConfig, RestUrl } from "../../api/Config";
+import { RequestConfig } from "../../api/Config";
 import { ImportMnemonicRequest } from "../../shared/Mnemonic";
 import axios from "axios";
 
@@ -75,7 +75,7 @@ export class WalletFileRestore extends Component<
       var request: ImportMnemonicRequest = {
         mnemonic: wordlist
       }
-      axios.post<ImportMnemonicRequest>(RestUrl + "wallet/mnemonic", request, RequestConfig).then(function (response) {
+      axios.post<ImportMnemonicRequest>("/wallet/mnemonic", request, RequestConfig).then(function (response) {
         console.log(JSON.stringify(response.data, null, 2));
         self.setState( { loading: true, mnemonic: wordlist }, self.waitForRescan());
       }).catch(function (error) {
@@ -105,7 +105,7 @@ export class WalletFileRestore extends Component<
       setTimeout(() => 
       {
         console.log('waitForRescan loop after sleep');
-        axios.get(RestUrl + "wallet/defaultaddress", RequestConfig)
+        axios.get("/wallet/defaultaddress", RequestConfig)
           .then(function (response) {
             console.log('waitForRescan response', response);
             self.setState( { loading: false } );

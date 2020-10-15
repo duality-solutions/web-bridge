@@ -6,7 +6,7 @@ import { Container } from "../ui/Container";
 import { Divider } from "../ui/Divider";
 import { PasswordEntry, SafeImage, SecureFileIcon } from "../ui/Images";
 import { H3, Text } from "../ui/Text";
-import { RequestConfig, RestUrl } from "../../api/Config";
+import { RequestConfig } from "../../api/Config";
 import axios from "axios";
 
 export interface MnemonicBackupProps {
@@ -52,7 +52,7 @@ export class MnemonicBackup extends Component<
   private getMnemonic = async () => {
     var self = this;
     await axios
-      .get(RestUrl + "wallet/mnemonic", RequestConfig)
+      .get("/wallet/mnemonic", RequestConfig)
       .then(function (response) {
         self.setState({ mnemonic: response.data.mnemonic });
       })

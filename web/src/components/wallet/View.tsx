@@ -1,5 +1,5 @@
 import React, { Component } from "react";
-import { RequestConfig, RestUrl } from "../../api/Config";
+import { RequestConfig } from "../../api/Config";
 import { WalletAddressResponse } from "../../api/Wallet";
 import { Box } from "../ui/Box";
 import { Card } from "../ui/Card";
@@ -30,7 +30,7 @@ export class WalletView extends Component<WalletViewProps, WalletViewState> {
 
   private getWalletAddresses = () => {
     var self = this;
-    axios.get<WalletAddressResponse>(RestUrl + "wallet/defaultaddress", RequestConfig).then(function (response) {
+    axios.get<WalletAddressResponse>("/wallet/defaultaddress", RequestConfig).then(function (response) {
       self.setState( { walletAddress: response.data.address });
     }).catch(function (error) {
       console.log("Execute dynamic-cli JSON RCP [Get] Error: " + error);

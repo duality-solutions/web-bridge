@@ -3,6 +3,12 @@ import ReactDOM from 'react-dom';
 import './index.css';
 import App from './App';
 import * as serviceWorker from './serviceWorker';
+import 'semantic-ui-css/semantic.min.css'
+import { RestBaseUrl } from './api/Config';
+import axios from 'axios';
+
+// set default baseURL
+axios.defaults.baseURL = RestBaseUrl;
 
 ReactDOM.render(
   <React.StrictMode>
