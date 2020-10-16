@@ -6,8 +6,7 @@ import { Container } from "../ui/Container";
 import { Divider } from "../ui/Divider";
 import { PasswordEntry, SafeImage, SecureFileIcon } from "../ui/Images";
 import { H3, Text } from "../ui/Text";
-import { RequestConfig } from "../../api/Config";
-import axios from "axios";
+import { GetMnemonic } from "../../api/Wallet";
 
 export interface MnemonicBackupProps {
   onCancel: () => void;
@@ -27,7 +26,6 @@ export class MnemonicBackup extends Component<
     // bind events
     this.componentDidMount = this.componentDidMount.bind(this);
     this.componentWillUnmount = this.componentWillUnmount.bind(this);
-    this.handleSubmit = this.handleSubmit.bind(this);
     this.handleFileCreation = this.handleFileCreation.bind(this);
     this.getMnemonic = this.getMnemonic.bind(this);
   }
@@ -38,26 +36,14 @@ export class MnemonicBackup extends Component<
 
   componentWillUnmount(): void {}
 
-  handleSubmit = (e: FormEvent) => {
-    //if we don't prevent form submission, causes a browser reload
-    this.setState({ mnemonic: undefined });
-    e.preventDefault();
-  };
-
   handleFileCreation = (e: FormEvent) => {
     //if we don't prevent form submission, causes a browser reload
     e.preventDefault();
   };
 
   private getMnemonic = async () => {
-    var self = this;
-    await axios
-      .get("/wallet/mnemonic", RequestConfig)
-      .then(function (response) {
-        self.setState({ mnemonic: response.data.mnemonic });
-      })
-      .catch(function (error) {
-        console.log("Execute wallet/mnemonic [Get] Error: " + error);
+      GetMnemonic().then((data) => {
+        this.setState({ mnemonic: data.mnemonic });
       });
   };
 

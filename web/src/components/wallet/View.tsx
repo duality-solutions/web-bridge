@@ -1,12 +1,10 @@
 import React, { Component } from "react";
-import { RequestConfig } from "../../api/Config";
-import { WalletAddressResponse } from "../../api/Wallet";
 import { Box } from "../ui/Box";
 import { Card } from "../ui/Card";
 import { Container } from "../ui/Container";
 import { QRCode } from "../ui/QRCode";
 import { H1, H3 } from "../ui/Text";
-import axios from 'axios';
+import { GetWalletAddresses } from "../../api/Wallet";
 
 export interface WalletViewProps {}
 
@@ -29,11 +27,8 @@ export class WalletView extends Component<WalletViewProps, WalletViewState> {
   componentWillUnmount(): void {}
 
   private getWalletAddresses = () => {
-    var self = this;
-    axios.get<WalletAddressResponse>("/wallet/defaultaddress", RequestConfig).then(function (response) {
-      self.setState( { walletAddress: response.data.address });
-    }).catch(function (error) {
-      console.log("Execute dynamic-cli JSON RCP [Get] Error: " + error);
+    GetWalletAddresses().then((data) => {
+      this.setState( { walletAddress: data.address });
     });
   };
 

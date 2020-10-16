@@ -1,9 +1,7 @@
 import React, { Component } from "react";
 import { Grid } from "semantic-ui-react";
 import Terminal from "terminal-in-react";
-import { JsonRpc } from "../api/Terminal";
-import { RequestConfig } from "../api/Config";
-import axios from 'axios';
+import { ExecCommand } from "../api/Terminal";
 
 export interface TerminalProps {
   mode: number;
@@ -20,7 +18,6 @@ export class TerminalPage extends Component<TerminalProps, TerminalState> {
 
     // bind events
     this.componentDidMount = this.componentDidMount.bind(this);
-    this.execCommand = this.execCommand.bind(this);
   }
 
   componentDidMount(): void {
@@ -28,52 +25,6 @@ export class TerminalPage extends Component<TerminalProps, TerminalState> {
   }
 
   componentWillUnmount(): void {}
-
-  private isBoolean(value: string): boolean {
-    return ((value != null) && (value !== '') && (value.toLocaleLowerCase() === 'false' || value.toLocaleLowerCase() === 'true'));
-  }
-
-  private isNumber(value: string): boolean {
-    return ((value != null) && (value !== '') && !isNaN(Number(value.toString())));
-  }
-
-  private stringToParamsArray(s: string[]): (string | number | boolean)[] {
-    var objArray: (string | number | boolean)[] = [];
-    s.forEach(element => {
-        if (this.isNumber(element)){
-            objArray.push(Number(element));
-        } else if (this.isBoolean(element)) {
-            if (element.toLocaleLowerCase() === 'true') {
-                objArray.push(true);
-            } else {
-                objArray.push(false);
-            }
-        } else {
-            objArray.push(element);
-        }
-    });
-    return objArray;
-  }
-
-  private execCommand = async (cmd: string) => {
-    var parsed: string[] = cmd.split(',');
-    if (parsed.length > 0) {
-        let method: string = parsed[0];
-        let params: string[] = parsed.slice(1, parsed.length);
-        let paramsObj: (string | number | boolean)[] = this.stringToParamsArray(params);
-        let command: JsonRpc = {
-            jsonrpc: "2.0",
-            method: method,
-            params: paramsObj,
-            id: "123" // TODO: create unique id
-        };
-        await axios.post<object>("/blockchain/jsonrpc", command, RequestConfig).then(function (response) {
-          console.log(JSON.stringify(response.data, null, 2));
-        }).catch(function (error) {
-          console.log("Execute dynamic-cli JSON RCP [Put] Error: " + error);
-        });
-    }
-  }
 
   render() {
     return (
@@ -90,7 +41,7 @@ export class TerminalPage extends Component<TerminalProps, TerminalState> {
             hideTopBar
             commandPassThrough={
                 (cmd) => {
-                    this.execCommand(String(cmd));
+                  ExecCommand(String(cmd));
                 }
             }
           />
