@@ -11,6 +11,16 @@ export interface MnemonicResponse {
     mnemonicpassphrase: string;
 };
 
+export interface ImportMnemonicRequest {
+    mnemonic: string;
+    language?: string;
+    passphrase?: string;
+};
+
+export interface ImportMnemonicResponse {
+    done: string;
+}
+
 export const GetMnemonic = async (): Promise<MnemonicResponse> => {
     return await axios.get<MnemonicResponse>("/wallet/mnemonic", RequestConfig).then(function (response) {
         return response.data;
@@ -33,6 +43,19 @@ export const GetWalletAddresses = async (): Promise<WalletAddressResponse> => {
         var errMessage = "GetWalletAddresses execute [Get] /wallet/defaultaddress error: " + error;
         var errResponse: WalletAddressResponse = {
             address: errMessage
+        }
+        return errResponse;
+    });
+}
+
+export const RestoreMnemonic = async (mnemonic: ImportMnemonicRequest): Promise<ImportMnemonicResponse> => {
+    return await axios.post<ImportMnemonicResponse>("/wallet/mnemonic", mnemonic, RequestConfig).then(function (response) {
+        return response.data;
+    }).catch(function (error) {
+        var errMessage = "RestoreMnemonic execute [Post] /wallet/mnemonic error: " + error;
+        console.log(errMessage);
+        var errResponse: ImportMnemonicResponse = {
+            done: "failed"
         }
         return errResponse;
     });
