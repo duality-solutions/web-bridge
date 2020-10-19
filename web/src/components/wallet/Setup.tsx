@@ -34,7 +34,7 @@ export class WalletSetup extends Component<WalletSetupProps, WalletSetupState> {
     super(props);
     // bind events
     this.componentDidMount = this.componentDidMount.bind(this);
-    this.componentWillUnmount = this.componentWillUnmount.bind(this);
+    this.componentDidUnmount = this.componentDidUnmount.bind(this);
     this.onNewWallet = this.onNewWallet.bind(this);
   }
 
@@ -44,7 +44,7 @@ export class WalletSetup extends Component<WalletSetupProps, WalletSetupState> {
     });
   }
 
-  componentWillUnmount(): void {}
+  componentDidUnmount(): void {}
 
   private onNewWallet(): void {
     this.props.onComplete();

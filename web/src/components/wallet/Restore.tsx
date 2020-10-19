@@ -25,14 +25,14 @@ export class WalletRestore extends Component<
     super(props);
     // bind events
     this.componentDidMount = this.componentDidMount.bind(this);
-    this.componentWillUnmount = this.componentWillUnmount.bind(this);
+    this.componentDidUnmount = this.componentDidUnmount.bind(this);
   }
 
   componentDidMount(): void {
     this.setState({ useMnemonic: undefined });
   }
 
-  componentWillUnmount(): void {}
+  componentDidUnmount(): void {}
 
   render() {
     return (

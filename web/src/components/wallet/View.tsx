@@ -17,14 +17,14 @@ export class WalletView extends Component<WalletViewProps, WalletViewState> {
     super(props);
     // bind events
     this.componentDidMount = this.componentDidMount.bind(this);
-    this.componentWillUnmount = this.componentWillUnmount.bind(this);
+    this.componentDidUnmount = this.componentDidUnmount.bind(this);
     this.getWalletAddresses = this.getWalletAddresses.bind(this);
     this.getWalletAddresses();
   }
 
   componentDidMount(): void {}
 
-  componentWillUnmount(): void {}
+  componentDidUnmount(): void {}
 
   private getWalletAddresses = () => {
     GetWalletAddresses().then((data) => {
