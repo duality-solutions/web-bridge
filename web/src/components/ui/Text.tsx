@@ -7,6 +7,7 @@ interface H1Props {
   colored?: boolean;
   fontWeight?: string;
   theme?: { blue: string };
+  minwidth?: string;
 }
 
 interface ParaProps {
@@ -45,7 +46,7 @@ const StyledHeader3 = styled("h3")<H1Props>`
     else if (props.color) return props.color;
     else return "black";
   }};
-  min-width: 500px;
+  min-width: ${(props) => props.minwidth || "500px"};
   word-wrap: break-word;
 `;
 

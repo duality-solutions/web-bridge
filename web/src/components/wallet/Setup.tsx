@@ -66,7 +66,7 @@ export class WalletSetup extends Component<WalletSetupProps, WalletSetupState> {
                   onClick={() => this.setState({ setupState: SetupState.New })}
                 >
                   <ImportIcon height="80px" width="80px" />
-                  <H3 align="center" color="white">
+                  <H3 align="start" color="white" minwidth="50px">
                     Create Wallet
                   </H3>
                   <Text color="white" align="center">
@@ -79,7 +79,7 @@ export class WalletSetup extends Component<WalletSetupProps, WalletSetupState> {
                   }
                 >
                   <RestoreIcon height="80px" width="80px" />
-                  <H3 align="center" color="white">
+                  <H3 align="start" color="white" minwidth="50px">
                     Restore Wallet
                   </H3>
                   <Text color="white" align="center">
