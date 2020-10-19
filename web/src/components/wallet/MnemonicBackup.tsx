@@ -88,26 +88,26 @@ export class MnemonicBackup extends Component<
                     </Card>
                     <Box display="flex" direction="row">
                         <Box width="50%" margin="0 1em 0 0">
-                        <Text align="center">
-                            Write or print this phrase and
-                        </Text>
-                        <Text margin="0" align="center">
-                            keep it somewhere safe.
-                        </Text>
-                        <Box display="flex" width="100%" margin="2em 0 0 0">
-                            <PasswordEntry width="80px" height="80px" />
-                            <span
-                            style={{
-                                color: "#2e77d0",
-                                lineHeight: "1.2em",
-                                fontSize: "300%"
-                            }}
-                            >
-                            &#8594;
-                            </span>
-                            <SafeImage width="80px" height="80px" />
-                        </Box>
-                        </Box>
+                          <Text align="center">
+                              Write or print this phrase and
+                          </Text>
+                          <Text margin="0" align="center">
+                              keep it somewhere safe.
+                          </Text>
+                          <Box display="flex" width="100%" margin="2em 0 0 0">
+                              <PasswordEntry width="80px" height="80px" />
+                              <span
+                              style={{
+                                  color: "#2e77d0",
+                                  lineHeight: "1.2em",
+                                  fontSize: "300%"
+                              }}
+                              >
+                              &#8594;
+                              </span>
+                              <SafeImage width="80px" height="80px" />
+                          </Box>
+                          </Box>
                         <Box
                         width="14px"
                         direction="column"
@@ -118,16 +118,16 @@ export class MnemonicBackup extends Component<
                         <Divider />
                         </Box>
                         <Box width="30%" margin="0 0 0 3em">
-                        <Box display="flex" width="100%" margin="2em 0 0 2em">
-                            <SecureFileIcon
-                            width="80px"
-                            height="80px"
-                            style={{ color: "blue" }}
-                            />
-                        </Box>
-                        <LightButton onClick={this.handleFileCreation}>
-                            Create a secure file
-                        </LightButton>
+                          <LightButton onClick={this.handleFileCreation}>
+                              Create a secure file
+                          </LightButton>
+                          <Box display="flex" width="100%" margin="2em 0 0 2em">
+                              <SecureFileIcon
+                              width="80px"
+                              height="80px"
+                              style={{ color: "blue" }}
+                              />
+                          </Box>
                         </Box>
                     </Box>
                     </Card>

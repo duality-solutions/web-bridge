@@ -3,7 +3,7 @@ import { Container } from "../ui/Container";
 import { SCard } from "../ui/Card";
 import { Box } from "../ui/Box";
 import { H1, H3, Text } from "../ui/Text";
-import { ImportIcon, RestoreIcon } from "../ui/Images";
+import { ImportIconWhite, RestoreIconWhite } from "../ui/Images";
 import { MnemonicBackup } from "./MnemonicBackup";
 import { MnemonicWarning } from "./MnemonicWarning";
 import { WalletRestore } from "./Restore";
@@ -65,7 +65,7 @@ export class WalletSetup extends Component<WalletSetupProps, WalletSetupState> {
                 <SCard
                   onClick={() => this.setState({ setupState: SetupState.New })}
                 >
-                  <ImportIcon height="80px" width="80px" />
+                  <ImportIconWhite height="80px" width="80px" />
                   <H3 align="start" color="white" minwidth="50px">
                     Create Wallet
                   </H3>
@@ -78,7 +78,7 @@ export class WalletSetup extends Component<WalletSetupProps, WalletSetupState> {
                     this.setState({ setupState: SetupState.Restore })
                   }
                 >
-                  <RestoreIcon height="80px" width="80px" />
+                  <RestoreIconWhite height="80px" width="80px" />
                   <H3 align="start" color="white" minwidth="50px">
                     Restore Wallet
                   </H3>

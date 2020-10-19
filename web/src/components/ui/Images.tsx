@@ -1,13 +1,15 @@
 import * as React from "react";
 import styled from "styled-components";
 import backarrow from "../../assets/backarrow.svg";
-import importwallet from "../../assets/import.svg";
+import importWhite from "../../assets/importWhite.svg";
 import logo from "../../assets/logo.svg";
 import passphrase from "../../assets/passphrase.svg";
+import passphraseWhite from "../../assets/passphraseWhite.svg";
 import passwordentry from "../../assets/passwordentry.svg";
-import restoreWallet from "../../assets/restore.svg";
+import restoreWallet from "../../assets/restoreWhite.svg";
 import safe from "../../assets/safe.svg";
 import securefile from "../../assets/securefile.svg";
+import securefileWhite from "../../assets/securefileWhite.svg";
 
 interface ImageProps {
   src?: string;
@@ -37,7 +39,7 @@ interface Styleable {
   style?: Record<string, any>;
 }
 
-const ImportIcon: React.FunctionComponent<ImageProps & Styleable> = ({
+const ImportIconWhite: React.FunctionComponent<ImageProps & Styleable> = ({
   width,
   height,
   margin,
@@ -47,14 +49,14 @@ const ImportIcon: React.FunctionComponent<ImageProps & Styleable> = ({
   <SvgIcon
     onClick={onClick}
     style={{ cursor: "pointer", ...style }}
-    src={importwallet}
+    src={importWhite}
     width={width || "50px"}
     height={height || "30px"}
     margin={margin || "0 10px"}
   />
 );
 
-const RestoreIcon: React.FunctionComponent<ImageProps & Styleable> = ({
+const RestoreIconWhite: React.FunctionComponent<ImageProps & Styleable> = ({
   width,
   height,
   margin,
@@ -88,6 +90,23 @@ const PassphraseIcon: React.FunctionComponent<ImageProps & Styleable> = ({
   />
 );
 
+const PassphraseIconWhite: React.FunctionComponent<ImageProps & Styleable> = ({
+  width,
+  height,
+  margin,
+  onClick,
+  style
+}) => (
+  <SvgIcon
+    onClick={onClick}
+    style={{ cursor: "pointer", ...style }}
+    src={passphraseWhite}
+    width={width || "50px"}
+    height={height || "30px"}
+    margin={margin || "0 10px"}
+  />
+);
+
 const SecureFileIcon: React.FunctionComponent<ImageProps & Styleable> = ({
   width,
   height,
@@ -99,6 +118,23 @@ const SecureFileIcon: React.FunctionComponent<ImageProps & Styleable> = ({
     onClick={onClick}
     style={{ cursor: "pointer", ...style }}
     src={securefile}
+    width={width || "50px"}
+    height={height || "30px"}
+    margin={margin || "0 10px"}
+  />
+);
+
+const SecureFileIconWhite: React.FunctionComponent<ImageProps & Styleable> = ({
+  width,
+  height,
+  margin,
+  onClick,
+  style
+}) => (
+  <SvgIcon
+    onClick={onClick}
+    style={{ cursor: "pointer", ...style }}
+    src={securefileWhite}
     width={width || "50px"}
     height={height || "30px"}
     margin={margin || "0 10px"}
@@ -159,11 +195,13 @@ const BackArrow: React.FunctionComponent<ImageProps & Styleable> = ({
 export {
   SvgIcon as AppLogo,
   BackArrow,
-  ImportIcon,
+  ImportIconWhite,
   PassphraseIcon,
+  PassphraseIconWhite,
   PasswordEntry,
   PlainAppLogo,
-  RestoreIcon,
+  RestoreIconWhite,
   SafeImage,
-  SecureFileIcon
+  SecureFileIcon,
+  SecureFileIconWhite
 };

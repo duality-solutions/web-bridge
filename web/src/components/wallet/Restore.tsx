@@ -3,7 +3,7 @@ import { Box } from "../ui/Box";
 import { BackButton } from "../ui/Button";
 import { SCard } from "../ui/Card";
 import { Container } from "../ui/Container";
-import { PassphraseIcon, SecureFileIcon } from "../ui/Images";
+import { PassphraseIconWhite, SecureFileIconWhite } from "../ui/Images";
 import { Text } from "../ui/Text";
 
 export interface WalletRestoreProps {
@@ -50,7 +50,7 @@ export class WalletRestore extends Component<
                 height="140px"
                 width="220px"
               >
-                <PassphraseIcon
+                <PassphraseIconWhite
                   height="60px"
                   width="60px"
                   style={{ margin: "0 0 1em 0" }}
@@ -70,7 +70,7 @@ export class WalletRestore extends Component<
                 height="140px"
                 width="220px"
               >
-                <SecureFileIcon
+                <SecureFileIconWhite
                   height="60px"
                   width="60px"
                   style={{ margin: " 0 0 1em 0" }}
