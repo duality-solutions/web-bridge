@@ -10,7 +10,6 @@ import { H3, Text } from "../ui/Text";
 import { FilePathInfo } from "../../shared/FilePathInfo";
 import { WalletRestoreFilePassword } from "./RestoreFilePassword";
 import { RequestConfig } from "../../api/Config";
-import { ImportMnemonicRequest } from "../../shared/Mnemonic";
 import axios from "axios";
 
 export interface WalletFileRestoreProps {
@@ -41,7 +40,7 @@ export class WalletFileRestore extends Component<
     this.waitForRescan = this.waitForRescan.bind(this);
     this.state = {
       loading: false
-    }
+    };
   }
 
   componentDidMount(): void {
@@ -63,8 +62,7 @@ export class WalletFileRestore extends Component<
   };
 
   private onMnemonic = async (wordlist: string) => {
-    var self = this;
-    console.log('onMnemonic');
+    console.log("onMnemonic");
     const wordCount = wordlist.split(" ").length;
     if (
       wordCount === 12 ||
@@ -72,15 +70,7 @@ export class WalletFileRestore extends Component<
       wordCount === 24 ||
       wordCount === 25
     ) {
-      var request: ImportMnemonicRequest = {
-        mnemonic: wordlist
-      }
-      axios.post<ImportMnemonicRequest>("/wallet/mnemonic", request, RequestConfig).then(function (response) {
-        console.log(JSON.stringify(response.data, null, 2));
-        self.setState( { loading: true, mnemonic: wordlist }, self.waitForRescan());
-      }).catch(function (error) {
-        console.log("onMnemonic execute wallet/mnemonic [Post] Error: " + error);
-      });
+      this.setState({ loading: true });
     } else {
       var err: DropzoneError = {
         title: "Incorrect Word Count",
@@ -91,29 +81,27 @@ export class WalletFileRestore extends Component<
     }
   };
 
-  // Returns a Promise that resolves after "ms" Milliseconds
-  private timer(ms: number) {
-    return new Promise(res => setTimeout(res, ms));
-  }
-
-  private waitForRescan(): | undefined {
+  private waitForRescan(): undefined {
     //TODO: Use redux-saga for these types of actions
-    console.log('waitForRescan');
+    console.log("waitForRescan");
     var self = this;
     while (this.state.loading) {
-      console.log('waitForRescan loop before sleep');
-      setTimeout(() => 
-      {
-        console.log('waitForRescan loop after sleep');
-        axios.get("/wallet/defaultaddress", RequestConfig)
+      console.log("waitForRescan loop before sleep");
+      setTimeout(() => {
+        console.log("waitForRescan loop after sleep");
+        axios
+          .get("/wallet/defaultaddress", RequestConfig)
           .then(function (response) {
-            console.log('waitForRescan response', response);
-            self.setState( { loading: false } );
+            console.log("waitForRescan response", response);
+            self.setState({ loading: false });
             self.props.onComplete();
-        })
-        .catch(function (error) {
-          console.log("waitForRescan execute wallet/defaultaddress [Get] Error: " + error);
-        });
+          })
+          .catch(function (error) {
+            console.log(
+              "waitForRescan execute wallet/defaultaddress [Get] Error: " +
+                error
+            );
+          });
       }, 5000);
     }
     return;
@@ -161,6 +149,7 @@ export class WalletFileRestore extends Component<
                   onClick={() => this.props.onCancel()}
                   margin="150px 0 0 -80px"
                 />
+
                 <Card
                   width="100%"
                   align="center"
@@ -168,18 +157,18 @@ export class WalletFileRestore extends Component<
                   padding="2em 4em 2em 2em"
                 >
                   <Box display="flex" direction="row" margin="0">
-                    <Box width="60px" margin="0">
-                      <SecureFileIcon width="60px" height="60px" />
-                    </Box>
+                    <SecureFileIcon width="60px" height="60px" />
                     <Box
                       direction="column"
                       width="500px"
                       align="center"
                       margin="0 auto 0 auto"
                     >
-                      <H3 margin="0 0 1em 0">
-                        Restore using Secure Restore File{" "}
-                      </H3>
+                      <Box width="60px" margin="0">
+                        <H3 margin="0 0 1em 0">
+                          Restore using Secure Restore File
+                        </H3>
+                      </Box>
                       <Dropzone
                         multiple={false}
                         accept={".psh.json"}
