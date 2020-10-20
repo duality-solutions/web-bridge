@@ -44,7 +44,7 @@ export class WalletSetup extends Component<WalletViewDispatchProps, WalletSetupS
     super(props);
     // bind events
     this.componentDidMount = this.componentDidMount.bind(this);
-    this.componentWillUnmount = this.componentWillUnmount.bind(this);
+    this.componentDidUnmount = this.componentDidUnmount.bind(this);
     this.onInitWallet = this.onInitWallet.bind(this);
     this.onRequestNewWallet = this.onRequestNewWallet.bind(this);
     this.onRequestRestoreWallet = this.onRequestRestoreWallet.bind(this);
