@@ -49,14 +49,27 @@ export const GetWalletAddresses = async (): Promise<WalletAddressResponse> => {
 }
 
 export const RestoreMnemonic = async (mnemonic: ImportMnemonicRequest): Promise<ImportMnemonicResponse> => {
-    return await axios.post<ImportMnemonicResponse>("/wallet/mnemonic", mnemonic, RequestConfig).then(function (response) {
-        return response.data;
-    }).catch(function (error) {
-        var errMessage = "RestoreMnemonic execute [Post] /wallet/mnemonic error: " + error;
-        console.log(errMessage);
-        var errResponse: ImportMnemonicResponse = {
-            done: "failed"
-        }
-        return errResponse;
-    });
+    const wordCount = mnemonic.mnemonic.split(" ").length;
+    if (
+      wordCount === 12 ||
+      wordCount === 13 ||
+      wordCount === 24 ||
+      wordCount === 25
+    ) {
+        return await axios.post<ImportMnemonicResponse>("/wallet/mnemonic", mnemonic, RequestConfig).then(function (response) {
+            return response.data;
+        }).catch(function (error) {
+            var errMessage = "RestoreMnemonic execute [Post] /wallet/mnemonic error: " + error;
+            console.log(errMessage);
+            var errResponse: ImportMnemonicResponse = {
+                done: "failed"
+            }
+            return errResponse;
+        });
+    } else {
+        var response: ImportMnemonicResponse = {
+            done: "Word count error"
+        };
+        return response;
+    }
 }
