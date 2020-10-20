@@ -129,7 +129,7 @@ export class WalletSetup extends Component<WalletViewDispatchProps, WalletSetupS
           <WalletPassword
             onComplete={() => this.props.onComplete()}
             uiType={"CREATE"}
-            onCancel={() => this.setState({ setupState: SetupState.Init })}
+            onCancel={() => this.setState({ setupState: SetupState.NewWarned })}
           />
         )}
         {this.state && this.state.setupState === SetupState.Restore && (
@@ -154,7 +154,7 @@ export class WalletSetup extends Component<WalletViewDispatchProps, WalletSetupS
           this.state.setupState === SetupState.RestoreWithSecureFile && (
             <WalletFileRestore
               onComplete={() => this.props.onComplete()}
-              onCancel={() => this.props.onCancel()}
+              onCancel={() => this.setState({ setupState: SetupState.Restore })}
               onRestoreMnemonic={(words) => this.props.walletImportMnemonic(words)}
             />
           )}
