@@ -10,6 +10,8 @@ import { WalletRestore } from "./Restore";
 import { WalletFileRestore } from "./FileRestore";
 import { WalletMnemonicRestore } from "./MnemonicRestore";
 import { WalletPassword } from "./WalletPassword";
+import { PickedDispatchProps } from "../../state/shared/PickedDispatchProps";
+import { ManageWalletActions } from "../../state/actions/manageWallet";
 
 enum SetupState {
   Init = 1,
@@ -18,36 +20,55 @@ enum SetupState {
   Restore,
   RestoreWithMnemonic,
   RestoreWithSecureFile,
-  CreatePassword
+  CreatePassword,
+  Waiting,
+  Complete,
 }
 
 export interface WalletSetupProps {
   onComplete: () => void;
+  onCancel: () => void;
+  complete: boolean;
 }
+
+export type WalletViewDispatch = PickedDispatchProps<typeof ManageWalletActions, "walletImportMnemonic" >;
+
+type WalletViewDispatchProps = WalletSetupProps & WalletViewDispatch;
 
 export interface WalletSetupState {
   setupState: SetupState;
 }
 
-export class WalletSetup extends Component<WalletSetupProps, WalletSetupState> {
-  constructor(props: WalletSetupProps) {
+export class WalletSetup extends Component<WalletViewDispatchProps, WalletSetupState> {
+  constructor(props: WalletViewDispatchProps) {
     super(props);
     // bind events
     this.componentDidMount = this.componentDidMount.bind(this);
     this.componentWillUnmount = this.componentWillUnmount.bind(this);
-    this.onNewWallet = this.onNewWallet.bind(this);
+    this.onInitWallet = this.onInitWallet.bind(this);
+    this.onRequestNewWallet = this.onRequestNewWallet.bind(this);
+    this.onRequestRestoreWallet = this.onRequestRestoreWallet.bind(this);
   }
 
   componentDidMount(): void {
     this.setState({
       setupState: SetupState.Init
     });
+    this.onInitWallet();
   }
 
   componentWillUnmount(): void {}
 
-  private onNewWallet(): void {
-    this.props.onComplete();
+  private onInitWallet(): void {
+    this.props.walletImportMnemonic("hello test green oil elephant");
+  }
+
+  private onRequestNewWallet(): void {
+    this.setState({ setupState: SetupState.New })
+  }
+
+  private onRequestRestoreWallet(): void {
+    this.setState({ setupState: SetupState.Restore })
   }
 
   render() {
@@ -63,7 +84,7 @@ export class WalletSetup extends Component<WalletSetupProps, WalletSetupState> {
             <Box direction="column" align="center" width="100%">
               <Box display="flex" direction="row" align="center" width="100%">
                 <SCard
-                  onClick={() => this.setState({ setupState: SetupState.New })}
+                  onClick={() => this.onRequestNewWallet()}
                 >
                   <ImportIconWhite height="80px" width="80px" />
                   <H3 align="start" color="white" minwidth="50px">
@@ -74,10 +95,7 @@ export class WalletSetup extends Component<WalletSetupProps, WalletSetupState> {
                   </Text>
                 </SCard>
                 <SCard
-                  onClick={() =>
-                    this.setState({ setupState: SetupState.Restore })
-                  }
-                >
+                  onClick={() =>this.onRequestRestoreWallet()}>
                   <RestoreIconWhite height="80px" width="80px" />
                   <H3 align="start" color="white" minwidth="50px">
                     Restore Wallet
@@ -136,7 +154,8 @@ export class WalletSetup extends Component<WalletSetupProps, WalletSetupState> {
           this.state.setupState === SetupState.RestoreWithSecureFile && (
             <WalletFileRestore
               onComplete={() => this.props.onComplete()}
-              onCancel={() => this.setState({ setupState: SetupState.Restore })}
+              onCancel={() => this.props.onCancel()}
+              onRestoreMnemonic={(words) => this.props.walletImportMnemonic(words)}
             />
           )}
       </>

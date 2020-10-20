@@ -7,5 +7,6 @@ export const getRootSaga = () => {
 
 // single entry point to start all Sagas at once
 export default function* rootSagas() {
+    console.log("rootSagas")
     yield all([call(watchWalletStatusSaga)]);
 }

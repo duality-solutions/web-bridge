@@ -9,6 +9,7 @@ export interface SetupWizardProps {
 
 export interface SetupWizardState {
   currentStep?: number;
+  mnemonic?: string;
 }
 
 export class SetupWizard extends Component<SetupWizardProps, SetupWizardState> {
@@ -76,7 +77,12 @@ export class SetupWizard extends Component<SetupWizardProps, SetupWizardState> {
           <Grid.Row textAlign="center">
             {this.state && this.state.currentStep === 1 && (
               <Grid.Column>
-                <WalletSetup onComplete={() => this.props.onComplete()} />
+                <WalletSetup 
+                  onComplete={() => this.props.onComplete()} 
+                  onCancel={() => this.setState({ currentStep: 1 })}
+                  walletImportMnemonic={(mnemonic) => this.setState({ mnemonic: mnemonic })}
+                  complete={false}
+                />
               </Grid.Column>
             )}
           </Grid.Row>

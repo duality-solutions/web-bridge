@@ -10,12 +10,12 @@ import { H3, Text } from "../ui/Text";
 import { FilePathInfo } from "../../shared/FilePathInfo";
 import { WalletRestoreFilePassword } from "./RestoreFilePassword";
 import { RequestConfig } from "../../api/Config";
-import { ImportMnemonicRequest } from "../../shared/Mnemonic";
 import axios from "axios";
 
 export interface WalletFileRestoreProps {
   onComplete: () => void;
   onCancel: () => void;
+  onRestoreMnemonic: (words: string) => void;
 }
 
 export interface WalletFileRestoreState {
@@ -72,15 +72,8 @@ export class WalletFileRestore extends Component<
       wordCount === 24 ||
       wordCount === 25
     ) {
-      var request: ImportMnemonicRequest = {
-        mnemonic: wordlist
-      }
-      axios.post<ImportMnemonicRequest>("/wallet/mnemonic", request, RequestConfig).then(function (response) {
-        console.log(JSON.stringify(response.data, null, 2));
-        self.setState( { loading: true, mnemonic: wordlist }, self.waitForRescan());
-      }).catch(function (error) {
-        console.log("onMnemonic execute wallet/mnemonic [Post] Error: " + error);
-      });
+      self.props.onRestoreMnemonic(wordlist);
+      this.setState( { loading: true } );
     } else {
       var err: DropzoneError = {
         title: "Incorrect Word Count",
@@ -90,11 +83,6 @@ export class WalletFileRestore extends Component<
       return;
     }
   };
-
-  // Returns a Promise that resolves after "ms" Milliseconds
-  private timer(ms: number) {
-    return new Promise(res => setTimeout(res, ms));
-  }
 
   private waitForRescan(): | undefined {
     //TODO: Use redux-saga for these types of actions

@@ -6,7 +6,7 @@ function* waitForMnemonicImport() {
   console.log("waitForReindex -- /WalletImportMnemonic");
   for (;;) {
     const { reindexComplete } = yield {
-      reindexComplete: take(getType(ManageWalletActions.walletImportMnemonic))
+      reindexComplete: take(getType(ManageWalletActions.walletComplete))
     };
     if (reindexComplete) {
       console.log("waitForReindex complete");
