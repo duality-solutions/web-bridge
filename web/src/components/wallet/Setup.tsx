@@ -57,7 +57,7 @@ export class WalletSetup extends Component<WalletViewDispatchProps, WalletSetupS
     this.onInitWallet();
   }
 
-  componentWillUnmount(): void {}
+  componentDidUnmount(): void {}
 
   private onInitWallet(): void {
     this.props.walletImportMnemonic("hello test green oil elephant");

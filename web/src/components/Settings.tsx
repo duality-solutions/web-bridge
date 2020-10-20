@@ -28,7 +28,7 @@ export class Settings extends Component<SettingsProps, SettingsState> {
     super(props);
     // bind events
     this.componentDidMount = this.componentDidMount.bind(this);
-    this.componentWillUnmount = this.componentWillUnmount.bind(this);
+    this.componentDidUnmount = this.componentDidUnmount.bind(this);
     this.getConfigSettings = this.getConfigSettings.bind(this);
     this.updateIceConfig = this.updateIceConfig.bind(this);
     this.updateWebServerConfig = this.updateWebServerConfig.bind(this);
@@ -39,7 +39,7 @@ export class Settings extends Component<SettingsProps, SettingsState> {
     this.getConfigSettings();
   }
 
-  componentWillUnmount(): void {}
+  componentDidUnmount(): void {}
 
   private getConfigSettings = () => {
     GetConfigSettings().then((data) => {

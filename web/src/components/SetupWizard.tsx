@@ -17,14 +17,14 @@ export class SetupWizard extends Component<SetupWizardProps, SetupWizardState> {
     super(props);
     // bind events
     this.componentDidMount = this.componentDidMount.bind(this);
-    this.componentWillUnmount = this.componentWillUnmount.bind(this);
+    this.componentDidUnmount = this.componentDidUnmount.bind(this);
   }
 
   componentDidMount(): void {
     this.setState({ currentStep: this.props.currentStep });
   }
 
-  componentWillUnmount(): void {}
+  componentDidUnmount(): void {}
 
   render() {
     return (

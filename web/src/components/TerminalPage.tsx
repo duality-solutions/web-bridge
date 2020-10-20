@@ -18,13 +18,14 @@ export class TerminalPage extends Component<TerminalProps, TerminalState> {
 
     // bind events
     this.componentDidMount = this.componentDidMount.bind(this);
+    this.componentDidUnmount = this.componentDidUnmount.bind(this);
   }
 
   componentDidMount(): void {
     this.setState({ mode: this.props.mode });
   }
 
-  componentWillUnmount(): void {}
+  componentDidUnmount(): void {}
 
   render() {
     return (

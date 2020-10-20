@@ -33,7 +33,7 @@ export class MainFrame extends Component<MainFrameProps, MainFrameState> {
     this.currentPage = props.currentPage ? props.currentPage : "home";
     // bind events
     this.componentDidMount = this.componentDidMount.bind(this);
-    this.componentWillUnmount = this.componentWillUnmount.bind(this);
+    this.componentDidUnmount = this.componentDidUnmount.bind(this);
     this.changePage = this.changePage.bind(this);
   }
 
@@ -46,7 +46,7 @@ export class MainFrame extends Component<MainFrameProps, MainFrameState> {
     });
   }
 
-  componentWillUnmount(): void {}
+  componentDidUnmount(): void {}
 
   private changePage(pageName: string): void {
     this.currentPage = pageName;

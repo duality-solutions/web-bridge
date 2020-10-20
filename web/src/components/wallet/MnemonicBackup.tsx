@@ -25,7 +25,7 @@ export class MnemonicBackup extends Component<
     super(props);
     // bind events
     this.componentDidMount = this.componentDidMount.bind(this);
-    this.componentWillUnmount = this.componentWillUnmount.bind(this);
+    this.componentDidUnmount = this.componentDidUnmount.bind(this);
     this.handleFileCreation = this.handleFileCreation.bind(this);
     this.getMnemonic = this.getMnemonic.bind(this);
   }
@@ -34,7 +34,7 @@ export class MnemonicBackup extends Component<
     this.getMnemonic();
   }
 
-  componentWillUnmount(): void {}
+  componentDidUnmount(): void {}
 
   handleFileCreation = (e: FormEvent) => {
     //if we don't prevent form submission, causes a browser reload
