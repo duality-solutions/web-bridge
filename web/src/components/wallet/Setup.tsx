@@ -10,6 +10,7 @@ import { WalletRestore } from "./Restore";
 import { WalletFileRestore } from "./FileRestore";
 import { WalletMnemonicRestore } from "./MnemonicRestore";
 import { WalletPassword } from "./WalletPassword";
+import { WalletSecureFilePassword } from "./SecureFilePassword";
 
 enum SetupState {
   Init = 1,
@@ -18,7 +19,10 @@ enum SetupState {
   Restore,
   RestoreWithMnemonic,
   RestoreWithSecureFile,
-  CreatePassword
+  BackupSecureFile,
+  CreatePassword,
+  Waiting,
+  Complete,
 }
 
 export interface WalletSetupProps {
@@ -27,6 +31,7 @@ export interface WalletSetupProps {
 
 export interface WalletSetupState {
   setupState: SetupState;
+  mnemonic?: string;
 }
 
 export class WalletSetup extends Component<WalletSetupProps, WalletSetupState> {
@@ -105,7 +110,22 @@ export class WalletSetup extends Component<WalletSetupProps, WalletSetupState> {
             onComplete={() =>
               this.setState({ setupState: SetupState.CreatePassword })
             }
+            onBackupSecureFile={(mnemonic) => this.setState({ setupState: SetupState.BackupSecureFile, mnemonic: mnemonic })}
           />
+        )}
+        {this.state &&
+          this.state.setupState === SetupState.BackupSecureFile && this.state.mnemonic && (
+            <WalletSecureFilePassword
+              mnemonic={this.state.mnemonic}
+              onCancel={() => this.setState({ setupState: SetupState.NewWarned })}
+            />
+        )}
+        {this.state &&
+          this.state.setupState === SetupState.RestoreWithSecureFile && (
+            <WalletFileRestore
+              onComplete={() => this.props.onComplete()}
+              onCancel={() => this.setState({ setupState: SetupState.Restore })}
+            />
         )}
         {this.state && this.state.setupState === SetupState.CreatePassword && (
           <WalletPassword
@@ -131,14 +151,14 @@ export class WalletSetup extends Component<WalletSetupProps, WalletSetupState> {
               onComplete={() => this.props.onComplete()}
               onCancel={() => this.setState({ setupState: SetupState.Restore })}
             />
-          )}
+        )}
         {this.state &&
           this.state.setupState === SetupState.RestoreWithSecureFile && (
             <WalletFileRestore
               onComplete={() => this.props.onComplete()}
               onCancel={() => this.setState({ setupState: SetupState.Restore })}
             />
-          )}
+        )}
       </>
     );
   }
