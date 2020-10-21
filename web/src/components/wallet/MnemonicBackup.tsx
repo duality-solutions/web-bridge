@@ -1,4 +1,4 @@
-import React, { Component, FormEvent } from "react";
+import React, { Component } from "react";
 import { Box } from "../ui/Box";
 import { ArrowButton, BackButton, LightButton } from "../ui/Button";
 import { Card } from "../ui/Card";
@@ -11,6 +11,7 @@ import { GetMnemonic } from "../../api/Wallet";
 export interface MnemonicBackupProps {
   onCancel: () => void;
   onComplete: () => void;
+  onBackupSecureFile: (mnemonic: string) => void;
 }
 
 export interface MnemonicBackupState {
@@ -26,7 +27,7 @@ export class MnemonicBackup extends Component<
     // bind events
     this.componentDidMount = this.componentDidMount.bind(this);
     this.componentDidUnmount = this.componentDidUnmount.bind(this);
-    this.handleFileCreation = this.handleFileCreation.bind(this);
+    this.backupSecureFile = this.backupSecureFile.bind(this);
     this.getMnemonic = this.getMnemonic.bind(this);
   }
 
@@ -36,9 +37,10 @@ export class MnemonicBackup extends Component<
 
   componentDidUnmount(): void {}
 
-  handleFileCreation = (e: FormEvent) => {
-    //if we don't prevent form submission, causes a browser reload
-    e.preventDefault();
+  backupSecureFile = async () => {
+    if (this.state && this.state.mnemonic) {
+      this.props.onBackupSecureFile(this.state.mnemonic);
+    }
   };
 
   private getMnemonic = async () => {
@@ -118,7 +120,7 @@ export class MnemonicBackup extends Component<
                         <Divider />
                         </Box>
                         <Box width="30%" margin="0 0 0 3em">
-                          <LightButton onClick={this.handleFileCreation}>
+                          <LightButton onClick={this.backupSecureFile}>
                               Create a secure file
                           </LightButton>
                           <Box display="flex" width="100%" margin="2em 0 0 2em">
