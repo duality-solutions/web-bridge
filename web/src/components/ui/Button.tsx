@@ -73,6 +73,22 @@ const ArrowButton: React.FunctionComponent<ArrowButtonProps> = ({
   </StyledButton>
 );
 
+const StyledBackArrowButton = styled("div")`
+  display: block;
+  direction: column;
+  width: 100px;
+  cursor: pointer;
+`;
+
+const BackArrowButton: React.FunctionComponent<{
+  onClick: () => void;
+  marginTop?: string;
+}> = ({ onClick, marginTop }) => (
+  <StyledBackArrowButton onClick={() => onClick()}>
+    <BackArrow style={{ marginTop: marginTop || "175%" }} />
+  </StyledBackArrowButton>
+);
+
 const LightButton = styled("button")<ButtonProps>`
   align-self: ${(props) => (props.align ? props.align : "center")};
   justify-content: center;
@@ -91,4 +107,4 @@ const LightButton = styled("button")<ButtonProps>`
 
 export default StyledButton;
 
-export { ArrowButton, BackButton, LightButton };
+export { ArrowButton, BackArrowButton, BackButton, LightButton };

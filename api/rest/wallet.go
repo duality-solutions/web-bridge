@@ -265,36 +265,43 @@ func (w *WebBridgeRunner) postmnemonic(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": strErrMsg})
 		return
 	}
-	cmd := `dynamic-cli importmnemonic "` + req.Mnemonic + `"`
-	if len(req.Language) > 0 {
-		cmd += ` "` + req.Language + `"`
-	} else {
-		cmd += ` "english"`
-	}
-	if len(req.Passphrase) > 0 {
-		cmd += ` "` + req.Passphrase + `"`
-	}
-	strCommand, _ := dynamic.NewRequest(cmd)
-	response, _ := <-w.dynamicd.ExecCmdRequest(strCommand)
-	if strings.Contains(response, "Error:") {
-		result := models.RPCError{}
-		err := json.Unmarshal([]byte(response), &result)
+	wordCount := len(strings.Split(req.Mnemonic, " "))
+	if wordCount == 12 || wordCount == 13 || wordCount == 24 || wordCount == 25 {
+		cmd := `dynamic-cli importmnemonic "` + req.Mnemonic + `"`
+		if len(req.Language) > 0 {
+			cmd += ` "` + req.Language + `"`
+		} else {
+			cmd += ` "english"`
+		}
+		if len(req.Passphrase) > 0 {
+			cmd += ` "` + req.Passphrase + `"`
+		}
+		strCommand, _ := dynamic.NewRequest(cmd)
+		response, _ := <-w.dynamicd.ExecCmdRequest(strCommand)
+		if strings.Contains(response, "Error:") {
+			result := models.RPCError{}
+			err := json.Unmarshal([]byte(response), &result)
+			if err != nil {
+				strErrMsg := fmt.Sprintf("Response JSON unmarshal error %v", err)
+				c.JSON(http.StatusInternalServerError, gin.H{"error": strErrMsg})
+				return
+			}
+			c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error})
+			return
+		}
+		var result interface{}
+		err = json.Unmarshal([]byte(response), &result)
 		if err != nil {
-			strErrMsg := fmt.Sprintf("Response JSON unmarshal error %v", err)
+			strErrMsg := fmt.Sprintf("Results JSON unmarshal error %v", err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": strErrMsg})
 			return
 		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error})
+		c.JSON(http.StatusOK, gin.H{"result": result})
+	} else {
+		strErrMsg := fmt.Sprintf("Incorrect number of words (%v) in mnemonic", wordCount)
+		c.JSON(http.StatusBadRequest, gin.H{"error": strErrMsg})
 		return
 	}
-	var result interface{}
-	err = json.Unmarshal([]byte(response), &result)
-	if err != nil {
-		strErrMsg := fmt.Sprintf("Results JSON unmarshal error %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": strErrMsg})
-		return
-	}
-	c.JSON(http.StatusOK, gin.H{"result": result})
 }
 
 //
