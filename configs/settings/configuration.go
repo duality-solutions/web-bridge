@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"strings"
 	"sync"
 
 	"github.com/duality-solutions/web-bridge/api/models"
@@ -76,8 +77,10 @@ func (c *Configuration) createDefault() {
 		Credential: DefaultIceCredential,
 	}
 	defaultWeb := models.DefaultWebServerConfig()
+	defaultWalletStatus := models.DefaultWalletSetupStatus()
 	c.configFile.IceServers = append(c.configFile.IceServers, defaultIce)
 	c.configFile.WebServer = defaultWeb
+	c.configFile.WalletStatus = defaultWalletStatus
 	file, _ := json.Marshal(&c)
 	err := ioutil.WriteFile(homeDir+ConfigurationFileName, file, 0644)
 	if isErr(err) {
@@ -109,6 +112,11 @@ func (c *Configuration) Load(dir, seperator string) error {
 			c.configFile.WebServer = models.DefaultWebServerConfig()
 			c.updateFile()
 		} else {
+			hasStatus := strings.Index(string(file), `"WalletStatus"`)
+			if hasStatus < 0 {
+				c.configFile.WalletStatus = models.DefaultWalletSetupStatus()
+				c.updateFile()
+			}
 			if !util.IsValidCIDRList(c.configFile.WebServer.AllowCIDR) {
 				return fmt.Errorf("Invalid Web Server allow CIDR: %v", c.configFile.WebServer.AllowCIDR)
 			}
