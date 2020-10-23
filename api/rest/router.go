@@ -38,6 +38,10 @@ func StartWebServiceRouter(c *settings.Configuration, d *dynamic.Dynamicd, a *Ap
 	runner.dynamicd = d
 	runner.shutdownApp = a
 	runner.mode = m
+	setupStatus, _, err := runner.GetWalletSetupInfo()
+	if err == nil {
+		runner.configuration.UpdateWalletSetup(*setupStatus)
+	}
 	startWebServiceRoutes()
 }
 
@@ -138,6 +142,7 @@ func setupWalletRoutes(currentVersion *gin.RouterGroup) {
 	wallet.GET("/defaultaddress", runner.defaultaddress)
 	wallet.GET("/transactions", runner.gettransactions)
 	wallet.GET("/setup", runner.walletsetup)
+	wallet.POST("/setup/backup", runner.setupmnemonicbackup)
 }
 
 func setupBridgesRoutes(currentVersion *gin.RouterGroup) {
