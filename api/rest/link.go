@@ -2,6 +2,7 @@ package rest
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -11,6 +12,51 @@ import (
 	"github.com/duality-solutions/web-bridge/blockchain/rpc/dynamic"
 	"github.com/gin-gonic/gin"
 )
+
+// LinkStatus is the current link status
+type LinkStatus string
+
+const (
+	// Complete link
+	Complete LinkStatus = "Complete"
+	// Pending link
+	Pending LinkStatus = "Pending"
+)
+
+// GetLinks returns a list of pending or complete links from the Dynamic RPC server
+func (w *WebBridgeRunner) GetLinks(status LinkStatus) (*models.LinksResponse, error) {
+	var links models.LinksResponse
+	var cmdStr = ""
+	if status == Complete {
+		cmdStr = `dynamic-cli link complete`
+	} else if status == Pending {
+		cmdStr = `dynamic-cli link pending`
+	}
+	cmd, _ := dynamic.NewRequest(cmdStr)
+	response, _ := <-w.dynamicd.ExecCmdRequest(cmd)
+	results := map[string]interface{}{}
+	err := json.Unmarshal([]byte(response), &results)
+	if err != nil {
+		strErrMsg := fmt.Sprintf("Results JSON unmarshal error %v", err)
+		return nil, errors.New(strErrMsg)
+	}
+	myLinks := make(map[string]models.Link)
+	for key, linkInterface := range results {
+		if key != "locked_links" {
+			linkObj := models.Link{LinkStatus: string(status)}
+			linkVal := reflect.ValueOf(linkInterface)
+			for _, lk := range linkVal.MapKeys() {
+				link := linkVal.MapIndex(lk)
+				linkObj.SetValue(lk.String(), fmt.Sprintf("%v", link))
+			}
+			myLinks[key] = linkObj
+		} else {
+			links.LockedLinks = linkInterface.(float64)
+		}
+	}
+	links.Links = myLinks
+	return &links, nil
+}
 
 func (w *WebBridgeRunner) links(c *gin.Context) {
 	cmd, _ := dynamic.NewRequest(`dynamic-cli link complete`)

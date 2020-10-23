@@ -7,6 +7,7 @@ type WalletSetupStatus struct {
 	HasAccounts     bool `json:"HasAccounts"`
 	HasLinks        bool `json:"HasLinks"`
 	HasTransactions bool `json:"HasTransactions"`
+	WalletEncrypted bool `json:"WalletEncrypted"`
 }
 
 // DefaultWalletSetupStatus creates a default WalletSetupStatus struct
@@ -16,6 +17,7 @@ func DefaultWalletSetupStatus() WalletSetupStatus {
 		HasAccounts:     false,
 		HasLinks:        false,
 		HasTransactions: false,
+		WalletEncrypted: false,
 	}
 }
 

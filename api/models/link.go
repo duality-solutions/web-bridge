@@ -97,18 +97,7 @@ type GetMessageRequest struct {
 	MessageType   string `json:"message_type"`
 }
 
-/*
-type LinkRequestResponse struct {
-	Expired                bool   `json:"expired"`
-	ExpiresOn              int    `json:"expires_on"`
-	LinkMessage            string `json:"link_message"`
-	RecipientFQDN          string `json:"recipient_fqdn"`
-	RecipientWalletAddress string `json:"recipient_wallet_address"`
-	RequestorFQDN          string `json:"requestor_fqdn"`
-	RequestorLinkPubkey    string `json:"requestor_link_pubkey"`
-	RequestorWalletAddress string `json:"requestor_wallet_address"`
-	SignatureProof         string `json:"signature_proof"`
-	Time                   int    `json:"time"`
-	TxID                   string `json:"txid"`
+type LinksResponse struct {
+	Links       map[string]Link
+	LockedLinks float64 `json:"locked_links"`
 }
-*/
