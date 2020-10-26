@@ -8,7 +8,7 @@ type TransactionsResponse struct {
 	Category          string   `json:"Category"`
 	Amount            float64  `json:"Amount"`
 	Label             string   `json:"label"`
-	vOut              int      `json:"vout"`
+	VOut              int      `json:"vout"`
 	Confirmations     int      `json:"confirmations"`
 	InstantLock       bool     `json:"instantlock"`
 	BlockHash         string   `json:"blockhash"`
