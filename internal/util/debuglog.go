@@ -24,6 +24,7 @@ var (
 	Error DebugLog
 )
 
+// HomeDir stores the operating system specific user home directory
 var HomeDir string = ""
 
 // InitDebugLogFile is used to initialize the debug log file path.
@@ -69,32 +70,40 @@ func EndDebugLogFile(x int) {
 
 // Println logs to debug.log file and console
 func (d *DebugLog) Println(a ...interface{}) {
-	d.Logger.Println(a...)
-	if d.Console {
-		fmt.Println(a...)
-	}
+	go func() {
+		d.Logger.Println(a...)
+		if d.Console {
+			fmt.Println(a...)
+		}
+	}()
 }
 
 // Print logs to debug.log file and console
 func (d *DebugLog) Print(a ...interface{}) {
-	d.Logger.Print(a...)
-	if d.Console {
-		fmt.Print(a...)
-	}
+	go func() {
+		d.Logger.Print(a...)
+		if d.Console {
+			fmt.Print(a...)
+		}
+	}()
 }
 
 // Printf logs to debug.log file and console
 func (d *DebugLog) Printf(format string, a ...interface{}) {
-	d.Logger.Printf(format, a...)
-	if d.Console {
-		fmt.Printf(format, a...)
-	}
+	go func() {
+		d.Logger.Printf(format, a...)
+		if d.Console {
+			fmt.Printf(format, a...)
+		}
+	}()
 }
 
 // Fprintf logs to debug.log file and console
 func (d *DebugLog) Fprintf(w io.Writer, format string, a ...interface{}) {
-	d.Logger.Printf(format, a...)
-	if d.Console {
-		fmt.Fprintf(w, format, a...)
-	}
+	go func() {
+		d.Logger.Printf(format, a...)
+		if d.Console {
+			fmt.Fprintf(w, format, a...)
+		}
+	}()
 }
