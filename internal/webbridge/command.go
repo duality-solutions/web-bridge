@@ -36,6 +36,7 @@ func appCommandLoop(stopBridges *chan struct{}, acc *[]dynamic.Account, al *dyna
 		for {
 			select {
 			default:
+
 				if !unlocked {
 					errUnlock := d.UnlockWallet("")
 					if errUnlock != nil {
@@ -56,7 +57,7 @@ func appCommandLoop(stopBridges *chan struct{}, acc *[]dynamic.Account, al *dyna
 				if strings.HasPrefix(cmdText, "exit") || strings.HasPrefix(cmdText, "shutdown") || strings.HasPrefix(cmdText, "stop") {
 					util.Info.Println("Exit command. Stopping services.")
 					shutdown.ShutdownAppliction()
-					break
+					return
 				} else if strings.HasPrefix(cmdText, "unlock") {
 					unlocked = unlockWallet(d)
 					if unlocked {
