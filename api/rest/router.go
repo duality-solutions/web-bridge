@@ -53,6 +53,7 @@ func startWebServiceRoutes() {
 	api := runner.router.Group("/api")
 	version := api.Group("/v1")
 	version.POST("/shutdown", runner.shutdown)
+	version.GET("/overview", runner.overview)
 	setupBlockchainRoutes(version)
 	setupWalletRoutes(version)
 	setupBridgesRoutes(version)
