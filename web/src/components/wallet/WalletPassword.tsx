@@ -17,7 +17,7 @@ export interface ValidationResult<T> {
 }
 
 export interface WalletPasswordProps {
-  onComplete: () => void;
+  onComplete:  (password: string) => void;
   onCancel: () => void;
   password?: string;
   uiType: PasswordUiType;
@@ -39,6 +39,7 @@ export class WalletPassword extends Component<
     // bind events
     this.componentDidMount = this.componentDidMount.bind(this);
     this.componentDidUnmount = this.componentDidUnmount.bind(this);
+    this.onCompleteButtonClick = this.onCompleteButtonClick.bind(this);
     this.state = {
       isValidating: false
     };
@@ -61,6 +62,12 @@ export class WalletPassword extends Component<
     // name: "password"
     //});
   };
+
+  private onCompleteButtonClick = () => {
+    if (this.state && this.state.password) {
+      this.props.onComplete(this.state.password)
+    }
+  }
 
   render() {
     const { isValidating, validationResult } = this.state;
@@ -148,6 +155,7 @@ export class WalletPassword extends Component<
                 label={uiType === "CREATE" ? "Continue" : "Log in"}
                 type="submit"
                 disabled={isValidating}
+                onClick={() => this.onCompleteButtonClick()}
               />
               {isValidating ? (
                 <LoadingSpinner

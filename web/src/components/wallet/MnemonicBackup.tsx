@@ -11,6 +11,7 @@ import { GetMnemonic } from "../../api/Wallet";
 export interface MnemonicBackupProps {
   onCancel: () => void;
   onComplete: () => void;
+  enterPassword: () => void;
   onBackupSecureFile: (mnemonic: string) => void;
 }
 
@@ -44,9 +45,18 @@ export class MnemonicBackup extends Component<
   };
 
   private getMnemonic = async () => {
-      GetMnemonic().then((data) => {
+    var self = this;
+    GetMnemonic().then((data) => {
+      if (data.hdseed !== "") {
         this.setState({ mnemonic: data.mnemonic });
-      });
+      } else {
+        console.log("wallet locked");
+        self.props.enterPassword();
+      }
+    }).catch(function (error) {
+      console.log("Rest error. wallet locked");
+      self.props.enterPassword();
+    });
   };
 
   render() {

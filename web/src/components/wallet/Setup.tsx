@@ -11,6 +11,7 @@ import { WalletFileRestore } from "./FileRestore";
 import { WalletMnemonicRestore } from "./MnemonicRestore";
 import { WalletPassword } from "./WalletPassword";
 import { WalletSecureFilePassword } from "./SecureFilePassword";
+import { UnlockWallet, UnlockWalletRequest, EncryptWallet, EncryptWalletRequest } from "../../api/Wallet";
 
 enum SetupState {
   Init = 1,
@@ -23,6 +24,7 @@ enum SetupState {
   CreatePassword,
   Waiting,
   Complete,
+  EnterPassword,
 }
 
 export interface WalletSetupProps {
@@ -32,6 +34,8 @@ export interface WalletSetupProps {
 export interface WalletSetupState {
   setupState: SetupState;
   mnemonic?: string;
+  locked: boolean;
+  encrypted: boolean;
 }
 
 export class WalletSetup extends Component<WalletSetupProps, WalletSetupState> {
@@ -41,13 +45,16 @@ export class WalletSetup extends Component<WalletSetupProps, WalletSetupState> {
     this.componentDidMount = this.componentDidMount.bind(this);
     this.componentDidUnmount = this.componentDidUnmount.bind(this);
     this.onNewWallet = this.onNewWallet.bind(this);
+    this.onMnemonicBackup = this.onMnemonicBackup.bind(this);
+    // set initial state
+    this.state = {
+      setupState: SetupState.Init,
+      locked: true,
+      encrypted: false,
+    }
   }
 
-  componentDidMount(): void {
-    this.setState({
-      setupState: SetupState.Init
-    });
-  }
+  componentDidMount(): void {}
 
   componentDidUnmount(): void {}
 
@@ -55,6 +62,52 @@ export class WalletSetup extends Component<WalletSetupProps, WalletSetupState> {
     this.props.onComplete();
   }
 
+  private onUnlockWallet = (password: string) => {
+    var request: UnlockWalletRequest = {
+      passphrase: password,
+      timeout: 60000,
+    }
+    UnlockWallet(request).then((data) => {
+      if (data.result !== "failed") {
+        console.log("unlocked wallet" + data.result);
+        this.setState( { setupState: SetupState.NewWarned, locked: false, encrypted: true })
+      } else {
+        console.log("unlocked wallet" + data.result);
+        // todo: pass error message back to WalletPassword
+        this.setState( { setupState: SetupState.New, encrypted: true })
+      }
+    }).catch(function (error) {
+      console.log("UnlockWallet Rest error." + error);
+    });
+  }
+
+  private onEncryptWallet = (password: string) => {
+    var request: EncryptWalletRequest = {
+      passphrase: password
+    }
+    EncryptWallet(request).then((data) => {
+      if (data.result === "successful") {
+        console.log("encrypt wallet " + data.result);
+        this.setState( { locked: true, encrypted: true })
+        this.props.onComplete();
+      } else {
+        console.log("encrypt wallet failed" + data.result);
+        this.setState( { setupState: SetupState.New, encrypted: true })
+      }
+    }).catch(function (error) {
+      console.log("UnlockWallet Rest error." + error);
+    });
+  }
+
+  private onMnemonicBackup = () => {
+    if (!this.state.encrypted) {
+      this.setState({ setupState: SetupState.CreatePassword })
+    } else {
+      this.props.onComplete();
+    }
+  }
+
+  //
   render() {
     return (
       <>
@@ -107,10 +160,17 @@ export class WalletSetup extends Component<WalletSetupProps, WalletSetupState> {
         {this.state && this.state.setupState === SetupState.NewWarned && (
           <MnemonicBackup
             onCancel={() => this.setState({ setupState: SetupState.Init })}
-            onComplete={() =>
-              this.setState({ setupState: SetupState.CreatePassword })
-            }
+            onComplete={() => this.onMnemonicBackup()}
             onBackupSecureFile={(mnemonic) => this.setState({ setupState: SetupState.BackupSecureFile, mnemonic: mnemonic })}
+            enterPassword={() => this.setState({ setupState: SetupState.EnterPassword })}
+          />
+        )}
+        {this.state &&
+          this.state.setupState === SetupState.EnterPassword && (
+            <WalletPassword
+              onComplete={(password) => this.onUnlockWallet(password)}
+              uiType={"LOGIN"}
+              onCancel={() => this.setState({ setupState: SetupState.New })}
           />
         )}
         {this.state &&
@@ -129,7 +189,7 @@ export class WalletSetup extends Component<WalletSetupProps, WalletSetupState> {
         )}
         {this.state && this.state.setupState === SetupState.CreatePassword && (
           <WalletPassword
-            onComplete={() => this.props.onComplete()}
+            onComplete={(password) => this.onEncryptWallet(password)}
             uiType={"CREATE"}
             onCancel={() => this.setState({ setupState: SetupState.NewWarned })}
           />
