@@ -36,6 +36,7 @@ export interface WalletSetupState {
   mnemonic?: string;
   locked: boolean;
   encrypted: boolean;
+  passwordError?: string;
 }
 
 export class WalletSetup extends Component<WalletSetupProps, WalletSetupState> {
@@ -67,17 +68,15 @@ export class WalletSetup extends Component<WalletSetupProps, WalletSetupState> {
       passphrase: password,
       timeout: 60000,
     }
+    var self = this;
     UnlockWallet(request).then((data) => {
       if (data.result !== "failed") {
-        console.log("unlocked wallet" + data.result);
         this.setState( { setupState: SetupState.NewWarned, locked: false, encrypted: true })
       } else {
-        console.log("unlocked wallet" + data.result);
-        // todo: pass error message back to WalletPassword
-        this.setState( { setupState: SetupState.New, encrypted: true })
+        this.setState( { locked: true, encrypted: true, passwordError: "The supplied credentials are incorrect." })
       }
     }).catch(function (error) {
-      console.log("UnlockWallet Rest error." + error);
+      self.setState( { locked: true, encrypted: true, passwordError: "The supplied credentials are incorrect." })
     });
   }
 
@@ -171,6 +170,7 @@ export class WalletSetup extends Component<WalletSetupProps, WalletSetupState> {
               onComplete={(password) => this.onUnlockWallet(password)}
               uiType={"LOGIN"}
               onCancel={() => this.setState({ setupState: SetupState.New })}
+              errorMessage={this.state ? this.state.passwordError : undefined}
           />
         )}
         {this.state &&

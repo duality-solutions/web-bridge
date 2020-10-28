@@ -21,6 +21,7 @@ export interface WalletPasswordProps {
   onCancel: () => void;
   password?: string;
   uiType: PasswordUiType;
+  errorMessage?: string;
 }
 
 export interface WalletPasswordState {
@@ -71,7 +72,7 @@ export class WalletPassword extends Component<
 
   render() {
     const { isValidating, validationResult } = this.state;
-    const { uiType } = this.props;
+    const { uiType, errorMessage } = this.props;
     const validationFailed =
       typeof validationResult !== "undefined" && !validationResult.success;
     const showFieldErrors =
@@ -140,6 +141,13 @@ export class WalletPassword extends Component<
                       {e}
                     </Text>
                   ))
+                ) : (
+                  <></>
+                )}
+                {errorMessage ? (
+                  <Text align="center" color="#e30429">
+                    {errorMessage}
+                  </Text>
                 ) : (
                   <></>
                 )}

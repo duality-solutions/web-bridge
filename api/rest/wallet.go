@@ -62,7 +62,11 @@ func (w *WebBridgeRunner) unlockwallet(c *gin.Context) {
 			c.JSON(http.StatusOK, gin.H{"result": "Can not unlock an unencrypted wallet"})
 			return
 		}
-		c.JSON(http.StatusOK, gin.H{"result": result})
+		if strings.Contains(strResult, "Error: The wallet passphrase entered was incorrect.") {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Error: The wallet passphrase entered was incorrect."})
+			return
+		}
+		c.JSON(http.StatusBadRequest, gin.H{"error": result})
 	}
 }
 
