@@ -1,11 +1,42 @@
 basePath: /api/v1
 definitions:
-  models.ConfigurationFile:
+  models.BridgeInfo:
     properties:
-      IceServers:
-        items:
-          $ref: '#/definitions/models.IceServerConfig'
-        type: array
+      http_listen_port:
+        type: integer
+      https_listen_port:
+        type: integer
+      link_account:
+        type: string
+      link_id:
+        type: string
+      my_account:
+        type: string
+      on_error_epoch:
+        type: integer
+      on_last_data_epoch:
+        type: integer
+      on_open_epoch:
+        type: integer
+      on_state_changed_epoch:
+        type: integer
+      rtc_status:
+        type: string
+      session_id:
+        type: integer
+      state:
+        type: string
+    type: object
+  models.BridgeRequest:
+    properties:
+      link_id:
+        description: LinkID is a deterministic identifier created by hashing the link accounts names in alphabetic order
+        type: string
+    type: object
+  models.ErrorResponse:
+    properties:
+      error:
+        type: string
     type: object
   models.IceServerConfig:
     properties:
@@ -43,6 +74,78 @@ definitions:
         description: MnemonicPassphrase (string, optional)  mnemonic passphrase used as the 13th or 25th word
         type: string
     type: object
+  models.TransactionsResponse:
+    properties:
+      Amount:
+        type: number
+      Category:
+        type: string
+      account:
+        type: string
+      address:
+        type: string
+      bip125-replaceable:
+        type: string
+      blockhash:
+        type: string
+      blockindex:
+        type: integer
+      blocktime:
+        type: integer
+      confirmations:
+        type: integer
+      instantlock:
+        type: boolean
+      label:
+        type: string
+      time:
+        type: integer
+      timereceived:
+        type: integer
+      txid:
+        type: string
+      vout:
+        type: integer
+      walletconflicts:
+        items:
+          type: string
+        type: array
+    type: object
+  models.WalletAddressResponse:
+    properties:
+      address:
+        description: Address (string, required) wallet address
+        type: string
+    type: object
+  models.WalletSetupStatus:
+    properties:
+      HasAccounts:
+        type: boolean
+      HasLinks:
+        type: boolean
+      HasTransactions:
+        type: boolean
+      MnemonicBackup:
+        type: boolean
+      UnlockedUntil:
+        type: integer
+      WalletEncrypted:
+        type: boolean
+    type: object
+  models.WebServerConfig:
+    properties:
+      allowCIDR:
+        type: string
+      bindAddress:
+        type: string
+      listenPort:
+        type: integer
+    type: object
+  models.WebServerRestartRequest:
+    properties:
+      restart_epoch:
+        type: integer
+    type: object
 host: http://docs.webbridge.duality.solutions
 info:
   contact:
@@ -57,6 +160,94 @@ info:
   title: WebBridge Restful API Documentation
   version: "1.0"
 paths:
+  /api/v1/bridges/restart:
+    post:
+      consumes:
+      - application/json
+      description: Stops the specified bridge
+      parameters:
+      - description: Bridge
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.BridgeRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ok
+          schema:
+            $ref: '#/definitions/models.BridgeInfo'
+        "400":
+          description: Bad request
+          schema:
+            type: string
+        "500":
+          description: Internal error
+          schema:
+            type: string
+  /api/v1/config/web:
+    get:
+      consumes:
+      - application/json
+      description: Returns the internal web server's settings for the current running configuration
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ok
+          schema:
+            $ref: '#/definitions/models.WebServerConfig'
+        "500":
+          description: Internal error
+          schema:
+            type: string
+    post:
+      consumes:
+      - application/json
+      description: Updates the internal web server's settings for the current running configuration
+      parameters:
+      - description: WebServer
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.WebServerConfig'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ok
+          schema:
+            $ref: '#/definitions/models.WebServerConfig'
+        "500":
+          description: Internal error
+          schema:
+            type: string
+  /api/v1/config/web/restart:
+    put:
+      consumes:
+      - application/json
+      description: Restarts the internal web server using the current configuration
+      parameters:
+      - description: RestartEpoch
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.WebServerRestartRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ok
+          schema:
+            type: string
+        "500":
+          description: Internal error
+          schema:
+            type: string
   /api/v1/ice:
     delete:
       consumes:
@@ -113,14 +304,18 @@ paths:
         name: body
         required: true
         schema:
-          $ref: '#/definitions/models.ConfigurationFile'
+          items:
+            $ref: '#/definitions/models.IceServerConfig'
+          type: array
       produces:
       - application/json
       responses:
         "200":
           description: ok
           schema:
-            $ref: '#/definitions/models.ConfigurationFile'
+            items:
+              $ref: '#/definitions/models.IceServerConfig'
+            type: array
         "400":
           description: Bad request
           schema:
@@ -157,6 +352,46 @@ paths:
           description: Internal error
           schema:
             type: string
+  /api/v1/overview:
+    get:
+      consumes:
+      - application/json
+      description: Returns the current WebBridge overview status
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ok
+          schema:
+            $ref: '#/definitions/models.WalletSetupStatus'
+        "400":
+          description: Bad request
+          schema:
+            type: string
+        "500":
+          description: Internal error
+          schema:
+            type: string
+  /api/v1/wallet/defaultaddress:
+    get:
+      consumes:
+      - application/json
+      description: Returns a default standard wallet address
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ok
+          schema:
+            $ref: '#/definitions/models.WalletAddressResponse'
+        "400":
+          description: Bad request
+          schema:
+            type: string
+        "500":
+          description: Internal error
+          schema:
+            type: string
   /api/v1/wallet/mnemonic:
     get:
       consumes:
@@ -172,11 +407,11 @@ paths:
         "400":
           description: Bad request
           schema:
-            type: string
+            $ref: '#/definitions/models.ErrorResponse'
         "500":
           description: Internal error
           schema:
-            type: string
+            $ref: '#/definitions/models.ErrorResponse'
     post:
       consumes:
       - application/json
@@ -195,6 +430,68 @@ paths:
           description: ok
           schema:
             type: string
+        "400":
+          description: Bad request
+          schema:
+            type: string
+        "500":
+          description: Internal error
+          schema:
+            type: string
+  /api/v1/wallet/setup:
+    get:
+      consumes:
+      - application/json
+      description: Returns the current wallet setup status
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ok
+          schema:
+            $ref: '#/definitions/models.WalletSetupStatus'
+        "400":
+          description: Bad request
+          schema:
+            type: string
+        "500":
+          description: Internal error
+          schema:
+            type: string
+  /api/v1/wallet/setup/backup:
+    post:
+      consumes:
+      - application/json
+      description: Updates the wallet setup backup mnemonic configuration to true
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ok
+          schema:
+            $ref: '#/definitions/models.WalletSetupStatus'
+        "400":
+          description: Bad request
+          schema:
+            type: string
+        "500":
+          description: Internal error
+          schema:
+            type: string
+  /api/v1/wallet/transactions:
+    get:
+      consumes:
+      - application/json
+      description: Returns a list of transactions received or sent from this wallet
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ok
+          schema:
+            items:
+              $ref: '#/definitions/models.TransactionsResponse'
+            type: array
         "400":
           description: Bad request
           schema:

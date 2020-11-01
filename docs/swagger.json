@@ -18,6 +18,143 @@
     "host": "http://docs.webbridge.duality.solutions",
     "basePath": "/api/v1",
     "paths": {
+        "/api/v1/bridges/restart": {
+            "post": {
+                "description": "Stops the specified bridge",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                    {
+                        "description": "Bridge",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.BridgeRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "ok",
+                        "schema": {
+                            "$ref": "#/definitions/models.BridgeInfo"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/config/web": {
+            "get": {
+                "description": "Returns the internal web server's settings for the current running configuration",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "ok",
+                        "schema": {
+                            "$ref": "#/definitions/models.WebServerConfig"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Updates the internal web server's settings for the current running configuration",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                    {
+                        "description": "WebServer",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.WebServerConfig"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "ok",
+                        "schema": {
+                            "$ref": "#/definitions/models.WebServerConfig"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/config/web/restart": {
+            "put": {
+                "description": "Restarts the internal web server using the current configuration",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                    {
+                        "description": "RestartEpoch",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.WebServerRestartRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "ok",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/ice": {
             "get": {
                 "description": "Returns all the ICE servers in current running configuration",
@@ -103,7 +240,10 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.ConfigurationFile"
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.IceServerConfig"
+                            }
                         }
                     }
                 ],
@@ -111,7 +251,10 @@
                     "200": {
                         "description": "ok",
                         "schema": {
-                            "$ref": "#/definitions/models.ConfigurationFile"
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.IceServerConfig"
+                            }
                         }
                     },
                     "400": {
@@ -172,6 +315,68 @@
                 }
             }
         },
+        "/api/v1/overview": {
+            "get": {
+                "description": "Returns the current WebBridge overview status",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "ok",
+                        "schema": {
+                            "$ref": "#/definitions/models.WalletSetupStatus"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/wallet/defaultaddress": {
+            "get": {
+                "description": "Returns a default standard wallet address",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "ok",
+                        "schema": {
+                            "$ref": "#/definitions/models.WalletAddressResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/wallet/mnemonic": {
             "get": {
                 "description": "Shows the current wallet mnemonic and HD information",
@@ -191,13 +396,13 @@
                     "400": {
                         "description": "Bad request",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/models.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal error",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/models.ErrorResponse"
                         }
                     }
                 }
@@ -242,17 +447,160 @@
                     }
                 }
             }
+        },
+        "/api/v1/wallet/setup": {
+            "get": {
+                "description": "Returns the current wallet setup status",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "ok",
+                        "schema": {
+                            "$ref": "#/definitions/models.WalletSetupStatus"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/wallet/setup/backup": {
+            "post": {
+                "description": "Updates the wallet setup backup mnemonic configuration to true",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "ok",
+                        "schema": {
+                            "$ref": "#/definitions/models.WalletSetupStatus"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/wallet/transactions": {
+            "get": {
+                "description": "Returns a list of transactions received or sent from this wallet",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "ok",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.TransactionsResponse"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
-        "models.ConfigurationFile": {
+        "models.BridgeInfo": {
             "type": "object",
             "properties": {
-                "IceServers": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.IceServerConfig"
-                    }
+                "http_listen_port": {
+                    "type": "integer"
+                },
+                "https_listen_port": {
+                    "type": "integer"
+                },
+                "link_account": {
+                    "type": "string"
+                },
+                "link_id": {
+                    "type": "string"
+                },
+                "my_account": {
+                    "type": "string"
+                },
+                "on_error_epoch": {
+                    "type": "integer"
+                },
+                "on_last_data_epoch": {
+                    "type": "integer"
+                },
+                "on_open_epoch": {
+                    "type": "integer"
+                },
+                "on_state_changed_epoch": {
+                    "type": "integer"
+                },
+                "rtc_status": {
+                    "type": "string"
+                },
+                "session_id": {
+                    "type": "integer"
+                },
+                "state": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.BridgeRequest": {
+            "type": "object",
+            "properties": {
+                "link_id": {
+                    "description": "LinkID is a deterministic identifier created by hashing the link accounts names in alphabetic order",
+                    "type": "string"
+                }
+            }
+        },
+        "models.ErrorResponse": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "type": "string"
                 }
             }
         },
@@ -304,6 +652,116 @@
                 "mnemonicpassphrase": {
                     "description": "MnemonicPassphrase (string, optional)  mnemonic passphrase used as the 13th or 25th word",
                     "type": "string"
+                }
+            }
+        },
+        "models.TransactionsResponse": {
+            "type": "object",
+            "properties": {
+                "Amount": {
+                    "type": "number"
+                },
+                "Category": {
+                    "type": "string"
+                },
+                "account": {
+                    "type": "string"
+                },
+                "address": {
+                    "type": "string"
+                },
+                "bip125-replaceable": {
+                    "type": "string"
+                },
+                "blockhash": {
+                    "type": "string"
+                },
+                "blockindex": {
+                    "type": "integer"
+                },
+                "blocktime": {
+                    "type": "integer"
+                },
+                "confirmations": {
+                    "type": "integer"
+                },
+                "instantlock": {
+                    "type": "boolean"
+                },
+                "label": {
+                    "type": "string"
+                },
+                "time": {
+                    "type": "integer"
+                },
+                "timereceived": {
+                    "type": "integer"
+                },
+                "txid": {
+                    "type": "string"
+                },
+                "vout": {
+                    "type": "integer"
+                },
+                "walletconflicts": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "models.WalletAddressResponse": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "description": "Address (string, required) wallet address",
+                    "type": "string"
+                }
+            }
+        },
+        "models.WalletSetupStatus": {
+            "type": "object",
+            "properties": {
+                "HasAccounts": {
+                    "type": "boolean"
+                },
+                "HasLinks": {
+                    "type": "boolean"
+                },
+                "HasTransactions": {
+                    "type": "boolean"
+                },
+                "MnemonicBackup": {
+                    "type": "boolean"
+                },
+                "UnlockedUntil": {
+                    "type": "integer"
+                },
+                "WalletEncrypted": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "models.WebServerConfig": {
+            "type": "object",
+            "properties": {
+                "allowCIDR": {
+                    "type": "string"
+                },
+                "bindAddress": {
+                    "type": "string"
+                },
+                "listenPort": {
+                    "type": "integer"
+                }
+            }
+        },
+        "models.WebServerRestartRequest": {
+            "type": "object",
+            "properties": {
+                "restart_epoch": {
+                    "type": "integer"
                 }
             }
         }
