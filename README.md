@@ -4,6 +4,10 @@
 
 Connecting HTTP servers and clients on disparate networks using WebRTC and blockchain signaling
 
+## Development Requirements
+- [GoLang](https://golang.org/dl/) v1.14 or above.
+- NVM, TypeScript, Yarn and React for [Admin Console](web/README.md)
+
 ## Running with dev and debug mode
 
 ```go
