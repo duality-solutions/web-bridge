@@ -5,16 +5,18 @@ const encryptionOpts: sjcl.SjclCipherEncryptParams = {
   iter: 100000,
   ks: 256,
   ts: 128,
-  salt: [],
-  iv: []
+  v: 1,
+  salt: sjcl.random.randomWords(2,0),
+  iv: sjcl.random.randomWords(4,0),
 };
 
 const encrypt = (password: string) => (payload: string): string => {
-  var cipherText = sjcl.encrypt(password, payload, encryptionOpts).cipher;
-  if (!cipherText) {
+  var cipher = sjcl.encrypt(password, payload, encryptionOpts);
+  if (!cipher) {
     return "";
   }
-  return cipherText;
+  var encoded = btoa(JSON.stringify(cipher))
+  return encoded;
 };
 
 const decrypt = (password: string) => (encryptedPayload: string): string => {
@@ -31,7 +33,7 @@ export interface AesEncryptor {
   decrypt: (encryptedPayload: string) => string;
   encryptObject: <T>(payload: T) => string;
   decryptObject: <T>(encryptedPayload: string) => T;
-}
+};
 
 export const getAesEncryptor = (password: string): AesEncryptor => {
   const e = encrypt(password);
