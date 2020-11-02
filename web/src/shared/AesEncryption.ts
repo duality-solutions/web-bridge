@@ -15,7 +15,8 @@ const encrypt = (password: string) => (payload: string): string => {
   if (!cipher) {
     return "";
   }
-  var encoded = btoa(JSON.stringify(cipher))
+  var cipherJson = JSON.parse(JSON.stringify(cipher));
+  var encoded = "data:application/json;base64," + btoa(cipherJson);
   return encoded;
 };
 

@@ -8,6 +8,7 @@ import { SecureFileIcon } from "../ui/Images";
 import { H3, Text } from "../ui/Text";
 import { getAesEncryptor } from "../../shared/AesEncryption";
 import { ValidationResult } from "../../shared/ValidationResult";
+import { SaveFile } from "../../shared/SaveFile";
 
 export interface WalletSecureFilePasswordProps {
   mnemonic: string;
@@ -32,7 +33,7 @@ export class WalletSecureFilePassword extends Component<
     this.componentDidMount = this.componentDidMount.bind(this);
     this.componentDidUnmount = this.componentDidUnmount.bind(this);
     this.encryptSecureMnemonicFile = this.encryptSecureMnemonicFile.bind(this);
-
+    // init state
     this.state = { password: "", confirmPassword: "" };
   }
 
@@ -40,7 +41,7 @@ export class WalletSecureFilePassword extends Component<
 
   componentDidUnmount(): void {}
 
-  private encryptSecureMnemonicFile(): void {
+  private encryptSecureMnemonicFile = async () => {
     if (this.state.password !== this.state.confirmPassword) {
       this.setState({ error: "Passwords do not match" });
       return;
@@ -51,9 +52,8 @@ export class WalletSecureFilePassword extends Component<
     if (this.state.password) {
       try {
         const { encrypt } = getAesEncryptor(this.state.password);
-        const encryptedMnemonic = "data:application/json;base64," + encrypt(this.props.mnemonic);
-        console.log(encryptedMnemonic);
-        this.setState({ fileCipherText: encryptedMnemonic });
+        const encryptedMnemonic = encrypt(this.props.mnemonic);
+        SaveFile("webbridge-backup.psh.json", encryptedMnemonic);
       } catch (e) {
         console.log("Error:", e);
       }
@@ -63,6 +63,7 @@ export class WalletSecureFilePassword extends Component<
   render() {
     const { onCancel } = this.props;
     const { error } = this.state;
+    
     return (
       <>
         <Container height="50vh" margin="10% 5% 0 0">
@@ -93,7 +94,7 @@ export class WalletSecureFilePassword extends Component<
                       <Input
                         value={this.state.password}
                         name="password"
-                        onChange={(e) =>
+                        onChange={(e: any) =>
                           this.setState({ password: e.target.value })
                         }
                         placeholder="Password"
@@ -107,7 +108,7 @@ export class WalletSecureFilePassword extends Component<
                       <Input
                         value={this.state.confirmPassword}
                         name="confirmPassword"
-                        onChange={(e) =>
+                        onChange={(e: any) =>
                           this.setState({ confirmPassword: e.target.value })
                         }
                         placeholder="Password"
@@ -135,9 +136,9 @@ export class WalletSecureFilePassword extends Component<
               margin="0 auto 0 auto"
             >
               <ArrowButton
-                label="Continue"
-                type="button"
                 onClick={() => this.encryptSecureMnemonicFile()}
+                type="button"
+                label="Save Backup"
               />
             </Box>
           </Box>
