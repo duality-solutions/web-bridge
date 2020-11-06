@@ -36,7 +36,7 @@ func (w *WebBridgeRunner) GetWalletSetupInfo() (*models.WalletSetupStatus, int, 
 		strErrMsg := fmt.Sprintf("Results JSON unmarshal error %v", err)
 		return nil, http.StatusInternalServerError, errors.New(strErrMsg)
 	}
-	var currentStatus = w.configuration.WalletSetupStatus()
+	var currentStatus = *w.configuration.WalletSetupStatus()
 	status.MnemonicBackup = currentStatus.MnemonicBackup
 	if walletinfo.TxCount > 0 {
 		status.HasTransactions = true
