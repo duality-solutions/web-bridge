@@ -67,12 +67,10 @@ func startGinGonic() {
 		Addr:    runner.configuration.WebServer().AddressPortString(),
 		Handler: runner.router,
 	}
-	go func() {
-		// Start HTTP service
-		if err := runner.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			panic(fmt.Errorf("ListenAndServe failed: %v", err))
-		}
-	}()
+	// Start HTTP service
+	if err := runner.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		panic(fmt.Errorf("ListenAndServe failed: %v", err))
+	}
 }
 
 // RestartWebServiceRouter running service is shutdown and a new service is ran with a new configuration
