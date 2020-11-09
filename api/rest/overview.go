@@ -195,7 +195,7 @@ func (w *WebBridgeRunner) GetBridgeOverview() (*models.BridgeOverview, int, erro
 // @Description Returns the current WebBridge overview status
 // @Accept  json
 // @Produce  json
-// @Success 200 {object} models.WalletSetupStatus "ok"
+// @Success 200 {object} models.OverviewResponse "ok"
 // @Failure 400 {object} string "Bad request"
 // @Failure 500 {object} string "Internal error"
 // @Router /api/v1/overview [get]
