@@ -97,6 +97,7 @@ func (proxy *ProxyHTTPServer) readWebRTCMessageLoop(ctx *ProxyCtx) {
 				proxy.mapWebRTCMessages[sessionID] <- &wr
 				defer close(proxy.mapWebRTCMessages[sessionID])
 			} else if wr.GetType() == MessageType_request {
+				ctx.Logf("readWebRTCMessageLoop Read error: %v", err)
 				go proxy.sendResponse(&wr, ctx)
 			} else {
 				ctx.Logf("readWebRTCMessageLoop unknown message type received %v %v", proxy.BridgeLinkNames, proxy.BridgeID)
@@ -147,8 +148,52 @@ func (proxy *ProxyHTTPServer) waitForWebRTCMessage(sessionID string, timeout tim
 	}
 }
 
+func localIPAddresses() []string {
+	addresses := make([]string, 0)
+	ifaces, err := net.Interfaces()
+	if err != nil {
+		util.Error.Println("localIPAddresses net.Interfaces error", err)
+		return addresses
+	}
+	for _, i := range ifaces {
+		addrs, err := i.Addrs()
+		if err != nil {
+			util.Error.Println("localIPAddresses i.Addrs() error", err)
+			continue
+		}
+		for _, addr := range addrs {
+			var ip net.IP
+			switch v := addr.(type) {
+			case *net.IPNet:
+				ip = v.IP
+			case *net.IPAddr:
+				ip = v.IP
+			}
+			addresses = append(addresses, ip.String())
+		}
+	}
+	return addresses
+}
+
+func accessDenied(targetURL string) bool {
+	if strings.Contains(targetURL, "localhost:35350") || strings.Contains(targetURL, "127.0.0.1:35350") {
+		return true
+	}
+	addresses := localIPAddresses()
+	for _, addr := range addresses {
+		if strings.Contains(targetURL, addr+":35350") {
+			return true
+		}
+	}
+	return false
+}
+
 func (proxy *ProxyHTTPServer) sendResponse(wrReq *WireMessage, ctx *ProxyCtx) {
 	targetURL := string(wrReq.URL)
+	if accessDenied(targetURL) {
+		ctx.Logf("sendResponse for bridge %v to %v access denied!", proxy.BridgeLinkNames, targetURL)
+		return
+	}
 	client := &http.Client{
 		Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{
