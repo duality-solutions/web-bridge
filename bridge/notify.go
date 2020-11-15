@@ -7,15 +7,8 @@ import (
 	"github.com/duality-solutions/web-bridge/internal/util"
 )
 
-var startEpoch int64
-var endEpoch int64
 var mapGetNotifications map[string]dynamic.GetMessageReturnJSON = make(map[string]dynamic.GetMessageReturnJSON)
-
-// OnlineNotification stores start and end WebBridge session time
-type OnlineNotification struct {
-	StartTime int64 `json:"start_time"`
-	EndTime   int64 `json:"end_time"`
-}
+var notificationInfo = newOnlineNotification()
 
 // NotifyLinksOnline sends a VGP message to all links with online status
 func NotifyLinksOnline(stopchan *chan struct{}) bool {
@@ -23,16 +16,12 @@ func NotifyLinksOnline(stopchan *chan struct{}) bool {
 		return true
 	}
 	util.Info.Println("NotifyLinksOnline Started")
-	endEpoch = 0
-	startEpoch = time.Now().Unix()
+	notificationInfo.updateDates(time.Now().Unix(), 0)
 	bridges := bridgeControler.Unconnected()
 	for _, link := range bridges {
 		select {
 		default:
-			notification := OnlineNotification{
-				StartTime: startEpoch,
-				EndTime:   endEpoch,
-			}
+			notification := notificationInfo.getCurrentNotification()
 			encoded, err := util.EncodeObject(notification)
 			if err != nil {
 				util.Error.Println("NotifyLinksOnline EncodeObject error", link.LinkAccount, err)
@@ -58,12 +47,9 @@ func NotifyLinksOffline() bool {
 	l := bridgeControler.Count()
 	bridges := bridgeControler.Unconnected()
 	sendOfflineChan := make(chan dynamic.MessageReturnJSON, l)
-	endEpoch = time.Now().Unix()
+	notificationInfo.updateDates(notificationInfo.GetStartTime(), time.Now().Unix())
 	for _, link := range bridges {
-		notification := OnlineNotification{
-			StartTime: startEpoch,
-			EndTime:   endEpoch,
-		}
+		notification := notificationInfo.getCurrentNotification()
 		encoded, err := util.EncodeObject(notification)
 		if err != nil {
 			util.Error.Println("NotifyLinksOffline EncodeObject error", link.LinkAccount, err)
@@ -73,10 +59,7 @@ func NotifyLinksOffline() bool {
 	}
 	bridges = bridgeControler.Connected()
 	for _, link := range bridges {
-		notification := OnlineNotification{
-			StartTime: startEpoch,
-			EndTime:   endEpoch,
-		}
+		notification := notificationInfo.getCurrentNotification()
 		encoded, err := util.EncodeObject(notification)
 		if err != nil {
 			util.Error.Println("NotifyLinksOffline EncodeObject error", link.LinkAccount, err)
