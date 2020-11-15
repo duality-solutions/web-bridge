@@ -78,19 +78,23 @@ func EstablishRTC(link *Bridge) {
 
 	// Register channel opening handling
 	link.DataChannel().OnOpen(func() {
-		link.SetOnOpenEpoch(time.Now().Unix())
-		link.SetState(StateOpenConnection)
-		util.Info.Printf("EstablishRTC Data channel '%s'-'%d' open.\n", link.DataChannel().Label(), link.DataChannel().ID())
-		// Detach the data channel
-		raw, err := link.DataChannel().Detach()
-		if err != nil {
-			util.Error.Println("EstablishRTC link DataChannel OnOpen error", err)
-			//keepAlive = false
-			keepAlive.UpdateAlive(false)
-			close(stopchan)
-			return
+		if link.DataChannel() != nil {
+			link.SetOnOpenEpoch(time.Now().Unix())
+			link.SetState(StateOpenConnection)
+			util.Info.Printf("EstablishRTC Data channel '%s'-'%d' open.\n", link.DataChannel().Label(), link.DataChannel().ID())
+			// Detach the data channel
+			raw, err := link.DataChannel().Detach()
+			if err != nil {
+				util.Error.Println("EstablishRTC link DataChannel OnOpen error", err)
+				//keepAlive = false
+				keepAlive.UpdateAlive(false)
+				close(stopchan)
+				return
+			}
+			go link.StartBridgeNetwork(raw, raw)
+		} else {
+			util.Error.Println("EstablishRTC link.DataChannel().OnOpen nil DataChannel")
 		}
-		go link.StartBridgeNetwork(raw, raw)
 	})
 
 	link.DataChannel().OnError(func(err error) {
