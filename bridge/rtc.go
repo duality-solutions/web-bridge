@@ -1,15 +1,7 @@
 package bridge
 
-import (
-	"time"
-
-	"github.com/duality-solutions/web-bridge/internal/util"
-	"github.com/pion/webrtc/v2"
-)
-
 /*
 WebRTC:
-
 Offer Peer (EstablishRTC)					 Answer Peer (WaitForRTC)
 1- NewPeerConnection                         1- NewPeerConnection
 2- CreateDataChannel                         2- OnICEConnectionStateChange
@@ -21,9 +13,42 @@ Offer Peer (EstablishRTC)					 Answer Peer (WaitForRTC)
 8- SetRemoteDescription
 */
 
+import (
+	"sync"
+	"time"
+
+	"github.com/duality-solutions/web-bridge/internal/util"
+	"github.com/pion/webrtc/v2"
+)
+
+type keepAlive struct {
+	alive bool
+	*sync.RWMutex
+}
+
+func newKeepAlive() keepAlive {
+	ka := keepAlive{
+		alive: false,
+	}
+	ka.RWMutex = new(sync.RWMutex)
+	return ka
+}
+
+func (ka *keepAlive) UpdateAlive(a bool) {
+	ka.Lock()
+	defer ka.Unlock()
+	ka.alive = a
+}
+
+func (ka *keepAlive) Alive() bool {
+	ka.RLock()
+	defer ka.RUnlock()
+	return ka.alive
+}
+
 // EstablishRTC tries to establish a real time connection (RTC) bridge with the link
 func EstablishRTC(link *Bridge) {
-	keepAlive := true
+	keepAlive := newKeepAlive()
 	stopchan := make(chan struct{})
 	if link.PeerConnection() == nil {
 		util.Info.Println("EstablishRTC PeerConnection nil for", link.LinkAccount)
@@ -36,14 +61,16 @@ func EstablishRTC(link *Bridge) {
 		link.SetOnStateChangeEpoch(time.Now().Unix())
 		util.Info.Printf("EstablishRTC ICE Connection State has changed for %s: %s\n", link.LinkParticipants(), connectionState.String())
 		if link.RTCState() == "checking" && connectionState.String() == "failed" {
-			keepAlive = false
+			//keepAlive = false
+			keepAlive.UpdateAlive(false)
 			close(stopchan)
 			return
 		}
 		link.SetRTCState(connectionState.String())
 		if connectionState.String() == "disconnected" {
 			link.ShutdownHTTPProxyServers()
-			keepAlive = false
+			//keepAlive = false
+			keepAlive.UpdateAlive(false)
 			close(stopchan)
 			return
 		}
@@ -58,7 +85,8 @@ func EstablishRTC(link *Bridge) {
 		raw, err := link.DataChannel().Detach()
 		if err != nil {
 			util.Error.Println("EstablishRTC link DataChannel OnOpen error", err)
-			keepAlive = false
+			//keepAlive = false
+			keepAlive.UpdateAlive(false)
 			close(stopchan)
 			return
 		}
@@ -68,7 +96,8 @@ func EstablishRTC(link *Bridge) {
 	link.DataChannel().OnError(func(err error) {
 		link.SetOnErrorEpoch(time.Now().Unix())
 		util.Error.Printf("EstablishRTC DataChannel OnError '%s': '%s'\n", link.DataChannel().Label(), err.Error())
-		keepAlive = false
+		//keepAlive = false
+		keepAlive.UpdateAlive(false)
 		close(stopchan)
 		return
 	})
@@ -86,10 +115,10 @@ func EstablishRTC(link *Bridge) {
 	}
 	util.Info.Println("EstablishRTC SetRemoteDescription", link.LinkAccount)
 
-	for keepAlive {
+	for keepAlive.Alive() {
 		select {
 		default:
-			if !keepAlive {
+			if !keepAlive.Alive() {
 				break
 			}
 		case <-stopchan:
@@ -118,7 +147,7 @@ func EstablishRTC(link *Bridge) {
 // WaitForRTC waits for a real time connection (RTC) bridge with the link
 // TODO: add timeout
 func WaitForRTC(link *Bridge) {
-	keepAlive := true
+	keepAlive := newKeepAlive()
 	stopchan := make(chan struct{})
 	if link.PeerConnection() == nil {
 		util.Error.Println("WaitForRTC PeerConnection nil for", link.LinkAccount)
@@ -132,14 +161,16 @@ func WaitForRTC(link *Bridge) {
 		link.SetOnStateChangeEpoch(time.Now().Unix())
 		util.Info.Printf("WaitForRTC ICE Connection State has changed for %s: %s\n", link.LinkParticipants(), connectionState.String())
 		if link.RTCState() == "checking" && connectionState.String() == "failed" {
-			keepAlive = false
+			//keepAlive = false
+			keepAlive.UpdateAlive(false)
 			close(stopchan)
 			return
 		}
 		link.SetRTCState(connectionState.String())
 		if connectionState.String() == "disconnected" {
 			link.ShutdownHTTPProxyServers()
-			keepAlive = false
+			//keepAlive = false
+			keepAlive.UpdateAlive(false)
 			close(stopchan)
 			return
 		}
@@ -158,7 +189,8 @@ func WaitForRTC(link *Bridge) {
 			raw, err := link.DataChannel().Detach()
 			if err != nil {
 				util.Error.Println("WaitForRTC link DataChannel OnOpen error", err)
-				keepAlive = false
+				//keepAlive = false
+				keepAlive.UpdateAlive(false)
 				close(stopchan)
 				return
 			}
@@ -168,7 +200,8 @@ func WaitForRTC(link *Bridge) {
 		link.DataChannel().OnError(func(err error) {
 			link.SetOnErrorEpoch(time.Now().Unix())
 			util.Error.Printf("WaitForRTC DataChannel OnError '%s': '%s'\n", link.DataChannel().Label(), err.Error())
-			keepAlive = false
+			//keepAlive = false
+			keepAlive.UpdateAlive(false)
 			close(stopchan)
 			return
 		})
@@ -178,14 +211,15 @@ func WaitForRTC(link *Bridge) {
 	err := link.PeerConnection().SetLocalDescription(link.Answer())
 	if err != nil {
 		util.Error.Println("WaitForRTC SetLocalDescription error ", link.LinkParticipants(), err)
-		keepAlive = false
+		//keepAlive = false
+		keepAlive.UpdateAlive(false)
 	}
 	util.Info.Println("WaitForRTC SetLocalDescription", link.LinkAccount)
 
-	for keepAlive {
+	for keepAlive.Alive() {
 		select {
 		default:
-			if !keepAlive {
+			if !keepAlive.Alive() {
 				break
 			}
 		case <-stopchan:
