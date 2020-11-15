@@ -14,6 +14,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"time"
 
@@ -48,6 +49,7 @@ type ProxyHTTPServer struct {
 	DataChannelWriter io.Writer
 	DataChannelReader io.Reader
 	mapWebRTCMessages map[string]chan *WireMessage
+	*sync.RWMutex
 }
 
 var hasPort = regexp.MustCompile(`:\d+$`)
@@ -73,9 +75,16 @@ func isEOF(r *bufio.Reader) bool {
 	return false
 }
 
+// updateWebRTCMessageMap
+func (proxy *ProxyHTTPServer) updateWebRTCMessageMap(session string, wr *WireMessage) {
+	proxy.RWMutex.Lock()
+	defer proxy.RWMutex.Unlock()
+	proxy.mapWebRTCMessages[session] <- wr //ToDo: fix this race condition. The locking code above is not working.
+	defer close(proxy.mapWebRTCMessages[session])
+}
+
 // readWebRTCMessageLoop creates a process that continues to read data from the WebRTC channel
 func (proxy *ProxyHTTPServer) readWebRTCMessageLoop(ctx *ProxyCtx) {
-	proxy.mapWebRTCMessages = make(map[string]chan *WireMessage)
 	// TODO: add a channel to stop this loop
 	for {
 		buffer := make([]byte, MaxTransmissionBytes)
@@ -94,8 +103,7 @@ func (proxy *ProxyHTTPServer) readWebRTCMessageLoop(ctx *ProxyCtx) {
 			}
 			if wr.GetType() == MessageType_response {
 				sessionID := wr.GetSessionId()
-				proxy.mapWebRTCMessages[sessionID] <- &wr
-				defer close(proxy.mapWebRTCMessages[sessionID])
+				proxy.updateWebRTCMessageMap(sessionID, &wr)
 			} else if wr.GetType() == MessageType_request {
 				ctx.Logf("readWebRTCMessageLoop Read error: %v", err)
 				go proxy.sendResponse(&wr, ctx)
@@ -454,6 +462,8 @@ func NewProxyHTTPServer() *ProxyHTTPServer {
 		}),
 		Tr: &http.Transport{TLSClientConfig: tlsClientSkipVerify, Proxy: http.ProxyFromEnvironment},
 	}
+	proxy.mapWebRTCMessages = make(map[string]chan *WireMessage)
+	proxy.RWMutex = new(sync.RWMutex)
 	proxy.ConnectDial = dialerFromEnv(&proxy)
 
 	return &proxy
