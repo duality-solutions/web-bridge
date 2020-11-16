@@ -27,13 +27,13 @@ export class WalletMnemonicRestore extends Component<
     super(props);
     // bind events
     this.componentDidMount = this.componentDidMount.bind(this);
-    this.componentDidUnmount = this.componentDidUnmount.bind(this);
+    this.componentWillUnmount = this.componentWillUnmount.bind(this);
     this.setMnemonic = this.setMnemonic.bind(this);
   }
 
   componentDidMount(): void {}
 
-  componentDidUnmount(): void {}
+  componentWillUnmount(): void {}
 
   private setMnemonic(words: string): void {
     this.setState({ mnemonic: words });

@@ -1,4 +1,5 @@
 import React, { Component } from "react";
+import ReactDOM from "react-dom";
 import { Button, Form, Header } from "semantic-ui-react";
 import { RestartWebServer, UpdateWebServerConfig, WebServerConfig, WebServerRestartRequest } from "../api/WebServerConfig";
 import { UpdateIceConfig, IceServerConfig } from "../api/IceServerConfig";
@@ -28,7 +29,7 @@ export class Settings extends Component<SettingsProps, SettingsState> {
     super(props);
     // bind events
     this.componentDidMount = this.componentDidMount.bind(this);
-    this.componentDidUnmount = this.componentDidUnmount.bind(this);
+    this.componentWillUnmount = this.componentWillUnmount.bind(this);
     this.getConfigSettings = this.getConfigSettings.bind(this);
     this.updateIceConfig = this.updateIceConfig.bind(this);
     this.updateWebServerConfig = this.updateWebServerConfig.bind(this);
@@ -39,7 +40,7 @@ export class Settings extends Component<SettingsProps, SettingsState> {
     this.getConfigSettings();
   }
 
-  componentDidUnmount(): void {}
+  componentWillUnmount(): void {}
 
   private getConfigSettings = () => {
     GetConfigSettings().then((data) => {

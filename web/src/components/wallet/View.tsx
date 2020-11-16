@@ -4,34 +4,38 @@ import { Card } from "../ui/Card";
 import { Container } from "../ui/Container";
 import { QRCode } from "../ui/QRCode";
 import { H1, H3 } from "../ui/Text";
+import {useDispatch, useSelector} from "react-redux";
 import { GetWalletAddresses } from "../../api/Wallet";
 
 export interface WalletViewProps {}
 
 export interface WalletViewState {
   walletAddress?: string;
+  walletAddressStore?: string;
 }
-
 export class WalletView extends Component<WalletViewProps, WalletViewState> {
   constructor(props: WalletViewProps) {
     super(props);
     // bind events
     this.componentDidMount = this.componentDidMount.bind(this);
-    this.componentDidUnmount = this.componentDidUnmount.bind(this);
+    this.componentWillUnmount = this.componentWillUnmount.bind(this);
     this.getWalletAddresses = this.getWalletAddresses.bind(this);
     this.getWalletAddresses();
   }
 
   componentDidMount(): void {}
 
-  componentDidUnmount(): void {}
+  componentWillUnmount(): void {}
+  
 
   private getWalletAddresses = () => {
+    // GetWalletAddressess should be inside the AppActions
+    // function to set the value of state
+
     GetWalletAddresses().then((data) => {
       this.setState( { walletAddress: data.address });
     });
   };
-
   render() {
     return (
       <>

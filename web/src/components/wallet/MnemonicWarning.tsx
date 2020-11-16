@@ -20,13 +20,13 @@ export class MnemonicWarning extends Component<
     super(props);
     // bind events
     this.componentDidMount = this.componentDidMount.bind(this);
-    this.componentDidUnmount = this.componentDidUnmount.bind(this);
+    this.componentWillUnmount = this.componentWillUnmount.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
   }
 
   componentDidMount(): void {}
 
-  componentDidUnmount(): void {}
+  componentWillUnmount(): void {}
 
   handleSubmit = (e: FormEvent) => {
     //if we don't prevent form submission, causes a browser reload

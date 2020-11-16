@@ -44,7 +44,7 @@ export class WalletSetup extends Component<WalletSetupProps, WalletSetupState> {
     super(props);
     // bind events
     this.componentDidMount = this.componentDidMount.bind(this);
-    this.componentDidUnmount = this.componentDidUnmount.bind(this);
+    this.componentWillUnmount = this.componentWillUnmount.bind(this);
     this.onNewWallet = this.onNewWallet.bind(this);
     this.onMnemonicBackup = this.onMnemonicBackup.bind(this);
     // set initial state
@@ -57,7 +57,7 @@ export class WalletSetup extends Component<WalletSetupProps, WalletSetupState> {
 
   componentDidMount(): void {}
 
-  componentDidUnmount(): void {}
+  componentWillUnmount(): void {}
 
   private onNewWallet(): void {
     this.props.onComplete();

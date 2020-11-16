@@ -15,7 +15,9 @@ export const RequestConfig: AxiosRequestConfig = {
         'Access-Control-Allow-Origin': '*',
         'Cache-Control': 'no-cache',
         'Content-Type': 'text/plain',
-        'Accept': 'application/json'
+        'Accept': 'application/json',
+        "Access-Control-Allow-Headers": "X-Requested-With, content-type",
+        "Access-Control-Allow-Methods": "PUT, POST, GET, DELETE, PATCH, OPTIONS",
     },
     responseType: 'json'
 };
