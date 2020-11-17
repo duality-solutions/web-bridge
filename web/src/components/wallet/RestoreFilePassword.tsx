@@ -28,13 +28,13 @@ export class WalletRestoreFilePassword extends Component<
     super(props);
     // bind events
     this.componentDidMount = this.componentDidMount.bind(this);
-    this.componentDidUnmount = this.componentDidUnmount.bind(this);
+    this.componentWillUnmount = this.componentWillUnmount.bind(this);
     this.decryptSecureMnemonicFile = this.decryptSecureMnemonicFile.bind(this);
   }
 
   componentDidMount(): void {}
 
-  componentDidUnmount(): void {}
+  componentWillUnmount(): void {}
 
   private decryptSecureMnemonicFile(): void {
     let mnemonicFilePassphrase = this.state.passwordText;

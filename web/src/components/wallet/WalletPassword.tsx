@@ -39,7 +39,7 @@ export class WalletPassword extends Component<
     super(props);
     // bind events
     this.componentDidMount = this.componentDidMount.bind(this);
-    this.componentDidUnmount = this.componentDidUnmount.bind(this);
+    this.componentWillUnmount = this.componentWillUnmount.bind(this);
     this.onCompleteButtonClick = this.onCompleteButtonClick.bind(this);
     this.state = {
       isValidating: false
@@ -48,7 +48,7 @@ export class WalletPassword extends Component<
 
   componentDidMount(): void {}
 
-  componentDidUnmount(): void {}
+  componentWillUnmount(): void {}
 
   handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     let name: string = e.target.name;

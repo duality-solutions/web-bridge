@@ -27,7 +27,7 @@ export class MnemonicBackup extends Component<
     super(props);
     // bind events
     this.componentDidMount = this.componentDidMount.bind(this);
-    this.componentDidUnmount = this.componentDidUnmount.bind(this);
+    this.componentWillUnmount = this.componentWillUnmount.bind(this);
     this.backupSecureFile = this.backupSecureFile.bind(this);
     this.getMnemonic = this.getMnemonic.bind(this);
   }
@@ -36,7 +36,7 @@ export class MnemonicBackup extends Component<
     this.getMnemonic();
   }
 
-  componentDidUnmount(): void {}
+  componentWillUnmount(): void {}
 
   backupSecureFile = async () => {
     if (this.state && this.state.mnemonic) {

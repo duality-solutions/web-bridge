@@ -1,5 +1,87 @@
 import axios from 'axios';
+import { Dispatch } from 'redux';
 import { RequestConfig }from "./Config";
+import { 
+    AddressRes,
+    MnemonicRes,
+    ImportMnemonicReq,
+    ImportMnemonicRes,
+    UnlockWalletReq,
+    UnlockWalletRes,
+    EncryptWalletReq,
+    EncryptWalletRes,
+} from '../types/Wallet';
+import { 
+    WALLET_ADDRESS_RESPONSE,
+    MNEMONIC_RESPONSE,
+    IMPORT_MNEMONIC_REQUEST,
+    IMPORT_MNEMONIC_RESPONSE,
+    UNLOCK_WALLET_REQUEST,
+    UNLOCK_WALLET_RESPONSE,
+    ENCRYPT_WALLET_REQUEST,
+    ENCRYPT_WALLET_RESPONSE,
+    WalletActionTypes,
+    AppActions
+ } from '../types/actions';
+ import { AppState } from '../store/configureStore';
+
+export const getMnemonicResponse = (mnemonic_response: MnemonicRes[]): AppActions => ({
+    type: MNEMONIC_RESPONSE,
+    mnemonic_response
+})
+
+export const getWalletAdress = (address_response: AddressRes ): AppActions => ({
+    type: WALLET_ADDRESS_RESPONSE,
+    address_response
+})
+
+export const MnemonicRequest = (mnemonic_request: ImportMnemonicReq[]): AppActions => ({
+    type: IMPORT_MNEMONIC_REQUEST,
+    mnemonic_request
+}) 
+
+export const RestoreMnemonicResponse = (restore_mnemonic_response: ImportMnemonicRes ): AppActions => ({
+    type: IMPORT_MNEMONIC_RESPONSE,
+    restore_mnemonic_response
+})
+
+export const UnlockRequest = (wallet_request: UnlockWalletReq[]): AppActions => ({
+    type: UNLOCK_WALLET_REQUEST,
+    wallet_request
+})
+
+export const UnlockResponse = (wallet_response: UnlockWalletRes): AppActions => ({
+    type: UNLOCK_WALLET_RESPONSE,
+    wallet_response
+})
+
+export const EncryptRequest = (encrypt_request: EncryptWalletReq): AppActions => ({
+    type: ENCRYPT_WALLET_REQUEST,
+    encrypt_request
+})
+
+export const EncryptResponse = (encrypt_response: EncryptWalletRes): AppActions => ({
+    type: ENCRYPT_WALLET_RESPONSE,
+    encrypt_response
+})
+
+export const GetWalletAddress = () => async (dispatch: Dispatch<WalletActionTypes>) => {
+    try {
+        const response = await axios.get("/wallet/defaultaddress", RequestConfig);
+        console.log(response, "response inside Wallet Address Action. ts")
+        dispatch({
+            type: WALLET_ADDRESS_RESPONSE,
+            address_response: response.data
+        })
+    } catch(error) {
+        var errMessage = "GetWalletAddresses execute [Get] /wallet/defaultaddress error: " + error;
+        var errResponse: WalletAddressResponse = {
+            address: errMessage
+        }
+        return errResponse;
+    }
+
+}
 
 export interface WalletAddressResponse {
     address: string;
@@ -38,12 +120,13 @@ export interface EncryptWalletResponse {
     result: string;
 };
 
+
 export const GetMnemonic = async (): Promise<MnemonicResponse> => {
     return await axios.get<MnemonicResponse>("/wallet/mnemonic", RequestConfig).then(function (response) {
+        
         return response.data;
     }).catch(function (error) {
         var errMessage = "GetMnemonics execute [Get] /wallet/mnemonic error: " + error;
-        console.log(errMessage);
         var errResponse: MnemonicResponse = {
             hdseed: "",
             mnemonic: "",

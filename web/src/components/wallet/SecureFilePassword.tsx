@@ -31,7 +31,7 @@ export class WalletSecureFilePassword extends Component<
     super(props);
     // bind events
     this.componentDidMount = this.componentDidMount.bind(this);
-    this.componentDidUnmount = this.componentDidUnmount.bind(this);
+    this.componentWillUnmount = this.componentWillUnmount.bind(this);
     this.encryptSecureMnemonicFile = this.encryptSecureMnemonicFile.bind(this);
     // init state
     this.state = { password: "", confirmPassword: "" };
@@ -39,7 +39,7 @@ export class WalletSecureFilePassword extends Component<
 
   componentDidMount(): void {}
 
-  componentDidUnmount(): void {}
+  componentWillUnmount(): void {}
 
   private encryptSecureMnemonicFile = async () => {
     if (this.state.password !== this.state.confirmPassword) {

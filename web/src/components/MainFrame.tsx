@@ -1,8 +1,10 @@
 import React, { Component } from "react";
 import { Settings } from "./Settings";
+import ReactDOM from "react-dom";
 import { TerminalPage } from "./TerminalPage";
 import { SetupWizard } from "./SetupWizard";
 import { WalletView } from "./wallet/View";
+import {useDispatch, useSelector} from "react-redux";
 import {
   Button,
   Dropdown,
@@ -33,7 +35,7 @@ export class MainFrame extends Component<MainFrameProps, MainFrameState> {
     this.currentPage = props.currentPage ? props.currentPage : "home";
     // bind events
     this.componentDidMount = this.componentDidMount.bind(this);
-    this.componentDidUnmount = this.componentDidUnmount.bind(this);
+    this.componentWillUnmount = this.componentWillUnmount.bind(this);
     this.changePage = this.changePage.bind(this);
   }
 
@@ -46,7 +48,7 @@ export class MainFrame extends Component<MainFrameProps, MainFrameState> {
     });
   }
 
-  componentDidUnmount(): void {}
+  componentWillUnmount(): void {}
 
   private changePage(pageName: string): void {
     this.currentPage = pageName;
@@ -106,6 +108,10 @@ export class MainFrame extends Component<MainFrameProps, MainFrameState> {
                       />
                     </Dropdown.Menu>
                   </Dropdown>
+                  <Menu.Item onClick={() => this.changePage("bridges")} as="a">
+                    <Icon name="connectdevelop" />
+                    Test Button
+                  </Menu.Item>
                 </Menu>
               </div>
             </div>

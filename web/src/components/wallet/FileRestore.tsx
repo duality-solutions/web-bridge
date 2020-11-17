@@ -33,7 +33,7 @@ export class WalletFileRestore extends Component<
     super(props);
     // bind events
     this.componentDidMount = this.componentDidMount.bind(this);
-    this.componentDidUnmount = this.componentDidUnmount.bind(this);
+    this.componentWillUnmount = this.componentWillUnmount.bind(this);
     this.filesSelectedHandler = this.filesSelectedHandler.bind(this);
     this.loadSecureFileData = this.loadSecureFileData.bind(this);
     this.onMnemonic = this.onMnemonic.bind(this);
@@ -47,7 +47,7 @@ export class WalletFileRestore extends Component<
     this.setState({ fileContents: undefined });
   }
 
-  componentDidUnmount(): void {}
+  componentWillUnmount(): void {}
 
   private loadSecureFileData = (file: FilePathInfo, reader?: FileReader) => {
     if (reader) {
