@@ -3,8 +3,8 @@ package bridge
 import (
 	"time"
 
-	"github.com/duality-solutions/web-bridge/internal/util"
 	"github.com/duality-solutions/web-bridge/blockchain/rpc/dynamic"
+	"github.com/duality-solutions/web-bridge/internal/util"
 	"github.com/pion/webrtc/v2"
 )
 
@@ -132,10 +132,7 @@ func SendOffer(link *Bridge) bool {
 func sendOnlineNotification(link *Bridge, wait time.Duration) {
 	select {
 	case <-time.After(wait):
-		notification := OnlineNotification{
-			StartTime: startEpoch,
-			EndTime:   endEpoch,
-		}
+		notification := notificationInfo.getCurrentNotification()
 		encoded, err := util.EncodeObject(notification)
 		if err != nil {
 			util.Error.Println("DisconnectedLinks EncodeObject error", link.LinkAccount, err)
@@ -150,8 +147,7 @@ func sendOnlineNotification(link *Bridge, wait time.Duration) {
 // DisconnectedLinks reinitializes the WebRTC link bridge struct
 func DisconnectedLinks(stopchan *chan struct{}) bool {
 	bridges := bridgeControler.Unconnected()
-	endEpoch = 0
-	startEpoch = time.Now().Unix()
+	notificationInfo.updateDates(time.Now().Unix(), 0)
 	for _, link := range bridges {
 		if link.State() == StateInit && link.RTCState() == "closed" {
 			link.SetRTCState("")

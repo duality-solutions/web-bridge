@@ -83,51 +83,55 @@ func initializeBridges(stopchan *chan struct{}) bool {
 // if new answer found, create a WebRTC bridge and send bridge result to upstream channel
 // on shutdown, clear all DHT offers
 func StartBridges(stopchan *chan struct{}, c settings.Configuration, d dynamic.Dynamicd, a []dynamic.Account, l dynamic.ActiveLinks) {
-	dynamicd = d
-	config = c
-	accounts = a
-	links = l
-	if dynamicd.WaitForConnections(stopchan, 10, 10) {
-		if initializeBridges(stopchan) {
-			for {
-				select {
-				case <-time.After(3 * time.Second):
-					if !GetLinkNotifications(stopchan) {
-						return
-					}
-					if !GetAnswers(stopchan) {
-						return
-					}
-					if !GetOffers(stopchan) {
-						return
-					}
-					if !DisconnectedLinks(stopchan) {
-						return
-					}
-					/*
-						if !StopDisconnected(stopchan) {
+	util.Info.Println("Starting bridges.")
+	go func() {
+		dynamicd = d
+		config = c
+		accounts = a
+		links = l
+		if dynamicd.WaitForConnections(stopchan, 10, 10) {
+			if initializeBridges(stopchan) {
+				for {
+					select {
+					case <-time.After(3 * time.Second):
+						if !GetLinkNotifications(stopchan) {
 							return
 						}
-					*/
-					// Update online start time every hour
-				case <-*stopchan:
-					util.Info.Println("StartBridges stopped")
-					return
+						if !GetAnswers(stopchan) {
+							return
+						}
+						if !GetOffers(stopchan) {
+							return
+						}
+						if !DisconnectedLinks(stopchan) {
+							return
+						}
+						/*
+							if !StopDisconnected(stopchan) {
+								return
+							}
+						*/
+						// Update online start time every hour
+					case <-*stopchan:
+						if !NotifyLinksOffline() {
+							util.Error.Println("StartBridges NotifyLinksOffline error")
+						}
+						util.Info.Println("StartBridges stopped")
+						return
+					}
 				}
+			} else {
+				util.Info.Println("StartBridges stopped after initializeBridges failed.")
 			}
 		} else {
-			util.Info.Println("StartBridges stopped after initializeBridges failed.")
+			util.Info.Println("StartBridges stopped after WaitForSync")
 		}
-	} else {
-		util.Info.Println("StartBridges stopped after WaitForSync")
-	}
+	}()
 }
 
 // ShutdownBridges stops the ManageBridges goroutine
 func ShutdownBridges(stopchan *chan struct{}) {
 	//TODO: disconnect all active/connected WebRTC bridges
+	util.Info.Println("ShutdownBridges close channel")
 	close(*stopchan)
-	if !NotifyLinksOffline() {
-		util.Error.Println("ShutdownBridges NotifyLinksOffline error")
-	}
 }

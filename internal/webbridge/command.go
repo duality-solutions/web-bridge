@@ -36,15 +36,13 @@ func appCommandLoop(stopBridges *chan struct{}, acc *[]dynamic.Account, al *dyna
 		for {
 			select {
 			default:
-
 				if !unlocked {
 					errUnlock := d.UnlockWallet("")
 					if errUnlock != nil {
 						util.Info.Println("Wallet locked so links are unavailable. Use the unlock command to start your link bridges.")
 					} else {
 						unlocked = true
-						util.Info.Println("Starting bridges.")
-						go bridge.StartBridges(stopBridges, config, *d, *acc, *al)
+						bridge.StartBridges(stopBridges, config, *d, *acc, *al)
 						bridgesStarted = true
 					}
 				}
@@ -94,8 +92,7 @@ func appCommandLoop(stopBridges *chan struct{}, acc *[]dynamic.Account, al *dyna
 					}
 				}
 				if unlocked && !bridgesStarted && acc != nil && al != nil {
-					util.Info.Println("Starting bridges.")
-					go bridge.StartBridges(stopBridges, config, *d, *acc, *al)
+					bridge.StartBridges(stopBridges, config, *d, *acc, *al)
 					bridgesStarted = true
 				}
 			case <-*shutdown.Close:

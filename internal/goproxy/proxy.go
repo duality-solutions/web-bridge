@@ -14,6 +14,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"time"
 
@@ -48,6 +49,7 @@ type ProxyHTTPServer struct {
 	DataChannelWriter io.Writer
 	DataChannelReader io.Reader
 	mapWebRTCMessages map[string]chan *WireMessage
+	*sync.RWMutex
 }
 
 var hasPort = regexp.MustCompile(`:\d+$`)
@@ -73,9 +75,16 @@ func isEOF(r *bufio.Reader) bool {
 	return false
 }
 
+// updateWebRTCMessageMap
+func (proxy *ProxyHTTPServer) updateWebRTCMessageMap(session string, wr *WireMessage) {
+	proxy.RWMutex.Lock()
+	defer proxy.RWMutex.Unlock()
+	proxy.mapWebRTCMessages[session] <- wr //ToDo: fix this race condition. The locking code above is not working.
+	defer close(proxy.mapWebRTCMessages[session])
+}
+
 // readWebRTCMessageLoop creates a process that continues to read data from the WebRTC channel
 func (proxy *ProxyHTTPServer) readWebRTCMessageLoop(ctx *ProxyCtx) {
-	proxy.mapWebRTCMessages = make(map[string]chan *WireMessage)
 	// TODO: add a channel to stop this loop
 	for {
 		buffer := make([]byte, MaxTransmissionBytes)
@@ -94,9 +103,9 @@ func (proxy *ProxyHTTPServer) readWebRTCMessageLoop(ctx *ProxyCtx) {
 			}
 			if wr.GetType() == MessageType_response {
 				sessionID := wr.GetSessionId()
-				proxy.mapWebRTCMessages[sessionID] <- &wr
-				defer close(proxy.mapWebRTCMessages[sessionID])
+				proxy.updateWebRTCMessageMap(sessionID, &wr)
 			} else if wr.GetType() == MessageType_request {
+				ctx.Logf("readWebRTCMessageLoop Read error: %v", err)
 				go proxy.sendResponse(&wr, ctx)
 			} else {
 				ctx.Logf("readWebRTCMessageLoop unknown message type received %v %v", proxy.BridgeLinkNames, proxy.BridgeID)
@@ -147,8 +156,52 @@ func (proxy *ProxyHTTPServer) waitForWebRTCMessage(sessionID string, timeout tim
 	}
 }
 
+func localIPAddresses() []string {
+	addresses := make([]string, 0)
+	ifaces, err := net.Interfaces()
+	if err != nil {
+		util.Error.Println("localIPAddresses net.Interfaces error", err)
+		return addresses
+	}
+	for _, i := range ifaces {
+		addrs, err := i.Addrs()
+		if err != nil {
+			util.Error.Println("localIPAddresses i.Addrs() error", err)
+			continue
+		}
+		for _, addr := range addrs {
+			var ip net.IP
+			switch v := addr.(type) {
+			case *net.IPNet:
+				ip = v.IP
+			case *net.IPAddr:
+				ip = v.IP
+			}
+			addresses = append(addresses, ip.String())
+		}
+	}
+	return addresses
+}
+
+func accessDenied(targetURL string) bool {
+	if strings.Contains(targetURL, "localhost:35350") || strings.Contains(targetURL, "127.0.0.1:35350") {
+		return true
+	}
+	addresses := localIPAddresses()
+	for _, addr := range addresses {
+		if strings.Contains(targetURL, addr+":35350") {
+			return true
+		}
+	}
+	return false
+}
+
 func (proxy *ProxyHTTPServer) sendResponse(wrReq *WireMessage, ctx *ProxyCtx) {
 	targetURL := string(wrReq.URL)
+	if accessDenied(targetURL) {
+		ctx.Logf("sendResponse for bridge %v to %v access denied!", proxy.BridgeLinkNames, targetURL)
+		return
+	}
 	client := &http.Client{
 		Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{
@@ -409,6 +462,8 @@ func NewProxyHTTPServer() *ProxyHTTPServer {
 		}),
 		Tr: &http.Transport{TLSClientConfig: tlsClientSkipVerify, Proxy: http.ProxyFromEnvironment},
 	}
+	proxy.mapWebRTCMessages = make(map[string]chan *WireMessage)
+	proxy.RWMutex = new(sync.RWMutex)
 	proxy.ConnectDial = dialerFromEnv(&proxy)
 
 	return &proxy
