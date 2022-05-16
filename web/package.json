@@ -14,7 +14,7 @@
     "@types/sjcl": "^1.0.29",
     "axios": "^0.20.0",
     "file-saver": "^2.0.2",
-    "node-fetch": "^2.6.1",
+    "node-fetch": "^2.6.7",
     "node-forge": "0.10.0",
     "qrcode-generator": "^1.4.4",
     "react": "^16.13.1",
